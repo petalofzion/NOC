@@ -2,7 +2,7 @@ import Mathlib
 import NOC.AHelpers
 import NOC.B.Expectation
 import NOC.C.CPrime
-import NOC.D.Core
+import NOC.Bridge.UpperLinkToSigma
 
 /-!
 Module: NOC.C

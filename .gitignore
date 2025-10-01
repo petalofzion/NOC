@@ -1,3 +1,4 @@
 # Lake build artifacts (Lean build output)
 .lake/
 **/.lake/
+.DS_Store

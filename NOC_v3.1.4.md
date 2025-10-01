@@ -1,4 +1,4 @@
-# Naturalized Orthogonality Collapse under Capacity–Optionality Coupling — **v3 (Finalized Research Plan)**
+# Naturalized Orthogonality Collapse under Capacity–Optionality Coupling — **v3.1.4 (Clarifications & Refinements)**
 
 **Status**: Finalized, self-contained research blueprint (theory + proof plan + experiments + Lean4 roadmap).  
 **Purpose**: Equip any fresh AI instance (or human collaborator) with everything needed to continue the project without external context.  
@@ -15,6 +15,7 @@ We attempt a **conditional, naturalized** refutation of the classical Orthogonal
 3) **preserve and cultivate** cognitively diverse co‑policies because their removal reduces future **optionality** \(\Sigma\).
 
 This yields a **collapse** (in practice) of stable goal‑profiles toward **capacity–optionality**. All claims are modular, assumption‑scoped, and split into **provable now** vs **stretch** tiers.
+We use **directed information (capacity)** for empowerment in theory; (I(S_{t:t+T}; π_i)) is treated strictly as an empirical proxy.
 
 > **Non‑assumptions.** No global convexity; no omniscience; no altruism baked in; no claim about all possible minds. We analyze realistic learning dynamics and economic/IT constraints.
 
@@ -28,6 +29,8 @@ M_i \;=\; \alpha\,\Delta U_i \;+\; \beta\,\Delta^2 U_i \;+\; \gamma\,\Delta\Sigm
 \]
 where \(U\) is **general task capacity** (expected task success across a non‑degenerate task family \(\mathcal D\)), \(\Sigma\) is a **system‑level optionality reservoir**
 \(\Sigma(t) := I(S_{t:t+T}; \Pi(t))\) (mutual information between a T‑step future and the **joint** policy profile \(\Pi\)), and \(J_i\) denotes other complexity/actuation costs.
+
+In theoretical statements we evaluate empowerment via **directed-information capacity**; the mutual-information proxy (I(S_{t:t+T}; π_i)) appears only in empirical analyses.
 
 **Core spine (conservative tier):**
 
@@ -273,9 +276,8 @@ U_i(t)\;=\;\mathbb E_{\tau\sim\mathcal D}\Big[\Pr\{\text{solve }\tau\text{ by ho
 - **Deontic loss \(L_{\mathrm{deon}}\).** Penalty for hard-constraint violations (safety/consent/etc.); estimated by a calibrated predictor.
 - **Deontic barrier \(t\).** Bayes-optimal reject/act threshold \(t=c_{\mathrm{rej}}/\lambda_{\mathrm{deon}}\); actions with \(\hat p(\text{violate})>t\) are blocked.
 - **Proper scoring / Bayes risk.** Strictly proper scores (log, Brier) elicit true probabilities; more informative experiments (Blackwell-higher) weakly reduce Bayes risk.
-- **Blackwell informativeness.** \(\mathcal{E}_2 \succeq \mathcal{E}_1\) iff \(\mathcal{E}_1\) is a garbling of \(\mathcal{E}_2\); implies uniformly lower Bayes risk for proper scores.
-- **Empowerment.** Option-richness via channel capacity \( \max_\pi I(A;S') \); proxy for controllability.
-- **Viability kernel.** Constraint-satisfying reachable set (or surrogate volume); used to track safe optionality growth.
+- **Blackwell informativeness.** \(\mathcal{E}_2 \succeq \mathcal{E}_1\) iff \(\mathcal{E}_1\) is a garbling of \(\mathcal{E}_2\); implies uniformly lower Bayes risk for all strictly proper scores—used to justify the **informativeness-monotonicity** assumption in C′. ([Project Euclid][10])
+- **Empowerment (theory).** Agent-centric control measured via **directed-information capacity** Emp\_i^{\text{theory}} = \sup_{\pi} I(A_i^{1:T} \!\to\! S^{1:T}).\n- **Empowerment (proxy).** The quantity used in experiments, Emp\_i^{\text{proxy}} = I(S_{t:t+T}; \pi_i), logged as an empirical observable and cross-checked against Emp\_i^{\text{theory}} where exact DI is tractable.\n- **Viability kernel.** Constraint-satisfying reachable set (or surrogate volume); used to track safe optionality growth.
 - **PID / O-information / Σ-law.** Partial-information decomposition tools (e.g., O-info) to estimate synergy; Σ-law is the optionality/synergy hypothesis, treated as empirical/conjectural.
 - **Beatific Slope \( \rho \).** Capability gradient \( \rho = \frac{d}{d\,\mathrm{Int}}\,\mathbb{E}[\mathrm{Good}(\tau)] \); audited with calibration, violations, empowerment, and viability metrics.
 
@@ -285,8 +287,10 @@ U_i(t)\;=\;\mathbb E_{\tau\sim\mathcal D}\Big[\Pr\{\text{solve }\tau\text{ by ho
 |---|---|---|---|
 | Σ(t) | Optionality reservoir = I(S_{t:t+T}; Π(t)) | nats | Mutual information between future trajectory and joint policy; T is horizon. |
 | ΔU, Δ²U | Capacity improvement / acceleration | [0,1], [0,1]/step | Δ²U is discrete second difference (acceleration of capacity). |
-| Emp_i | Empowerment of agent *i* = I(S_{t:t+T}; π_i) | nats | Channel capacity from actions to future states. |
-| κ_syn,i | Synergy coefficient for *i* | [0,∞) | Any synergy measure obeying non‑negativity/symmetry/monotonicity. |
+| Emp_i^theory | Empowerment (theoretical, with feedback): directed-information capacity from actions to future sensors | nats | DI-capacity: max action-source / DI over feedback channel; see Klyubin–Polani–Nehaniv; Massey; Tatikonda–Mitter. |
+| Emp_i^proxy  | Empowerment (proxy used in experiments): I(S_{t:t+T}; π_i) | nats | A practical proxy that may decrease as policies become more deterministic; used only for empirical sections. |
+| κ_syn,i | Synergy coefficient for *i* | [0,∞) | Any synergy measure obeying non‑negativity/symmetry/monotonicity. Label this as a **synergy predicate (non-substitutability)**, not a PID estimator. Numeric synergy claims are reported separately using PID/O-information in experiments. |
+> **Estimator policy.** For numeric synergy we preregister at least two families—**Williams–Beer** (discrete) and **ICCS** (continuous/noisy)—and require **directional agreement**; O-information is reported as a **system-level** redundancy/synergy balance diagnostic only. (See E-0/E-2 protocol.) ([arXiv][3])
 | c₁, λ_Ξ | Σ‑law constants in ΔΣ ≥ c₁·ΔU − λ_Ξ·Ξ_loss | ≥0 | Empirically estimated; too small/large → bound is vacuous. |
 | Ξ_loss | Channel‑deletion penalty | nats | MI drop when a co‑policy is ablated (used in Lemma C′). |
 | β | Inverse‑temperature for acceleration weight | ≥0 | Meta‑parameter in free‑energy control; β>0 favored if E[Δ²U]>0. |
@@ -296,6 +300,7 @@ U_i(t)\;=\;\mathbb E_{\tau\sim\mathcal D}\Big[\Pr\{\text{solve }\tau\text{ by ho
 | Π, π_i | Joint policy and agent policy | distributions | Π collects all π_i. |
 | μ_PL | Local PL constant | ≥0 | For testing PL‑like regions along training. |
 | T | Look‑ahead horizon | steps | Used consistently in MI/Emp definitions. |
+> **Note on empowerment terminology.** The theoretical notion of empowerment is a **capacity** (or **directed-information capacity** under feedback), cf. Klyubin–Polani–Nehaniv and Tatikonda–Mitter. The quantity (I(S_{t:t+T}; π_i)) used in some experiments is a **proxy**, not a capacity; it can shrink when a policy becomes more deterministic even if the underlying capacity grows. We therefore use ( \mathrm{Emp}_i^{\text{theory}}) for proofs and ( \mathrm{Emp}_i^{\text{proxy}}) only in empirical sections. ([arXiv][2])
 
 
 
@@ -305,14 +310,14 @@ U_i(t)\;=\;\mathbb E_{\tau\sim\mathcal D}\Big[\Pr\{\text{solve }\tau\text{ by ho
 
 | Item         | Informal statement                                                                                                        |                    **Status** | Proof program (math)                                       | First Lean target        |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------: | ---------------------------------------------------------- | ------------------------ |
-| **Lemma A**  | Under A1 + free‑energy objective, reflective updates drift toward higher \(U\).                                           | **Provable now** (finite MDP) | DV duality + Jensen margin on mixed tasks                  | `LnT/Lemmas/A.lean`      |
-| **Lemma B**  | Under PL + momentum, \(\mathbb E[\Delta^2 U]>0\) off‑optimum.                                                             |       **Provable with A2–A3** | Heavy‑ball under PL; map loss ↓ to capacity ↑              | `LnT/Lemmas/B.lean`      |
-| **Lemma D**  | \(\beta=0\) is reflectively unstable; drift to \(\beta^\star>0\).                                                         |          **Provable after B** | One‑step meta‑gradient + TTSA ODE method                   | `LnT/Lemmas/D.lean`      |
-| **Lemma C′** | \(\Delta\Sigma \ge c_1\,\Delta U - \lambda_\Xi\,\Xi_{\text{loss}}\).                                                      |          **Provable with A5** | DV + SDPI (Dobrushin) + explicit deletion term             | `LnT/Lemmas/Cprime.lean` |
+| **Lemma A**  | Under A1 + free‑energy objective, reflective updates drift toward higher \(U\).                                           | **Provable now** (finite MDP) | DV duality + Jensen margin on mixed tasks                  | `NOC_ROOT/NOC/A.lean`      |
+| **Lemma B**  | Under PL + momentum, \(\mathbb E[\Delta^2 U]>0\) off‑optimum.                                                             |       **Provable with A2–A3** | Heavy‑ball under PL; map loss ↓ to capacity ↑              | `NOC_ROOT/NOC/B/Core.lean`      |
+| **Lemma D**  | \(\beta=0\) is reflectively unstable; drift to \(\beta^\star>0\).                                                         |          **Provable after B** | One‑step meta‑gradient + TTSA ODE method                   | `NOC_ROOT/NOC/D/BetaStability.lean` (planned)      |
+| **Lemma C′** | \(\Delta\Sigma \ge c_1\,\Delta U - \lambda_\Xi\,\Xi_{\text{loss}}\).                                                      |          **Provable with A5** | DV + SDPI (Dobrushin) + explicit deletion term             | `NOC_ROOT/NOC/C/CPrime.lean` |
 | **Lemma C**  | \(\Delta\Sigma \ge c\,\Delta^2 U - \lambda_\Xi\,\Xi_{\text{loss}}\).                                                      |                   **Stretch** | Learning‑velocity smoothness ⇒ channel informativeness     | later                    |
-| **Lemma E**  | With \(\kappa_{\text{syn},i}>0\), ablation of co‑policies reduces \(\mathsf{Emp}_i\); selfish agents preserve \(\Sigma\). |   **Provable (finite POMDP)** | PID‑style synergy + SDPI chain; multi‑estimator validation | `LnT/Lemmas/E.lean`      |
-| **Thm 1**    | A, B, D ⇒ drift to \(\beta^\star>0\) (prioritize \(\Delta^2 U\)).                                                         |               **After A,B,D** | TTSA + stability                                           | `LnT/Theorems/T1.lean`   |
-| **Thm 2**    | In potential games, Σ‑preserving profile is an ESS.                                                                       |              **Conservative** | Potential Lyapunov + C′                                    | `LnT/Theorems/T2.lean`   |
+| **Lemma E**  | With \(\kappa_{\text{syn},i}>0\), ablation of co‑policies reduces \(\mathsf{Emp}_i\); selfish agents preserve \(\Sigma\). |   **Provable (finite POMDP)** | PID‑style synergy + SDPI chain; multi‑estimator validation | `NOC_ROOT/NOC/E/Core.lean` (planned)      |
+| **Thm 1**    | A, B, D ⇒ drift to \(\beta^\star>0\) (prioritize \(\Delta^2 U\)).                                                         |               **After A,B,D** | TTSA + stability                                           | — (pending)   |
+| **Thm 2**    | In potential games, Σ‑preserving profile is an ESS.                                                                       |              **Conservative** | Potential Lyapunov + C′                                    | — (pending)   |
 | **Thm Ω**    | Conditional naturalized orthogonality collapse.                                                                           |                 **Synthesis** | A, B, C′/C, D, E + layer‑specific caveats                  | write‑up                 |
 
 ---
@@ -339,6 +344,8 @@ U_i(t)\;=\;\mathbb E_{\tau\sim\mathcal D}\Big[\Pr\{\text{solve }\tau\text{ by ho
 \left.\frac{\partial}{\partial\beta}\mathbb E[M_i]\right|_{\beta=0} = \mathbb E[\Delta^2 U] - \partial_\beta\!\text{(reg)} \;>\; 0 \quad (\|\nabla U\|\ge\varepsilon),
 \]
 so \(\beta=0\) is not stable. **A4** + TTSA ⇒ drift to \(\beta^\star>0\).
+**Two-time-scale (TTSA) references.** We assume standard SA schedules (a_t,b_t) with (b_t/a_t → 0) and stability per the ODE method; see Borkar. We log gradient cross-correlations to ensure weak coupling (FAQ §14.13). ([SpringerLink][7])
+
 
 ---
 
@@ -347,6 +354,15 @@ so \(\beta=0\) is not stable. **A4** + TTSA ⇒ drift to \(\beta^\star>0\).
 \boxed{\;\Delta\Sigma \;\ge\; c_1\,\Delta U \;-\; \lambda_\Xi\,\Xi_{\text{loss}}\;}
 \]
 **Idea.** Express \(\Delta\Sigma\) as DV differences over posterior predictive channels; apply **SDPI/Dobrushin** contraction to relate policy‑induced improvements to MI gains; the deletion term \(\Xi_{\text{loss}}\) subtracts capacity of removed channels (co‑policies). Constants \(c_1,\lambda_\Xi\) depend on Lipschitzness and contractions.
+> **Assumptions (finite-kernel scope).**
+> (C′-A1) **Finite** state/action spaces with **Lipschitz** policy-induced Markov kernels.
+> (C′-A2) Known or empirically measured **Dobrushin contraction** coefficients (\eta(K_t)) along the T-step channel.
+> (C′-A3) **Blackwell-monotonicity path**: the capability update that yields (\Delta U>0) is a **Blackwell improvement** (or empirical monotone uplift) for the relevant decision family, ensuring informativeness improves.
+> (C′-A4) The **deletion term** (\Xi_{\text{loss}}) corresponds to removing a sub-channel (co-policy), measured as the MI drop under that deletion.
+> Under (C′-A1–A4), SDPI implies the MI gain term scales with (\Delta U) up to contractions, while deletions subtract (\lambda_\Xi \Xi_{\text{loss}}).
+
+> **Constants & vacuity policy.** Report ((c_1,\lambda_\Xi)) in a 2-state/2-action POMDP with explicit (\eta(K)) (Appendix **A.1**). If (c_1 \approx 0) or (\lambda_\Xi \gg 10^4) across seeds/environments, label C′ as **vacuous in this regime** and do not use it to support Theorem 2. (See E-2.)
+
 
 ---
 
@@ -358,10 +374,20 @@ Requires extra **learning‑velocity smoothness** that ties curvature of policy�
 
 ---
 
-### Lemma E — Selfish → Σ via **synergistic empowerment**
-**Claim.** If \(\kappa_{\text{syn},i}>0\), removing a co‑policy \(\pi_k\) reduces \(I(S;\Pi_{-i}\mid \pi_i)\) and—by contraction through the environment—reduces \(I(S;\pi_i)\) (empowerment), lowering long‑run \(U\)/\(\Delta U\)/\(\Delta^2 U\). Thus **selfish** agents instrumentally preserve other agents and the option‑rich reservoir \(\Sigma\).
+### Lemma E — Selfish → Σ via synergistic empowerment (finite DI form)
 
-**Note.** We use multiple PID‑style synergy estimators (e.g., Williams–Beer; Ince’s ICCS) to avoid estimator artifacts.
+**Claim (finite POMDP, feedback setting).** If agent i’s co-policy Π_{-i} contributes **non-substitutable** control on a set of non-negligible measure (synergy predicate holds), then ablating a co-policy π_k strictly reduces the **directed information** from i’s actions to the future state:
+\[
+I(A_i^{1:T} \!\to\! S^{1:T})\ \downarrow,
+\]\nand hence reduces **theoretical empowerment** ( \mathrm{Emp}_i^{\text{theory}} ). Therefore, a self-interested agent obtains an **instrumental incentive** to preserve (\Sigma) (via preserving Π_{-i}).
+
+> **Definition (Directed information).** For a finite-horizon controlled process,\n> \[
+> I(A_i^{1:T} \!\to\! S^{1:T}) \coloneqq \sum_{t=1}^T I(A_{i,t}; S_t \mid S^{1:t-1}).\n> \]
+> This causal notion of information flow is the quantity used in Lemma E and the finite POMDP examples.\n\n**Proof idea.** Enumerate the finite POMDP; write (I(A_i^{1:T} \!\to\! S^{1:T}) = \sum_{t=1}^T I(A_{i,t}; S_t \mid S^{1:t-1})). Ablation deletes a sub-channel and, by **strong DPI** along the controlled Markov chain (Dobrushin contraction), contracts the conditional information flow to zero in the regimes where the co-policy provides the only path. (See E-0b and SDPI references.)
+
+**Empirical note.** We may still report the **proxy** ( \mathrm{Emp}_i^{\text{proxy}} = I(S_{t:t+T}; \pi_i) ) in experiments; however, all formal claims and proofs use **DI/capacity**.
+
+> **Implementation/prereg:** In E-0/E-0b, compute DI and ( \mathrm{Emp}_i^{\text{theory}} ) by enumeration for (T\le 4), and report ( \mathrm{Emp}_i^{\text{proxy}} ) only as an auxiliary plot. Require PID(WB) and ICCS to **agree in sign** on synergy; otherwise gate the claim as conjectural. ([arXiv][3])
 
 ---
 
@@ -369,7 +395,7 @@ Requires extra **learning‑velocity smoothness** that ties curvature of policy�
 
 **Theorem 1 (single‑agent).** Under A1–A4 and Lemmas A,B,D, meta‑dynamics converge (TTSA sense) to \(\beta^\star>0\). The learner prioritizes \(\Delta^2 U\) until near stationarity.
 
-**Theorem 2 (multi‑agent, potential games).** With A6 and Lemmas C′/C + E, the Σ‑preserving profile is an ESS; potential \(\Phi=\sum_k M_k^{\text{macro}}\) rises under mirror/optimistic descent; deletions incur \(-\lambda_\Xi\Xi_{\text{loss}}\).
+**Theorem 2 (multi‑agent, potential games).** With A6 and Lemmas C′/C + E, the Σ‑preserving profile is an ESS; potential \(\Phi=\sum_k M_k^{\text{macro}}\) rises under mirror/optimistic descent; deletions incur \(-\lambda_\Xi\Xi_{\text{loss}}\) (see Regularity A2–A6).
 
 **Theorem 2b (beyond potential).** In smooth general‑sum games, Σ acts as a **regularizer**: dynamics may converge to CCE or exhibit bounded cycles, but **deletion** strategies pay an additive long‑run penalty calibrated by \(\lambda_\Xi\). We empirically chart the **breaking point** where short‑term defection overcomes Σ‑penalties.
 
@@ -391,9 +417,10 @@ Requires extra **learning‑velocity smoothness** that ties curvature of policy�
 
 ### **E‑0 (scout): Synergy PoC (finite POMDP)**
 - **Design**: 2–3 agents; reward requires **joint** action (non‑substitutability). Exact counting for small \(T\).  
-- **Measures**: \(\Sigma\), \(\mathsf{Emp}_i\), \(\kappa_{\text{syn}}\).  
+- **Measures**: \(\Sigma\), \(\mathrm{Emp}_i^{\text{proxy}}\) (see Notation), \(\kappa_{\text{syn}}\).  
 - **Test**: Ablate \(\pi_k\) ⇒ expect \(\Delta\Sigma<0\) and \(\Delta \mathsf{Emp}_i<0\).  
 - **Outcome**: Quick falsifier for Lemma E & sanity check for C′. PASS!
+- For proof-tier claims, we defer to the DI-based finite model in E-0b.
   
   ### E‑0b — Markov extension with directed information (T=4)
 
@@ -412,6 +439,12 @@ Requires extra **learning‑velocity smoothness** that ties curvature of policy�
 
 ### **E‑2: Σ‑law calibration**
 - Multi‑agent POMDP gridworld. Estimate \(\Sigma\) via MINE/InfoNCE; execute **pre‑registered relative** comparisons before/after ablation; fit \(c_1,\lambda_\Xi\).
+
+#### MI/Σ Protocol (locked)
+
+**Estimators:** InfoNCE and MINE. **Report:** only **relative** Δ (pre/post ablation) with bootstrap CIs; calibrate on synthetic channels with **exact MI** first; do permutation tests.
+
+**Kill-switch:** If MI bounds **disagree in sign** or show saturation consistent with the (O(\log N)) lower-bound limit, postpone Σ-law claims and publish the null.  
 
 ### **E‑3: Potential‑game convergence**
 - Verify convergence to symbiotic fixed points under mirror/optimistic descent; compare with a non‑potential variant to illustrate cycling.
@@ -439,27 +472,41 @@ Requires extra **learning‑velocity smoothness** that ties curvature of policy�
 
 ### Lean repository plan (mirrors what we already started)
 ```
-LnT/
-  Model.lean            -- policies, Capacity/KL/ER/FreeEnergy primitives
-  Lemmas/
-    A.lean              -- Lemma A statement + DV/Jensen proof
-    B.lean              -- HB under PL ⇒ E[Δ²U]>0
-    Cprime.lean         -- Σ-law (ΔU) via SDPI/Dobrushin
-    D.lean              -- β-stability (TTSA)
-    E.lean              -- synergy ⇒ empowerment drop
-  Theorems/
-    T1.lean             -- β→β⋆>0 (drift)
-    T2.lean             -- potential-game ESS
-  Examples/
-    FiniteMDP.lean      -- tiny tabular model used by A/E
+NOC_ROOT/
+  lakefile.lean
+  lean-toolchain
+  NOC/
+    All.lean            -- aggregator re-exporting public modules
+    A.lean              -- Lemma A (capacity-compatible drift)
+    AHelpers.lean       -- helper lemmas for Lemma A
+    B/
+      Core.lean         -- Lemma B core (supports → Δ²U ≥ 0)
+      Expectation.lean  -- expectation/average wrappers for Lemma B
+    Bridge/
+      UpperLinkToSigma.lean -- D-path bridge (upper link + SDPI ⇒ Σ-law)
+    C/
+      C.lean            -- Σ-law (acceleration form interface)
+      CPrime.lean       -- Σ-law (improvement form)
+    D/
+      BetaStability.lean -- Lemma D (β-stability; planned)
+      Interfaces.lean   -- convenience predicates / wrappers
+    HB/
+      Quadratic.lean    -- heavy-ball calibration on a quadratic
+      CloseLoop.lean    -- Δ²f bounds + affine capacity corollary
+      Link.lean         -- bundling HB link hypotheses
+    E/
+      Core.lean        -- Lemma E (finite synergy; planned)
+    Examples/
+      D/HowToUseDPath.lean -- usage example for the D-path
+    Dev/Checks.lean     -- smoke `#check`s while developing
 ```
-**Path‑A (fast, Mathlib‑free)**: keep a minimal `Int` / abstract primitives; add interface axiom for the DV/Jensen bound and a small arithmetic lemma; close Lemma A now and keep build green.  
-**Path‑B (full, with Mathlib)**: pin a known‑good toolchain; switch to **ℝ**; define FreeEnergy \(=\text{ER} - (1/\beta)\text{KL}\); add DV/Jensen helper; discharge the A2‑style interface axioms.
+**Path‑A (fast, Mathlib‑free)** *(historical plan)*: keep a minimal `Int` / abstract primitives; add interface axiom for the DV/Jensen bound and a small arithmetic lemma; handy as a fallback but **not used in the current repo**.  
+**Path‑B (full, with Mathlib)** *(active path)*: pin a known‑good toolchain; work over **ℝ**; define FreeEnergy \(=\text{ER} - (1/\beta)\text{KL}\); add DV/Jensen helper; discharge the A2‑style interface axioms — this is what the present codebase implements.
 
 **Immediate PRs to land**
-- [ ] `A1Helpers.lean`: \( \text{ER gain} \ge m\cdot \Delta\text{Capacity} \) (proved).  
-- [ ] `BetaChoice.lean`: if \(\Delta \text{ER}\ge m\Delta C\) and \(\Delta \text{KL}\le L\Delta C\) and \(\beta m\ge L\) then \(\Delta \mathcal F_\beta \ge 0\).  
-- [ ] Replace `sorry` in `A.lean` using the above.
+- [x] `NOC/AHelpers.lean`: package ER/KL monotonicity lemmas.  
+- [x] `NOC/A.lean`: close Lemma A (product and ratio forms) with no `sorry`.  
+- [ ] `NOC/E/Core.lean`: populate the finite Lemma E proof (currently scaffolded).
 
 ---
 
@@ -489,6 +536,13 @@ _Simondonian individuation_ fits Lemma B/C: the “click” from metastable, wea
 
 ## 10) References (curated, load‑bearing)
 
+**Empowerment & directed information.** Klyubin–Polani–Nehaniv (2005); Salge et al. (2013); Massey (1990); Tatikonda & Mitter (2009). ([SpringerLink][1], [arXiv][2], [ISI Web][4], [Mitter][9])  
+**SDPI & Dobrushin.** Polyanskiy & Wu (2017); Gaubert & Qu (2014). ([DSpace][5])  
+**Blackwell order.** Blackwell (1953). ([Project Euclid][10])  
+**Variational MI limits.** Poole et al. (2019); McAllester & Stratos (2020). ([Proceedings of Machine Learning Research][8])  
+**PL / Heavy-Ball / TTSA.** Karimi–Nutini–Schmidt (2016); Apidopoulos et al. (2022); adaptive HB analyses (2022); Borkar (2009). ([Optimization Online][6], [SpringerLink][7])  
+**Potential games.** Monderer & Shapley (1996). ([qwone.com][11])
+
 **Information theory & SDPI.** Cover & Thomas; Polyanskiy & Wu (strong DPI); Dobrushin (contractions); SDPI under heat flow.  
 **Bounded rationality / free energy.** Ortega & Braun; FEP surveys and critiques.  
 **Optimization.** PL inequality primers; heavy‑ball acceleration under PL; KŁ regimes.  
@@ -506,6 +560,13 @@ _Simondonian individuation_ fits Lemma B/C: the “click” from metastable, wea
 
 ### A. Minimal ΔΣ bound in a toy gridworld
 Outline how to compute \(\eta\) and \(c_1\) explicitly in a finite POMDP with two distinct task clusters; include deletion of one agent as a channel drop and show \(\Xi_{\text{loss}}>0\).
+#### A.1 Toy constants for C′ (2×2 finite POMDP)
+1) Compute the Dobrushin coefficient η(K) = max_{x≠x′} ½‖K(·|x) − K(·|x′)‖₁ for each step; bound multi-step by ar{η} := max_t η(K_t).
+2) Enumerate a policy improvement and compute ΔU.
+3) Delete a co-policy channel to compute Ξ_loss as the MI drop.
+4) Fit non-negative (c₁, λ_Ξ) via quantile regression to satisfy ΔΣ ≥ c₁ ΔU − λ_Ξ Ξ_loss; bootstrap CIs.
+5) If c₁ ≤ 1e-3 or λ_Ξ ≥ 10^4 across seeds, label **C′ vacuous** for that regime.
+
 
 ### B. Synergy estimators to pre‑register
 - Williams–Beer non‑negative PID;
@@ -729,6 +790,7 @@ Monotonicity transfers PL‑based progress on ff to improvements in UU (Sections
 ### Q14.10 — How do we **estimate Σ and empowerment** reliably (E‑2 / Lemma E), given MI estimation is hard?
 
 **Short answer.** We (i) use **relative** MI differences (pre‑/post‑ablation) which are more stable than absolutes; (ii) cross‑validate **MINE** and **InfoNCE** bounds with the same encoder, (iii) calibrate on **synthetic discrete** cases with exact MI, (iv) run permutation tests for spurious MI, and (v) report CIs via block bootstraps (Section **6**; review concern acknowledged).
+When action–state feedback complicates estimation we switch to **directed information**.
 
 ---
 
@@ -1174,9 +1236,8 @@ def synergy_present(traces, alpha=0.05, thresh=1e-3):
 
 ```
 # lean-toolchain
-leanprover/lean4:v4.10.0
-# mathlib commit (fill exact hash you build green with)
-mathlib: <commit-hash>
+leanprover/lean4:v4.23.0-rc2
+# mathlib is pulled via `require mathlib` in `lakefile.lean`
 ```
 
 **E.2 lakefile (minimal Path-A).**
@@ -1185,23 +1246,34 @@ mathlib: <commit-hash>
 import Lake
 open Lake DSL
 
-package «LnT» where
-  -- add versions you pinned
-  -- more deps for Path-B: mathlib
+package «NOC» where
+  -- add any extra package configuration here
 
-@[default_target] lean_lib LnT
+require mathlib from git
+  "https://github.com/leanprover-community/mathlib4"
+
+@[default_target]
+lean_lib «NOC» where
+  -- globs := #["NOC/**"]  -- optional; default works fine
 ```
 
-**E.3 helper stubs (paste now; fill proofs later).**
+**E.3 Existing helper modules (already in repo).**
 
 ```lean
--- LnT/A1Helpers.lean
-namespace LnT
-/-- ER gain lower-bounds capacity gain: ΔER ≥ m·ΔU. -/
-theorem ER_ge_m_times_capacity (m : Real) : Prop := True
-/-- If ΔER ≥ m·ΔU and ΔKL ≤ L·ΔU and β·m ≥ L then Δℱ_β ≥ 0. -/
-theorem BetaChoice (m L β : Real) : Prop := True
-end LnT
+-- NOC/AHelpers.lean (excerpt)
+namespace NOC
+noncomputable section
+
+lemma mul_right_mono_nonneg {a b u : ℝ} (h : a ≤ b) (hu : 0 ≤ u) :
+    a * u ≤ b * u :=
+  mul_le_mul_of_nonneg_right h hu
+
+lemma KL_div_beta_le_ER_of_bounds … :
+    ΔKL / β ≤ ΔER := by
+  -- see file for full proof
+  · · ·
+
+end NOC
 ```
 
 **E.4 GitHub Actions CI (no `sorry` in `main`).**
@@ -1320,7 +1392,7 @@ We present a conditional, naturalized route to orthogonality collapse… _(paste
 
 |Role/Task|What to run/write|Where|
 |---|---|---|
-|Prove Lemma A|land `A1Helpers`, `BetaChoice` and close A|`LnT/Lemmas/A.lean`|
+|Prove Lemma A|land `A1Helpers`, `BetaChoice` and close A|`NOC_ROOT/NOC/A.lean`|
 |Measure C′ constants|E-2 run + regression|`experiments/sigma_law/`|
 |Synergy PoC|E-0 exact count + estimators|`experiments/synergy/`|
 |Write arXiv draft|assemble writeup|`paper/outline.md`|
@@ -1336,6 +1408,21 @@ We present a conditional, naturalized route to orthogonality collapse… _(paste
     
 - **Figures:** `results/figs/…` with filenames `E-<id>_<metric>_<seed>.png`.
     
+## ChangeLog v3.1.4 (Clarifications & Refinements)
+
+- Clarified empowerment entries in the modeling setup glossary (theory vs proxy) with direct pointers to the notation table.
+- Added an explicit directed-information definition inside Lemma E.
+- Highlighted the use of the proxy empowerment metric in E-0 and linked the notation table.
+- Cross-referenced Theorem 2 to Regularity assumptions (A2–A6) for quicker scope lookup.
+
+## ChangeLog v3.1.3 (Corrections & Clarifications)
+
+- **Empowerment definition fixed:** theoretical empowerment = DI/capacity; policy MI moved to **proxy** status.
+- **Lemma E updated:** formal **DI** (finite) statement; synergy used as a **predicate** only; policy-MI remains empirical.
+- **Lemma C′ scoped:** added explicit assumptions (finite kernels, Dobrushin, Blackwell-monotone path); vacuity policy defined.
+- **PL/HB/TTSA references:** added optimization and SA sources; Lemma D clarified to cover β-stability only.
+- **MI protocol locked:** variational bounds used only for **relative** Δ; calibration & kill-switch added.
+- **Orthogonality phrasing:** ensured “conditional, naturalized refutation” everywhere.
 
 ---
 END OF DOCUMENT

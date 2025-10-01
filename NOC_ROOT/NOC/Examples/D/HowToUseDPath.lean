@@ -1,6 +1,6 @@
 import Mathlib
 import NOC.B.Expectation
-import NOC.D.Core
+import NOC.Bridge.UpperLinkToSigma
 import NOC.D.Interfaces      -- (UpperLink/SDPILink predicates + expectation wrappers)
 import NOC.HB.Link           -- (optional) bundle-style API
 

@@ -1,6 +1,6 @@
 import Mathlib
 import NOC.B.Expectation
-import NOC.D.Core
+import NOC.Bridge.UpperLinkToSigma
 import NOC.D.Interfaces  -- optional now; we no longer use the predicate shorthands but keeping it is harmless
 
 /-!

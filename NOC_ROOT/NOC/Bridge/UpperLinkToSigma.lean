@@ -5,7 +5,7 @@ import NOC.B.Expectation
 import NOC.C.CPrime
 
 /-!
-Module: NOC.D.Core
+Module: NOC.Bridge.UpperLinkToSigma
 Summary: D‑bridge — eliminate intermediates to get the Sigma‑law (C′) pointwise and lift to expectations.
 
 **Idea.** Suppose per sample we have:
