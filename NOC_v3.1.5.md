@@ -833,7 +833,7 @@ When action–state feedback complicates estimation we switch to **directed info
 
 ### Q14.13 — How do we set **two‑timescale** learning rates in practice (Lemma D / Thm 1)?
 
-**Short answer.** Use standard SA schedules: fast step $a_t$ and slow step $b_t$ with $\sum_t a_t = \infty$, $\sum_t a_t^2 < \infty$, $\sum_t b_t = \infty$, $\sum_t b_t^2 < \infty$, and $b_t/a_t \to 0$. In practice we use $a_t = \eta/(1+t)^{\alpha}$ with $\alpha \in (0.5,1]$ and $b_t = \eta_eta/(1+t)^{\alpha+\delta}$ with $\delta \in (0.1,0.5]$. We monitor coupling by gradient-norm cross-correlations and back off $\eta_eta$ when the slow ODE tracking error grows (Sections **1**, **5**). External reviews emphasized this assumption; we operationalize it here.
+**Short answer.** Use standard SA schedules: fast step $a_t$ and slow step $b_t$ with $\sum_t a_t = \infty$, $\sum_t a_t^2 < \infty$, $\sum_t b_t = \infty$, $\sum_t b_t^2 < \infty$, and $b_t/a_t \to 0$. In practice we use $a_t = \eta/(1+t)^{\alpha}$ with $\alpha \in (0.5,1]$ and $b_t = \eta_\beta/(1+t)^{\alpha+\delta}$ with $\delta \in (0.1,0.5]$. We monitor coupling by gradient-norm cross-correlations and back off $\eta_\beta$ when the slow ODE tracking error grows (Sections **1**, **5**). External reviews emphasized this assumption; we operationalize it here.
 
 ---
 
