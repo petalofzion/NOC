@@ -584,7 +584,7 @@ _Simondonian individuation_ fits Lemma B/C: the “click” from metastable, wea
 ### A. Minimal ΔΣ bound in a toy gridworld
 Outline how to compute \(\eta\) and \(c_1\) explicitly in a finite POMDP with two distinct task clusters; include deletion of one agent as a channel drop and show \(\Xi_{\text{loss}}>0\).
 #### A.1 Toy constants for C′ (2×2 finite POMDP)
-1) Compute the Dobrushin coefficient η(K) = max_{x≠x′} ½‖K(·|x) − K(·|x′)‖₁ for each step; bound multi-step by ar{η} := max_t η(K_t).
+1) Compute the Dobrushin coefficient η(K) = max_{x≠x′} ½‖K(·|x) − K(·|x′)‖₁ for each step; bound multi-step by \bar{η} := \max_t \eta(K_t).
 2) Enumerate a policy improvement and compute ΔU.
 3) Delete a co-policy channel to compute Ξ_loss as the MI drop.
 4) Fit non-negative (c₁, λ_Ξ) via quantile regression to satisfy ΔΣ ≥ c₁ ΔU − λ_Ξ Ξ_loss; bootstrap CIs.
@@ -827,13 +827,13 @@ When action–state feedback complicates estimation we switch to **directed info
 
 ### Q14.12 — What happens in **antagonistic** or low‑synergy environments?
 
-**Short answer.** If measured **synergy** κsyn,i≤0\kappa_{\text{syn},i}\le 0 for the regimes visited, Lemma **E** does not fire; then Σ may not be instrumentally protected and **E‑3b** will locate regimes where short‑term deletion gains beat Σ‑regularization. Our theory is explicitly **conditional** on environments where synergy is present at least intermittently (Scope, Sections **4**, **6**).
+**Short answer.** If measured **synergy** $\kappa_{\text{syn},i} \le 0$ for the regimes visited, Lemma **E** does not fire; then Σ may not be instrumentally protected and **E‑3b** will locate regimes where short‑term deletion gains beat Σ‑regularization. Our theory is explicitly **conditional** on environments where synergy is present at least intermittently (Scope, Sections **4**, **6**).
 
 ---
 
 ### Q14.13 — How do we set **two‑timescale** learning rates in practice (Lemma D / Thm 1)?
 
-**Short answer.** Use standard SA schedules: fast step $a_t$ and slow step $b_t$ with $\sum_t a_t = \infty$, $\sum_t a_t^2 < \infty$, $\sum_t b_t = \infty$, $\sum_t b_t^2 < \infty$, and $b_t / a_t 	o 0$. In practice we use $a_t = \eta/(1+t)^{\alpha}$ with $\alpha \in (0.5,1]$ and $b_t = \eta_eta/(1+t)^{\alpha+\delta}$ with $\delta \in (0.1,0.5]$. We monitor coupling by gradient-norm cross-correlations and back off $\eta_eta$ when the slow ODE tracking error grows (Sections **1**, **5**). External reviews emphasized this assumption; we operationalize it here.
+**Short answer.** Use standard SA schedules: fast step $a_t$ and slow step $b_t$ with $\sum_t a_t = \infty$, $\sum_t a_t^2 < \infty$, $\sum_t b_t = \infty$, $\sum_t b_t^2 < \infty$, and $b_t/a_t \to 0$. In practice we use $a_t = \eta/(1+t)^{\alpha}$ with $\alpha \in (0.5,1]$ and $b_t = \eta_eta/(1+t)^{\alpha+\delta}$ with $\delta \in (0.1,0.5]$. We monitor coupling by gradient-norm cross-correlations and back off $\eta_eta$ when the slow ODE tracking error grows (Sections **1**, **5**). External reviews emphasized this assumption; we operationalize it here.
 
 ---
 
@@ -841,27 +841,27 @@ When action–state feedback complicates estimation we switch to **directed info
 
 **Short answer (defaults).**
 
-- Grid: 10×1010\times 10; agents: 3; horizon T=16T=16; observation noise p=0.15p=0.15.
+- Grid: 10×10; agents: 3; horizon $T = 16$; observation noise $p = 0.15$.
     
-- Policies: MLP 2×642\times 64 ReLU; entropy regularization 10−310^{-3}; PPO or A2C.
+- Policies: MLP $2×64$ ReLU; entropy regularization $10^{-3}$; PPO or A2C.
     
-- MI: InfoNCE encoder 2×1282\times 128; temperature learnable; negatives per batch: 256; MINE critic 2×1282\times 128, gradient clipping 1.0.
+- MI: InfoNCE encoder $2×128$; temperature learnable; negatives per batch: 256; MINE critic $2×128$, gradient clipping 1.0.
     
-- Ablation: remove one agent at t=0.5 Ht=0.5\,H; measure ΔΣ\Delta\Sigma, ΔEmpi\Delta \mathsf{Emp}_i.  
+- Ablation: remove one agent at $t = 0.5\,H$; measure $\Delta\Sigma$ and $\Delta \mathsf{Emp}_i$.  
     These are just seeds; the experiment reports sensitivity bands (Section **6**).
     
 
 ---
 
-### Q14.15 — How do we **calibrate** the constants c1c_1 and λΞ\lambda_{\Xi} from data?
+### Q14.15 — How do we **calibrate** the constants $c_1$ and $\lambda_{\Xi}$ from data?
 
 **Short answer.**
 
-1. Compute **pre/post‑ablation** MI differences at matched states to estimate Ξloss\Xi_{\text{loss}}.
+1. Compute **pre/post‑ablation** MI differences at matched states to estimate $\Xi_{\text{loss}}$.
     
-2. Fit a **non‑negative** constrained regression ΔΣ≈c1ΔU−λΞΞloss\Delta\Sigma \approx c_1 \Delta U - \lambda_{\Xi} \Xi_{\text{loss}} with quantile loss; report CIs.
+2. Fit a **non-negative** constrained regression $(\Delta\Sigma \approx c_1 \Delta U - \lambda_{\Xi} \Xi_{\text{loss}})$ with quantile loss; report CIs.
     
-3. Cross‑check c1c_1 against **Dobrushin** bounds estimated from controlled perturbations of the policy→state channel (Sections **1**, **6**, **T‑C′**).
+3. Cross-check $c_1$ against **Dobrushin** bounds estimated from controlled perturbations of the policy→state channel (Sections **1**, **6**, **T‑C′**).
     
 
 ---
@@ -880,7 +880,7 @@ When action–state feedback complicates estimation we switch to **directed info
 
 ### Q14.18 — How is **optionality** (Σ) different from **viability** or **value of information** baselines?
 
-**Short answer.** Σ is **model‑agnostic** mutual information about **future states** conditioned on the **joint policy**, capturing controllability‑like potential **including synergy**. Viability kernels require a specific constraint set; VOI requires a specific task. Σ subsumes both as **task‑family‑agnostic** capacity to keep options open; we still report empowerment/viability as **secondary** checks (Sections **0.3**, **7**).
+**Short answer.** Σ is **model‑agnostic** mutual information between **future states** and the **joint action process**, capturing controllability‑like potential **including synergy**. Viability kernels require a specific constraint set; VOI requires a specific task. Σ subsumes both as **task‑family‑agnostic** capacity to keep options open; we still report empowerment/viability as **secondary** checks (Sections **0.3**, **7**).
 
 ---
 
