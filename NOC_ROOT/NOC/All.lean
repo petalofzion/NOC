@@ -2,7 +2,7 @@
 import NOC.A
 import NOC.B.Core
 import NOC.B.Expectation
-import NOC.Bridge.UpperLinkToSigma
+import NOC.Bridge.SigmaBridge
 import NOC.D.BetaStability
 import NOC.D.Interfaces
 import NOC.HB.Quadratic

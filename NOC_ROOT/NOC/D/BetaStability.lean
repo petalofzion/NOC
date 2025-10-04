@@ -4,7 +4,7 @@ import Mathlib
 Module: NOC.D.BetaStability
 Status: scaffolding.
 
-This file hosts the formalization plan for Lemma D (β-stability) from the `NOC_v3.1.5`
+This file hosts the formalization plan for Lemma D (β-stability) from the `NOC_v5`
 blueprint.  The lemma ultimately relies on three ingredients:
 
 * a controlled two-time-scale stochastic-approximation (TTSA) recursion;

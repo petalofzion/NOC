@@ -2,7 +2,7 @@ import Mathlib
 import NOC.AHelpers
 import NOC.B.Expectation
 import NOC.C.CPrime
-import NOC.Bridge.UpperLinkToSigma
+import NOC.Bridge.SigmaBridge
 
 /-!
 Module: NOC.C
@@ -95,18 +95,18 @@ open Classical
 open scoped BigOperators
 
 /-- **Pointwise C (from D).**
-If for some auxiliary `A,B` and parameters `p : DUpperLinkParams` we have
+If for some auxiliary `A,B` and parameters `p : SigmaBridgeParams` we have
 `d2U ≤ p.cU*A − p.κU*B` and `dSigma ≥ p.α*A − p.β*B`, then
 `dSigma ≥ (p.α/p.cU) * d2U − (p.β − p.α*p.κU/p.cU) * B`. -/
 theorem lemmaC_pointwise_from_D
-    {A B d2U dSigma : ℝ} (p : DUpperLinkParams)
+    {A B d2U dSigma : ℝ} (p : SigmaBridgeParams)
     (hLinkU : d2U ≤ p.cU * A - p.κU * B)
     (hSDPI  : dSigma ≥ p.α * A - p.β * B) :
     dSigma ≥ p.toSigmaLawParams.c1 * d2U
              - p.toSigmaLawParams.lambdaXi * B := by
   -- This is exactly sigma_from_upper with dU := d2U.
-  simpa [DUpperLinkParams.toSigmaLawParams] using
-    (DUpperLinkParams.sigma_from_upper (p := p)
+  simpa [SigmaBridgeParams.toSigmaLawParams] using
+    (SigmaBridgeParams.sigma_from_upper (p := p)
       (A := A) (B := B) (dU := d2U) (dSigma := dSigma)
       (hLinkU := hLinkU) (hSDPI := hSDPI))
 
@@ -116,7 +116,7 @@ theorem lemmaC_expectation_from_D
   {Ω : Type*} (S G : Finset Ω)
   (A B d2U dSigma : Ω → ℝ)
   (hGS : G ⊆ S) (hS : 0 < S.card)
-  (p : DUpperLinkParams)
+  (p : SigmaBridgeParams)
   {MSigma : ℝ}
   (hLinkU : ∀ ω ∈ G, d2U ω ≤ p.cU * A ω - p.κU * B ω)
   (hSDPI  : ∀ ω ∈ G, dSigma ω ≥ p.α * A ω - p.β * B ω)
@@ -127,7 +127,7 @@ theorem lemmaC_expectation_from_D
     + (((S.card - G.card : ℕ) : ℝ) / (S.card : ℝ)) * (-MSigma) := by
   -- D→C′ finitary lemma with dU := d2U
   simpa using
-    (DUpperLinkParams.lemmaD_expectation_finitary
+    (SigmaBridgeParams.lemmaBridge_expectation_finitary
       (S := S) (G := G)
       (A := A) (B := B) (dU := d2U) (dSigma := dSigma)
       (hGS := hGS) (hS := hS) (p := p) (MSigma := MSigma)
@@ -139,7 +139,7 @@ theorem lemmaC_expectation_with_fraction_from_D
   {Ω : Type*} (S G : Finset Ω)
   (A B d2U dSigma : Ω → ℝ)
   (hGS : G ⊆ S) (hS : 0 < S.card)
-  (p : DUpperLinkParams)
+  (p : SigmaBridgeParams)
   {MSigma p0 : ℝ}
   (hLinkU : ∀ ω ∈ G, d2U ω ≤ p.cU * A ω - p.κU * B ω)
   (hSDPI  : ∀ ω ∈ G, dSigma ω ≥ p.α * A ω - p.β * B ω)
@@ -152,7 +152,7 @@ theorem lemmaC_expectation_with_fraction_from_D
           - p.toSigmaLawParams.lambdaXi * avg G B)
     - (1 - p0) * MSigma := by
   simpa using
-    (DUpperLinkParams.lemmaD_expectation_with_fraction
+    (SigmaBridgeParams.lemmaBridge_expectation_with_fraction
       (S := S) (G := G)
       (A := A) (B := B) (dU := d2U) (dSigma := dSigma)
       (hGS := hGS) (hS := hS) (p := p)

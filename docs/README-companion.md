@@ -1,16 +1,16 @@
 # NOC Repo Companion: File Map, Scope, and How It Connects to the Paper
 
 **Audience:** new technical readers, reviewers, and potential collaborators.  
-**Purpose:** explain how each Lean file in this repo maps to the claims and notation in the **NOC v3.1.4** document, what each piece *does*, and what it *does not* (yet) do. This is a quick navigational index + scope clarifier.
+**Purpose:** explain how each Lean file in this repo maps to the claims and notation in the **NOC v5** document, what each piece *does*, and what it *does not* (yet) do. This is a quick navigational index + scope clarifier.
 
-**Maintainer note:** Keep this companion synced with the cross-module glue in `NOC/Bridge/UpperLinkToSigma.lean`, the Lemma E scaffold in `NOC/E/Core.lean`, and any updates to the narrative in the top-level `README.md` or research blueprint.
+**Maintainer note:** Keep this companion synced with the cross-module glue in `NOC/Bridge/SigmaBridge.lean`, the Lemma E scaffold in `NOC/E/Core.lean`, and any updates to the narrative in the top-level `README.md` or research blueprint.
 
 ---
 
 ## 0) Big picture (one minute)
 
 - The paper defines **objects** (capacity \(U\), acceleration \(\Delta^2 U\), optionality \(\Sigma\), deletion penalty \(\Xi_{\mathrm{loss}}\)) and **lemmas** (A, B, C′/C, D; E is empirical).
-- The Lean library proves the **algebraic / conservative tier**: A, B (expected form), the Σ-bridge (`NOC/Bridge/UpperLinkToSigma.lean`), and C′/C (Σ‑laws) — with *no* `sorry`; Lemma D (β-stability) remains planned.
+- The Lean library proves the **algebraic / conservative tier**: A, B (expected form), the Σ-bridge (`NOC/Bridge/SigmaBridge.lean`), and C′/C (Σ‑laws) — with *no* `sorry`; Lemma D (β-stability) remains planned.
 - **What Lean intentionally does *not* define:** \(\Sigma\) as MI, empowerment, or any estimator internals; those live in the **experiments** (E‑0, E‑2, E‑3b). The Lean side takes them as symbols/inputs and proves the inequalities they must satisfy *if* measured as in the paper.
 - **Lemma E** (synergistic empowerment ⇒ selfish→Σ) is **empirical** in this release: E‑0 exact toy result, E‑2 calibration, E‑3b cost sweeps. In Lean we expose a clean predicate to carry that assumption.
 
@@ -34,7 +34,7 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 | **Meta‑utility (informal)** | Not formalized; used only in commentary and to motivate lemmas A/B/D/C′. | — |
 | **Capacity \(U\), ΔU, Δ²U** | Abstract symbols or helper defs; used on the RHS of Σ‑laws. | `NOC/B/*` (expectation wrappers), `NOC/C/*` |
 | **Option­ality \(\Sigma\)** | **Abstract** `dSigma` symbol (Lean does not hard‑code MI). | `NOC/C/*`, `NOC/D/*` |
-| **Deletion penalty \(\Xi_{\mathrm{loss}}\)** | Name/slot and algebraic handling; see interfaces + C′/D usage. | `NOC/C/CPrime.lean`, `NOC/Bridge/UpperLinkToSigma.lean`, `NOC/D/Interfaces.lean` |
+| **Deletion penalty \(\Xi_{\mathrm{loss}}\)** | Name/slot and algebraic handling; see interfaces + C′/D usage. | `NOC/C/CPrime.lean`, `NOC/Bridge/SigmaBridge.lean`, `NOC/D/Interfaces.lean` |
 | **Lemma A (β‑choice ⇒ Δℱβ≥0)** | Arithmetic lemmas `lemmaA_freeEnergy_nonneg_*` (product/ratio) capturing the β‑choice trick. | `NOC/A.lean`, `NOC/AHelpers.lean` |
 | **Lemma B (local → expected Δ²U>0)** | Pointwise bridge + **expected**/finite‑support lifts (`avg`, expectation lemmas). | `NOC/B/Core.lean`, `NOC/B/Expectation.lean` |
 | **Lemma D (β-stability, planned)** | Reflective stability of precision (TTSA meta-gradient). | `NOC/D/BetaStability.lean` |
@@ -59,10 +59,10 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 
 ### D — `NOC/D/BetaStability.lean` (planned)
 - **Does (eventually):** deliver the β-stability lemma via two-time-scale/ODE analysis (using Lemma B’s acceleration). Currently a scaffold with the intended statement and hypotheses.
-- **Does not:** contain the Σ-bridge algebra; that now lives in `NOC/Bridge/UpperLinkToSigma.lean`.
+- **Does not:** contain the Σ-bridge algebra; that now lives in `NOC/Bridge/SigmaBridge.lean`.
 
-### Bridge — `NOC/Bridge/UpperLinkToSigma.lean`
-- **Does:** package an “upper link” plus a Dobrushin/SDPI-style inequality via `DUpperLinkParams`, eliminating intermediates to expose the Σ-law constants (pointwise & expectation).
+### Bridge — `NOC/Bridge/SigmaBridge.lean`
+- **Does:** package an “upper link” plus a Dobrushin/SDPI-style inequality via `SigmaBridgeParams`, eliminating intermediates to expose the Σ-law constants (pointwise & expectation).
 - **Does not:** prove the SDPI bounds; they are assumed or empirically fitted (typically from E-2).
 
 ### C′ (improvement Σ‑law) — `NOC/C/CPrime.lean`
@@ -110,7 +110,7 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 
 - **No SDPI/Dobrushin derivation in Lean.**  
   *Why:* can be imported as premises OR calibrated empirically (E‑2).  
-  *Plug:* Provide constants `c1, λXi` via `DUpperLinkParams` or from fitted experiments.
+  *Plug:* Provide constants `c1, λXi` via `SigmaBridgeParams` or from fitted experiments.
 
 ---
 
@@ -126,9 +126,9 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 ## 7) Minimal workflow for a new contributor
 
 1. **Build Lean**: `lake update && lake build`.  
-2. **Skim**: `NOC/C/CPrime.lean` (Σ‑law), `NOC/Bridge/UpperLinkToSigma.lean` (bridge), `NOC/B/Expectation.lean` (expected lifts).  
+2. **Skim**: `NOC/C/CPrime.lean` (Σ‑law), `NOC/Bridge/SigmaBridge.lean` (bridge), `NOC/B/Expectation.lean` (expected lifts).  
 3. **Use**: open `NOC/Examples/D/HowToUseDPath.lean` to see how to pass premises and call the expectation Σ‑law.  
-4. **Experiment side (later)**: run E‑0 / E‑2 to produce \(\Delta\Sigma\) and \(\Xi_{\mathrm{loss}}\) values; compare to Σ‑law; compute the preserve ratio \(\rho=\gamma\Delta\Sigma/(\zeta\Delta J)\).
+4. **Experiment side (later)**: run E‑0 / E‑2 to produce \(\Delta\Sigma\) and \(\Xi_{\mathrm{loss}}\) values; compare to Σ‑law; log the preserve ratio \(\rho=\gamma\Delta\Sigma/(\zeta\Delta J)\), the threat multiplier \(\tau_{\mathrm{th}}\), time-production \(\tau\) (and convergence toward \(\tau^\star\)), and the Anselmian diagnostic \(A_i\) alongside EA checks per the v5 blueprint.
 
 ---
 

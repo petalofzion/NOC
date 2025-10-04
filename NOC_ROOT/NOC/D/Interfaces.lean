@@ -2,7 +2,7 @@ import Mathlib
 import NOC.AHelpers
 import NOC.B.Expectation
 import NOC.C.CPrime
-import NOC.Bridge.UpperLinkToSigma
+import NOC.Bridge.SigmaBridge
 
 /-!
 Module: NOC.D.Interfaces
@@ -19,67 +19,67 @@ open scoped BigOperators
 
 /-- Upper link **on a subset** `G`: `dU ≤ p.cU*A − p.κU*B` for all `ω ∈ G`. -/
 def UpperLinkOn {Ω : Type*} (G : Finset Ω)
-  (A B dU : Ω → ℝ) (p : DUpperLinkParams) : Prop :=
+  (A B dU : Ω → ℝ) (p : SigmaBridgeParams) : Prop :=
   ∀ ω ∈ G, dU ω ≤ p.cU * A ω - p.κU * B ω
 
 /-- SDPI link **on a subset** `G`: `dSigma ≥ p.α*A − p.β*B` for all `ω ∈ G`. -/
 def SDPILinkOn {Ω : Type*} (G : Finset Ω)
-  (A B dSigma : Ω → ℝ) (p : DUpperLinkParams) : Prop :=
+  (A B dSigma : Ω → ℝ) (p : SigmaBridgeParams) : Prop :=
   ∀ ω ∈ G, dSigma ω ≥ p.α * A ω - p.β * B ω
 
 /-- Upper link **globally**: `dU ≤ p.cU*A − p.κU*B` for all `ω`. -/
-def UpperLink {Ω : Type*} (A B dU : Ω → ℝ) (p : DUpperLinkParams) : Prop :=
+def UpperLink {Ω : Type*} (A B dU : Ω → ℝ) (p : SigmaBridgeParams) : Prop :=
   ∀ ω, dU ω ≤ p.cU * A ω - p.κU * B ω
 
 /-- SDPI link **globally**: `dSigma ≥ p.α*A − p.β*B` for all `ω`. -/
-def SDPILink {Ω : Type*} (A B dSigma : Ω → ℝ) (p : DUpperLinkParams) : Prop :=
+def SDPILink {Ω : Type*} (A B dSigma : Ω → ℝ) (p : SigmaBridgeParams) : Prop :=
   ∀ ω, dSigma ω ≥ p.α * A ω - p.β * B ω
 
 /-! ### Small conveniences for the C′ coefficients extracted from D -/
-@[simp] lemma toSigmaLawParams_c1 (p : DUpperLinkParams) :
+@[simp] lemma toSigmaLawParams_c1 (p : SigmaBridgeParams) :
   p.toSigmaLawParams.c1 = p.α / p.cU := rfl
 
-@[simp] lemma toSigmaLawParams_lambdaXi (p : DUpperLinkParams) :
+@[simp] lemma toSigmaLawParams_lambdaXi (p : SigmaBridgeParams) :
   p.toSigmaLawParams.lambdaXi = p.β - p.α * p.κU / p.cU := rfl
 
 /-! ### Pointwise C′ from the two D-premises -/
 
 /-- If the two links hold **globally**, eliminate `A` and get pointwise C′ (with `Ξloss := B`). -/
 lemma pointwise_Cprime_from_D {Ω : Type*}
-  (A B dU dSigma : Ω → ℝ) (p : DUpperLinkParams)
+  (A B dU dSigma : Ω → ℝ) (p : SigmaBridgeParams)
   (hU : UpperLink A B dU p)
   (hS : SDPILink A B dSigma p) :
   ∀ ω, dSigma ω
         ≥ p.toSigmaLawParams.c1 * dU ω
           - p.toSigmaLawParams.lambdaXi * B ω := by
   intro ω
-  have := DUpperLinkParams.sigma_from_upper (p := p)
+  have := SigmaBridgeParams.sigma_from_upper (p := p)
               (A := A ω) (B := B ω) (dU := dU ω) (dSigma := dSigma ω)
               (hLinkU := hU ω) (hSDPI := hS ω)
-  simpa [DUpperLinkParams.toSigmaLawParams] using this
+  simpa [SigmaBridgeParams.toSigmaLawParams] using this
 
 /-- If the two links hold **on a subset** `G`, eliminate `A` and get pointwise C′ on `G`. -/
 lemma pointwise_Cprime_on_from_D {Ω : Type*}
-  (G : Finset Ω) (A B dU dSigma : Ω → ℝ) (p : DUpperLinkParams)
+  (G : Finset Ω) (A B dU dSigma : Ω → ℝ) (p : SigmaBridgeParams)
   (hU : UpperLinkOn G A B dU p)
   (hS : SDPILinkOn G A B dSigma p) :
   ∀ ω ∈ G, dSigma ω
         ≥ p.toSigmaLawParams.c1 * dU ω
           - p.toSigmaLawParams.lambdaXi * B ω := by
   intro ω hω
-  have := DUpperLinkParams.sigma_from_upper (p := p)
+  have := SigmaBridgeParams.sigma_from_upper (p := p)
               (A := A ω) (B := B ω) (dU := dU ω) (dSigma := dSigma ω)
               (hLinkU := hU ω hω) (hSDPI := hS ω hω)
-  simpa [DUpperLinkParams.toSigmaLawParams] using this
+  simpa [SigmaBridgeParams.toSigmaLawParams] using this
 
 /-! ### Expectation wrappers (pure reuse of your D → C′ lemmas) -/
 
-/-- Expectation (finitary) via D→C′: just reuse `lemmaD_expectation_finitary`. -/
+/-- Expectation (finitary) via D→C′: reuse `lemmaBridge_expectation_finitary`. -/
 theorem expectation_from_links
   {Ω : Type*} (S G : Finset Ω)
   (A B dU dSigma : Ω → ℝ)
   (hGS : G ⊆ S) (hS : 0 < S.card)
-  (p : DUpperLinkParams)
+  (p : SigmaBridgeParams)
   {MSigma : ℝ}
   (hU : UpperLinkOn G A B dU p)
   (hSdp : SDPILinkOn G A B dSigma p)
@@ -91,17 +91,17 @@ theorem expectation_from_links
   classical
   -- Directly reuse the D→C′ finitary lemma
   simpa using
-    (DUpperLinkParams.lemmaD_expectation_finitary (S := S) (G := G)
+    (SigmaBridgeParams.lemmaBridge_expectation_finitary (S := S) (G := G)
       (A := A) (B := B) (dU := dU) (dSigma := dSigma)
       (hGS := hGS) (hS := hS) (p := p) (MSigma := MSigma)
       (hLinkU := hU) (hSDPI := hSdp) (hBad := hBad))
 
-/-- Expectation with a coverage lower bound `p0`: reuse `lemmaD_expectation_with_fraction`. -/
+/-- Expectation with a coverage lower bound `p0`: reuse `lemmaBridge_expectation_with_fraction`. -/
 theorem expectation_with_fraction_from_links
   {Ω : Type*} (S G : Finset Ω)
   (A B dU dSigma : Ω → ℝ)
   (hGS : G ⊆ S) (hS : 0 < S.card)
-  (p : DUpperLinkParams)
+  (p : SigmaBridgeParams)
   {MSigma p0 : ℝ}
   (hU : UpperLinkOn G A B dU p)
   (hSdp : SDPILinkOn G A B dSigma p)
@@ -115,7 +115,7 @@ theorem expectation_with_fraction_from_links
     - (1 - p0) * MSigma := by
   classical
   simpa using
-    (DUpperLinkParams.lemmaD_expectation_with_fraction (S := S) (G := G)
+    (SigmaBridgeParams.lemmaBridge_expectation_with_fraction (S := S) (G := G)
       (A := A) (B := B) (dU := dU) (dSigma := dSigma)
       (hGS := hGS) (hS := hS) (p := p)
       (MSigma := MSigma) (p0 := p0)

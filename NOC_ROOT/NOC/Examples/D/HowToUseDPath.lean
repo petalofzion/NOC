@@ -1,6 +1,6 @@
 import Mathlib
 import NOC.B.Expectation
-import NOC.Bridge.UpperLinkToSigma
+import NOC.Bridge.SigmaBridge
 import NOC.D.Interfaces      -- (UpperLink/SDPILink predicates + expectation wrappers)
 import NOC.HB.Link           -- (optional) bundle-style API
 
@@ -24,7 +24,7 @@ variable {Ω : Type u}
 
 /-- If your two D‑links hold for **all** `ω`, you get the C′ pointwise inequality on all `ω`. -/
 theorem Dpath_pointwise_Cprime
-    (A B dU dSigma : Ω → ℝ) (p : DUpperLinkParams)
+    (A B dU dSigma : Ω → ℝ) (p : SigmaBridgeParams)
     (hU : UpperLink  A B dU    p)      -- ∀ω, dU ≤ p.cU*A − p.κU*B
     (hS : SDPILink  A B dSigma p) :    -- ∀ω, dSigma ≥ p.α*A − p.β*B
   ∀ ω, dSigma ω
@@ -45,7 +45,7 @@ Conclusion:
 theorem Dpath_expectation_finitary
     (S G : Finset Ω)
     (A B dU dSigma : Ω → ℝ)
-    (p : DUpperLinkParams)
+    (p : SigmaBridgeParams)
     (hGS : G ⊆ S) (hS : 0 < S.card)
     {MSigma : ℝ}
     (hU   : UpperLinkOn  G A B dU    p)   -- ∀ω∈G, dU ≤ p.cU*A − p.κU*B
@@ -63,7 +63,7 @@ and a **slope** condition `0 ≤ (p.c1*avg_G dU − p.lambdaXi*avg_G B) + MSigma
 theorem Dpath_expectation_with_fraction
     (S G : Finset Ω)
     (A B dU dSigma : Ω → ℝ)
-    (p : DUpperLinkParams)
+    (p : SigmaBridgeParams)
     (hGS : G ⊆ S) (hS : 0 < S.card)
     {MSigma p0 : ℝ}
     (hU   : UpperLinkOn  G A B dU    p)

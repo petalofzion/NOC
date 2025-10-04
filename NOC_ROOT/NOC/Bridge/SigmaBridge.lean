@@ -5,8 +5,8 @@ import NOC.B.Expectation
 import NOC.C.CPrime
 
 /-!
-Module: NOC.Bridge.UpperLinkToSigma
-Summary: D‑bridge — eliminate intermediates to get the Sigma‑law (C′) pointwise and lift to expectations.
+Module: NOC.Bridge.SigmaBridge
+Summary: Sigma-bridge — eliminate intermediates to get the Sigma-law (C′) pointwise and lift to expectations.
 
 **Idea.** Suppose per sample we have:
   • an **upper link** on `Δ²U`:        `Δ2U ≤ cU*A − κU*B`, with `cU>0`, `κU≥0`,
@@ -26,7 +26,7 @@ open Classical
 open scoped BigOperators
 
 /-- Parameters for the D‑bridge (upper link + SDPI). -/
-structure DUpperLinkParams where
+structure SigmaBridgeParams where
   cU : ℝ
   κU : ℝ
   α  : ℝ
@@ -36,10 +36,10 @@ structure DUpperLinkParams where
   κU_nonneg  : 0 ≤ κU
   trade      : β ≥ α * κU / cU   -- ensures λΞ ≥ 0
 
-namespace DUpperLinkParams
+namespace SigmaBridgeParams
 
 /-- Package the resulting C′ coefficients. -/
-def toSigmaLawParams (p : DUpperLinkParams) : SigmaLawParams :=
+def toSigmaLawParams (p : SigmaBridgeParams) : SigmaLawParams :=
 { c1 := p.α / p.cU
 , lambdaXi := p.β - p.α * p.κU / p.cU
 , c1_nonneg := by
@@ -56,7 +56,7 @@ def toSigmaLawParams (p : DUpperLinkParams) : SigmaLawParams :=
 From `Δ2U ≤ cU*A − κU*B` and `dSigma ≥ α*A − β*B`, conclude
 `dSigma ≥ (α/cU) * Δ2U − (β − α*κU/cU) * B`. -/
 lemma sigma_from_upper
-  (p : DUpperLinkParams)
+  (p : SigmaBridgeParams)
   {A B dU dSigma : ℝ}
   (hLinkU : dU ≤ p.cU * A - p.κU * B)
   (hSDPI  : dSigma ≥ p.α * A - p.β * B) :
@@ -124,11 +124,11 @@ On the good set `G ⊆ S`, assume:
 On the complement, assume the floor `dSigma ≥ −MSigma`.
 Then `avg_S dSigma ≥ (|G|/|S|)*(P.c1*avg_G dU − P.lambdaXi*avg_G B) + ((|S|-|G|)/|S|)*(−MSigma)`,
 where `P = p.toSigmaLawParams` and `Ξloss := B`. -/
-theorem lemmaD_expectation_finitary
+theorem lemmaBridge_expectation_finitary
   {Ω : Type*} (S G : Finset Ω)
   (A B dU dSigma : Ω → ℝ)
   (hGS : G ⊆ S) (hS : 0 < S.card)
-  (p : DUpperLinkParams)
+  (p : SigmaBridgeParams)
   {MSigma : ℝ}
   (hLinkU : ∀ ω ∈ G, dU ω ≤ p.cU * A ω - p.κU * B ω)
   (hSDPI  : ∀ ω ∈ G, dSigma ω ≥ p.α * A ω - p.β * B ω)
@@ -142,10 +142,10 @@ theorem lemmaD_expectation_finitary
   have hGoodC : ∀ ω ∈ G,
     dSigma ω ≥ p.toSigmaLawParams.c1 * dU ω - p.toSigmaLawParams.lambdaXi * B ω := by
     intro ω hω
-    have h := DUpperLinkParams.sigma_from_upper
+    have h := SigmaBridgeParams.sigma_from_upper
       (p := p) (A := A ω) (B := B ω) (dU := dU ω) (dSigma := dSigma ω)
       (hLinkU := hLinkU ω hω) (hSDPI := hSDPI ω hω)
-    simpa [DUpperLinkParams.toSigmaLawParams] using h
+    simpa [SigmaBridgeParams.toSigmaLawParams] using h
   -- Reuse the C′ expectation lemma with xiLoss := B.
   simpa using
     (lemmaCprime_expectation_finitary
@@ -156,15 +156,15 @@ theorem lemmaD_expectation_finitary
       (hGood := hGoodC) (hBad := hBad))
 
 /-- **D → C′ (finitary expectation with a mass lower bound `p0`).**
-Same set‑up as `lemmaD_expectation_finitary`; additionally assume the slope condition
+Same set‑up as `lemmaBridge_expectation_finitary`; additionally assume the slope condition
 `0 ≤ (P.c1 * avg_G dU − P.lambdaXi * avg_G B) + MSigma` and a coverage lower bound
 `p0 ≤ |G|/|S|`. Then
 `avg_S dSigma ≥ p0*(P.c1*avg_G dU) − p0*(P.lambdaXi*avg_G B) − (1−p0)*MSigma`. -/
-theorem lemmaD_expectation_with_fraction
+theorem lemmaBridge_expectation_with_fraction
   {Ω : Type*} (S G : Finset Ω)
   (A B dU dSigma : Ω → ℝ)
   (hGS : G ⊆ S) (hS : 0 < S.card)
-  (p : DUpperLinkParams)
+  (p : SigmaBridgeParams)
   {MSigma p0 : ℝ}
   (hLinkU : ∀ ω ∈ G, dU ω ≤ p.cU * A ω - p.κU * B ω)
   (hSDPI  : ∀ ω ∈ G, dSigma ω ≥ p.α * A ω - p.β * B ω)
@@ -181,10 +181,10 @@ theorem lemmaD_expectation_with_fraction
   have hGoodC : ∀ ω ∈ G,
     dSigma ω ≥ p.toSigmaLawParams.c1 * dU ω - p.toSigmaLawParams.lambdaXi * B ω := by
     intro ω hω
-    have h := DUpperLinkParams.sigma_from_upper
+    have h := SigmaBridgeParams.sigma_from_upper
       (p := p) (A := A ω) (B := B ω) (dU := dU ω) (dSigma := dSigma ω)
       (hLinkU := hLinkU ω hω) (hSDPI := hSDPI ω hω)
-    simpa [DUpperLinkParams.toSigmaLawParams] using h
+    simpa [SigmaBridgeParams.toSigmaLawParams] using h
   -- Expectation via the C′ fraction form
   simpa using
     (lemmaCprime_expectation_with_fraction
@@ -195,12 +195,12 @@ theorem lemmaD_expectation_with_fraction
       (hGood := hGoodC) (hBad := hBad)
       (hSlope := hSlope) (hp0 := hp0))
 
-@[simp] lemma c1_from_D (p : DUpperLinkParams) :
+@[simp] lemma c1_from_bridge (p : SigmaBridgeParams) :
   p.toSigmaLawParams.c1 = p.α / p.cU := rfl
 
-@[simp] lemma lambdaXi_from_D (p : DUpperLinkParams) :
+@[simp] lemma lambdaXi_from_bridge (p : SigmaBridgeParams) :
   p.toSigmaLawParams.lambdaXi = p.β - p.α * p.κU / p.cU := rfl
 
-end DUpperLinkParams
+end SigmaBridgeParams
 end
 end NOC

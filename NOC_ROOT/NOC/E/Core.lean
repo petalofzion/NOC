@@ -5,9 +5,9 @@ Module: NOC.E.Core
 Status: scaffolding.
 
 This module prepares the finite-tabular infrastructure needed to formalize Lemma E
-from `NOC_v3.1.5`: synergistic empowerment guarantees preservation of the joint
+from `NOC_v5`: synergistic empowerment guarantees preservation of the joint
 policy (and therefore of Σ).  We introduce lightweight records for finite POMDPs,
-policy profiles, the synergy predicate (`E-SYN-(δ, σ)`), and the SDPI clause, ending
+policy profiles, the synergy predicate (`E-SYN-(ε_syn, varsigma)`), and the SDPI clause, ending
 with a placeholder lemma.  Downstream files can depend on these names while the
 full information-theoretic proof is under construction.
 -/
@@ -40,13 +40,13 @@ structure PolicyProfile (Agent : Type u) (M : FinPOMDP Agent) where
 
 /-- Witness for the synergy predicate `κ_syn > 0` described in the blueprint.  The
 fields `histories`, `uniqueInfluence`, and `interaction` are placeholders for the
-technical statements that will assert E-SYN-(δ, σ). -/
+technical statements that will assert E-SYN-(ε_syn, varsigma). -/
 structure ESynergyWitness (Agent : Type u)
     (M : FinPOMDP Agent) (i k : Agent) where
-  δ : ℝ
-  σ : ℝ
-  δ_pos : 0 < δ
-  σ_pos : 0 < σ
+  ε_syn : ℝ
+  varsigma : ℝ
+  ε_pos : 0 < ε_syn
+  varsigma_pos : 0 < varsigma
   step : ℕ
   histories : Prop
   uniqueInfluence : Prop

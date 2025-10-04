@@ -1,6 +1,6 @@
 import Mathlib
 import NOC.B.Expectation
-import NOC.Bridge.UpperLinkToSigma
+import NOC.Bridge.SigmaBridge
 import NOC.D.Interfaces  -- optional now; we no longer use the predicate shorthands but keeping it is harmless
 
 /-!
@@ -25,7 +25,7 @@ structure HBLinkBundle (Ω : Type u) where
   B : Ω → ℝ
   dU : Ω → ℝ
   dSigma : Ω → ℝ
-  p : DUpperLinkParams
+  p : SigmaBridgeParams
   upper : ∀ ω, dU ω ≤ p.cU * A ω - p.κU * B ω
   sdpi  : ∀ ω, dSigma ω ≥ p.α * A ω - p.β * B ω
 
@@ -37,10 +37,10 @@ lemma pointwise_Cprime {Ω : Type u} (H : HBLinkBundle Ω) :
         ≥ H.p.toSigmaLawParams.c1 * (H.dU ω)
           - H.p.toSigmaLawParams.lambdaXi * (H.B ω) := by
   intro ω
-  have := DUpperLinkParams.sigma_from_upper (p := H.p)
+  have := SigmaBridgeParams.sigma_from_upper (p := H.p)
               (A := H.A ω) (B := H.B ω) (dU := H.dU ω) (dSigma := H.dSigma ω)
               (hLinkU := H.upper ω) (hSDPI := H.sdpi ω)
-  simpa [DUpperLinkParams.toSigmaLawParams] using this
+  simpa [SigmaBridgeParams.toSigmaLawParams] using this
 
 end HBLinkBundle
 
@@ -52,7 +52,7 @@ structure HBLinkBundleOn (Ω : Type u) (G : Finset Ω) where
   B : Ω → ℝ
   dU : Ω → ℝ
   dSigma : Ω → ℝ
-  p : DUpperLinkParams
+  p : SigmaBridgeParams
   upper : ∀ ω ∈ G, dU ω ≤ p.cU * A ω - p.κU * B ω
   sdpi  : ∀ ω ∈ G, dSigma ω ≥ p.α * A ω - p.β * B ω
 
@@ -66,10 +66,10 @@ lemma pointwise_Cprime_on {Ω : Type u} {G : Finset Ω}
         ≥ H.p.toSigmaLawParams.c1 * (H.dU ω)
           - H.p.toSigmaLawParams.lambdaXi * (H.B ω) := by
   intro ω hω
-  have := DUpperLinkParams.sigma_from_upper (p := H.p)
+  have := SigmaBridgeParams.sigma_from_upper (p := H.p)
               (A := H.A ω) (B := H.B ω) (dU := H.dU ω) (dSigma := H.dSigma ω)
               (hLinkU := H.upper ω hω) (hSDPI := H.sdpi ω hω)
-  simpa [DUpperLinkParams.toSigmaLawParams] using this
+  simpa [SigmaBridgeParams.toSigmaLawParams] using this
 
 /-! ### Expectation wrappers (reuse D → C′) -/
 
@@ -86,7 +86,7 @@ theorem expectation_finitary {Ω : Type u} {G S : Finset Ω}
     + (((S.card - G.card : ℕ) : ℝ) / (S.card : ℝ)) * (-MSigma) := by
   classical
   simpa using
-    (DUpperLinkParams.lemmaD_expectation_finitary
+    (SigmaBridgeParams.lemmaBridge_expectation_finitary
       (S := S) (G := G)
       (A := H.A) (B := H.B) (dU := H.dU) (dSigma := H.dSigma)
       (hGS := hGS) (hS := hS) (p := H.p) (MSigma := MSigma)
@@ -107,7 +107,7 @@ theorem expectation_with_fraction {Ω : Type u} {G S : Finset Ω}
     - (1 - p0) * MSigma := by
   classical
   simpa using
-    (DUpperLinkParams.lemmaD_expectation_with_fraction
+    (SigmaBridgeParams.lemmaBridge_expectation_with_fraction
       (S := S) (G := G)
       (A := H.A) (B := H.B) (dU := H.dU) (dSigma := H.dSigma)
       (hGS := hGS) (hS := hS) (p := H.p)
