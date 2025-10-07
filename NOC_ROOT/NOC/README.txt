@@ -26,7 +26,8 @@ open NOC
 -- Now all lemmas are in namespace `NOC`.
 
 Notes:
-- All modules use `import Mathlib`. No `sorry`/`admit` remains; `HB/CloseLoop.lean` includes
+- All core HB/A/B/C′/C modules use `import Mathlib`. Proof scaffolds for D/E contain
+  intentional `sorry`s (TTSA, DI–DPI, ROI, boundary). `HB/CloseLoop.lean` includes
   a conservative explicit bound (`hb_rhoStar`) with a complete proof that the polynomial
   bracket is nonpositive for `ρ ≤ ρ⋆(τ,γ)` when `0<τ<2`. This closes the Δ²f≤0 step under convex λ≥0.
 - If you ever change file locations, remember Lean module names are path‑based. Update `import …`

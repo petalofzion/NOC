@@ -22,7 +22,7 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 
 - Build: `lake update && lake build`
 - Root export: `import NOC`
-- Minimal MI/synergy interface: `import NOC.Interfaces.Synergy` (see §4).
+- Minimal MI/synergy interface (finite tabular scaffolding): `import NOC.E.Core` (see §4).
 
 ---
 
@@ -30,7 +30,7 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 
 | Paper concept / claim | What the repo provides | Where |
 |---|---|---|
-| **State, policies, trajectories** | Basic types/aliases for finite processes & policies (used by examples/lemmas). | `NOC/Model.lean` *(or equivalent foundation file in your tree)* |
+| **State, policies, trajectories** | Finite-horizon POMDP/Policies scaffolding for experiments and Lemma E. | `NOC/E/Core.lean` |
 | **Meta‑utility (informal)** | Not formalized; used only in commentary and to motivate lemmas A/B/D/C′. | — |
 | **Capacity \(U\), ΔU, Δ²U** | Abstract symbols or helper defs; used on the RHS of Σ‑laws. | `NOC/B/*` (expectation wrappers), `NOC/C/*` |
 | **Option­ality \(\Sigma\)** | **Abstract** `dSigma` symbol (Lean does not hard‑code MI). | `NOC/C/*`, `NOC/D/*` |
@@ -40,7 +40,7 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 | **Lemma D (β-stability, planned)** | Reflective stability of precision (TTSA meta-gradient). | `NOC/D/BetaStability.lean` |
 | **Lemma C′ (Σ‑law, improvement)** | `SigmaLawParams` with `c1, λXi ≥ 0`; pointwise + expected + “good‑set” finitary splits. | `NOC/C/CPrime.lean` |
 | **Lemma C (Σ‑law, acceleration)** | Like C′ but with Δ²U and velocity/smoothness constants. | `NOC/C/C.lean` *(if present in your tree)* |
-| **Lemma E (synergy ⇒ empowerment drop)** | **Empirical**. In Lean we expose predicates you can assume once experiments verify them. | `NOC/Interfaces/Synergy.lean` |
+| **Lemma E (synergy ⇒ empowerment drop)** | **Empirical**. In Lean we expose predicates and POMDP scaffolding for those assumptions. | `NOC/E/Core.lean` |
 | **Worked example** | How to pass premises on a “good set” \(G\) and call the expectation Σ‑law. | `NOC/Examples/D/HowToUseDPath.lean` |
 
 > If a specific foundation file is named slightly differently in your tree (e.g., `Model.lean`), update this table accordingly when you commit.
