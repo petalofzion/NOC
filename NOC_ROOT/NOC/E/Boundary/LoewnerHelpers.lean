@@ -31,12 +31,6 @@ theorem psd_congr {n : ℕ}
     using hcongr
 
 /-- Matrix inversion reverses the Loewner order on the SPD cone. -/
-theorem inv_antitone_spd {n : ℕ}
-  (A B : Matrix (Fin n) (Fin n) ℝ)
-  (hA : Matrix.IsHermitian A) (hB : Matrix.IsHermitian B)
-  (hA_spd : Matrix.PosDef A) (hB_spd : Matrix.PosDef B)
-  (hAB : Matrix.PosSemidef (B - A)) :
-  Matrix.PosSemidef (A⁻¹ - B⁻¹) := by
   sorry
 
 /-- Operator-monotonicity of the logarithm on SPD matrices, expressed via log-det. -/

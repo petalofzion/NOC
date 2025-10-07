@@ -40,8 +40,14 @@ The following tasks are currently stalled because the requisite mathematical or 
 - **Loewner helper lemmas (`inv_antitone_spd`, `logdet_mono_from_opmonotone`)**
   - Requires operator-inequality results on the SPD cone: inverse as an order-reversing map and operator-monotonicity of `A ↦ log det(I + A)`. Mathlib currently lacks these, blocking both helpers and the downstream Gaussian vector lemmas.
 
+- **Loewner helper lemmas (`inv_antitone_spd`, `logdet_mono_from_opmonotone`)**
+  - Action plan (no new library primitives required):
+      1. For `inv_antitone_spd`, whiten via the positive-definite square root of `A`, set `C := A^{-1/2} B A^{-1/2}`, show `C - I` is PSD with `psd_congr`, use the same trick with `C`’s square root to deduce `I - C⁻¹` is PSD, then conjugate back to recover `A⁻¹ - B⁻¹` PSD.
+      2. For `logdet_mono_from_opmonotone`, define `φ(t) = log det (I + A + t(B - A))` and compute the derivative using `d log det X = tr(X⁻¹ dX)` to get `φ′(t) = tr((I + A + t(B-A))⁻¹ (B-A)) ≥ 0`; monotonicity of `φ` yields the desired inequality at `t = 1`.
+  - Completing these proofs unblocks the Gaussian vector lemmas.
+
 - **Gaussian vector boundary (`loewner_logdet_mono`, `mi_after_ablation_logdet` and the scalar interference example)**
-  - Depends on the Loewner lemmas above; until they are proved, the vector comparison and explicit interference example cannot be discharged.
+  - Depends on the Loewner lemmas above; once they are implemented, finish the vector comparison and finalize the interference example.
 
 - **DI instantiation (`NOC_ROOT/NOC/E/Interfaces/DI*.lean`)**
   - Requires a concrete causal model with per-step directed information computations, SDPI witnesses, and filtration-alignment proofs. Those model-specific ingredients are not present, so the typeclass instances and final inequality cannot be instantiated yet.
