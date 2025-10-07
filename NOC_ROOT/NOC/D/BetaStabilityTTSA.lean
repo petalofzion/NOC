@@ -184,7 +184,13 @@ structure BetaUpdate where
   b    : ℕ → ℝ
   g    : ℝ → ℝ
   proj : ℝ → ℝ := fun z => max 0 (min βmax z)
-  update : ℝ → ℕ → ℝ := fun βn n => proj (βn + b n * g βn)
+
+/-- Canonical update step derived from the projection and drift. -/
+def BetaUpdate.update (P : BetaUpdate) (β : ℝ) (n : ℕ) : ℝ :=
+  P.proj (β + P.b n * P.g β)
+
+@[simp] lemma BetaUpdate.update_eval (P : BetaUpdate) (β : ℝ) (n : ℕ) :
+  BetaUpdate.update P β n = P.proj (β + P.b n * P.g β) := rfl
 
 /-- Iterate the β-update starting from an initial value. -/
 def iter (P : BetaUpdate) (β0 : ℝ) : ℕ → ℝ
@@ -197,17 +203,47 @@ def iter (P : BetaUpdate) (β0 : ℝ) : ℕ → ℝ
 def clamp (βmax : ℝ) (z : ℝ) : ℝ := max 0 (min βmax z)
 
 /-- The clamp projection satisfies the standard projection properties. -/
-lemma clamp_props (βmax : ℝ) : ProjIccProps βmax (clamp βmax) := by
-  -- To be filled by the proof agent (straightforward order arithmetic)
-  sorry
+lemma clamp_props (βmax : ℝ) (hβmax : 0 ≤ βmax) :
+    ProjIccProps βmax (clamp βmax) := by
+  refine ⟨?range, ?fixed, ?mono⟩
+  · intro z
+    refine ⟨?low, ?high⟩
+    · exact le_max_left _ _
+    ·
+      have h0 : 0 ≤ βmax := hβmax
+      have hmin : min βmax z ≤ βmax := min_le_left _ _
+      exact (max_le_iff.mpr ⟨h0, hmin⟩)
+  · intro z hz
+    have hmin : min βmax z = z := min_eq_right hz.2
+    have hmax : max 0 z = z := max_eq_right hz.1
+    simpa [clamp, hmin, hmax]
+  · intro x y hxy
+    have hminβ : min βmax x ≤ βmax := min_le_left _ _
+    have hminy : min βmax x ≤ y :=
+      le_trans (min_le_right _ _) hxy
+    have hmin : min βmax x ≤ min βmax y :=
+      le_min hminβ hminy
+    have h0 : 0 ≤ max 0 (min βmax y) := le_max_left _ _
+    have hxle : min βmax x ≤ max 0 (min βmax y) :=
+      le_trans hmin (le_max_right _ _)
+    exact (max_le_iff.mpr ⟨h0, hxle⟩)
 
 /-- If a projection equals the clamp pointwise, it inherits the interval properties. -/
 lemma props_of_is_clamp
   {βmax : ℝ} {proj : ℝ → ℝ}
+  (hβmax : 0 ≤ βmax)
   (hproj : ∀ z, proj z = clamp βmax z) :
   ProjIccProps βmax proj := by
-  -- Transport `clamp_props`; proof left as an exercise for the agent.
-  sorry
+  have hclamp : ProjIccProps βmax (clamp βmax) := clamp_props βmax hβmax
+  refine ⟨?range, ?fixed, ?mono⟩
+  · intro z
+    simpa [clamp, hproj z] using (hclamp.range z)
+  · intro z hz
+    have hz' := hclamp.fixed_on (by simpa using hz)
+    simpa [clamp, hproj z] using hz'
+  · intro x y hxy
+    have := hclamp.monotone hxy
+    simpa [clamp, hproj x, hproj y] using this
 
 /-- Canonical β-update using the clamp projection. -/
 def BetaUpdate.clamped (βmax : ℝ) (b : ℕ → ℝ) (g : ℝ → ℝ) : BetaUpdate :=
@@ -215,26 +251,35 @@ def BetaUpdate.clamped (βmax : ℝ) (b : ℕ → ℝ) (g : ℝ → ℝ) : BetaU
 
 /-- Clamp-based update inherits the projection properties. -/
 lemma BetaUpdate.clamped_props
-  (βmax : ℝ) (b : ℕ → ℝ) (g : ℝ → ℝ) :
+  (βmax : ℝ) (hβmax : 0 ≤ βmax) (b : ℕ → ℝ) (g : ℝ → ℝ) :
   ProjIccProps βmax (BetaUpdate.clamped βmax b g).proj := by
-  -- Follows from `props_of_is_clamp` and `clamp_props`.
-  sorry
+  have hproj : ∀ z, (BetaUpdate.clamped βmax b g).proj z = clamp βmax z := by
+    intro z; rfl
+  exact props_of_is_clamp hβmax hproj
 
 /-- Bounds invariance: the projected update stays in `[0, βmax]`. -/
 lemma update_bounds
   (P : BetaUpdate) (props : ProjIccProps P.βmax P.proj)
   (β : ℝ) (n : ℕ) :
   0 ≤ P.update β n ∧ P.update β n ≤ P.βmax := by
-  -- Immediate from `props.range` on the post-update argument.
-  sorry
+  obtain ⟨hlo, hup⟩ := props.range (β + P.b n * P.g β)
+  have hlo' : 0 ≤ P.update β n := by
+    simpa [BetaUpdate.update_eval] using hlo
+  have hup' : P.update β n ≤ P.βmax := by
+    simpa [BetaUpdate.update_eval] using hup
+  exact ⟨hlo', hup'⟩
 
 /-- Iteration bounds: if β₀ is within `[0, βmax]`, every iterate stays inside. -/
 lemma iter_bounds
   (P : BetaUpdate) (props : ProjIccProps P.βmax P.proj)
   (β0 : ℝ) (hβ0 : 0 ≤ β0 ∧ β0 ≤ P.βmax) :
   ∀ n, 0 ≤ iter P β0 n ∧ iter P β0 n ≤ P.βmax := by
-  -- Induction using `update_bounds`.
-  sorry
+  intro n
+  induction n with
+  | zero =>
+      simpa [iter] using hβ0
+  | succ n ih =>
+      simpa [iter] using update_bounds P props (iter P β0 n) n
 
 /-- Update monotonicity on a window: if `proj` and `g` are monotone, the update preserves order. -/
 lemma update_monotone_on_window
@@ -247,8 +292,13 @@ lemma update_monotone_on_window
   (hβ' : 0 ≤ β' ∧ β' ≤ βstar)
   (hle : β ≤ β') :
   P.update β n ≤ P.update β' n := by
-  -- Apply monotonicity of `proj` to the affine step.
-  sorry
+  have hgle : P.g β ≤ P.g β' := gmono hβ hβ' hle
+  have hmul : P.b n * P.g β ≤ P.b n * P.g β' :=
+    mul_le_mul_of_nonneg_left hgle hb
+  have hsum : β + P.b n * P.g β ≤ β' + P.b n * P.g β' :=
+    add_le_add hle hmul
+  have hproj := proj_mono hsum
+  simpa [BetaUpdate.update] using hproj
 
 /-- Drift lower bound ⇒ monotone growth under projection (arithmetic lemma). -/
 theorem beta_drift_lower_bound_props
@@ -259,8 +309,18 @@ theorem beta_drift_lower_bound_props
     (hg : ∀ β, 0 ≤ β ∧ β ≤ βstar → P.g β ≥ ε)
     (hproj : ProjIccProps P.βmax P.proj) :
     ∀ (β : ℝ) (n : ℕ), 0 ≤ β ∧ β ≤ βstar → P.update β n ≥ β := by
-  -- Target: use hproj.monotone and hproj.fixed_on together with hb, hg, hε
-  sorry
+  intro β n hβ
+  have hβ_le_max : β ≤ P.βmax := le_trans hβ.2 hβstar
+  have hproj_id : P.proj β = β :=
+    hproj.fixed_on ⟨hβ.1, hβ_le_max⟩
+  have hg_ge : P.g β ≥ ε := hg β hβ
+  have hg_nonneg : 0 ≤ P.g β := le_trans hε hg_ge
+  have hmul_nonneg : 0 ≤ P.b n * P.g β := mul_nonneg (hb n) hg_nonneg
+  have hsum : β ≤ β + P.b n * P.g β := le_add_of_nonneg_right hmul_nonneg
+  have hmono := hproj.monotone hsum
+  have hineq : β ≤ P.proj (β + P.b n * P.g β) := by
+    simpa [hproj_id] using hmono
+  simpa [BetaUpdate.update] using hineq
 
 /-- Hitting a target level under infinite mass (∑ b_n = ∞) and positive drift. -/
 theorem beta_hits_target_props
@@ -273,8 +333,80 @@ theorem beta_hits_target_props
     (hproj : ProjIccProps P.βmax P.proj)
     (hβ0 : 0 ≤ β0 ∧ β0 ≤ βstar) :
     ∃ N, (iter P β0 N) ≥ βstar := by
-  -- Agent: lower-bound cumulative growth by ε * ∑ b up to N and use divergence to exceed β⋆−β0.
-  sorry
+  classical
+  -- Assume no iterate reaches β⋆ and derive a contradiction.
+  by_contra hno
+  have hlt : ∀ n, iter P β0 n < βstar := by
+    intro n
+    have hn := (not_exists.mp hno) n
+    exact lt_of_not_ge hn
+  let S : ℕ → ℝ := fun N => (Finset.range N).sum P.b
+  have hβmax_nonneg : 0 ≤ P.βmax :=
+    le_trans hβ0.1 (le_trans hβ0.2 hβstar)
+  -- Iterates stay within the projection bounds.
+  have hβ0_le_max : β0 ≤ P.βmax := le_trans hβ0.2 hβstar
+  have hbounds := iter_bounds P hproj β0 ⟨hβ0.1, hβ0_le_max⟩
+  -- Lower bound iterates by accumulating the ε-weighted steps.
+  have hlower : ∀ n, iter P β0 n ≥ β0 + ε * S n := by
+    refine Nat.rec ?base ?step
+    · simp [S, iter]
+    · intro n ih
+      set βn := iter P β0 n with hβn_def
+      have hβn_lt : βn < βstar := by simpa [hβn_def] using hlt n
+      have hβn_bounds := hbounds n
+      obtain ⟨hβn_nonneg, hβn_le_max⟩ := hβn_bounds
+      have hβn_le_star : βn ≤ βstar := le_of_lt hβn_lt
+      have hg_ge : P.g βn ≥ ε := hg βn ⟨hβn_nonneg, hβn_le_star⟩
+      have hg_nonneg : 0 ≤ P.g βn := le_trans hε.le hg_ge
+      have hmul_nonneg : 0 ≤ P.b n * P.g βn := mul_nonneg (hb n) hg_nonneg
+      have harg_nonneg : 0 ≤ βn + P.b n * P.g βn := add_nonneg hβn_nonneg hmul_nonneg
+      have hproj_beta : P.proj P.βmax = P.βmax :=
+        hproj.fixed_on ⟨hβmax_nonneg, le_rfl⟩
+      have harg_le_max : βn + P.b n * P.g βn ≤ P.βmax := by
+        by_contra hgt
+        have hgt' : P.βmax < βn + P.b n * P.g βn := lt_of_not_ge hgt
+        have hproj_ge : P.βmax ≤ P.proj (βn + P.b n * P.g βn) := by
+          have hle : P.βmax ≤ βn + P.b n * P.g βn := le_of_lt hgt'
+          have hmono := hproj.monotone hle
+          simpa [hproj_beta] using hmono
+        have hproj_le : P.proj (βn + P.b n * P.g βn) ≤ P.βmax := (hproj.range _).2
+        have hproj_eq : P.proj (βn + P.b n * P.g βn) = P.βmax :=
+          le_antisymm hproj_le hproj_ge
+        have hnext_eq : iter P β0 (n + 1) = P.βmax := by
+          simpa [iter, BetaUpdate.update, hβn_def, hproj_eq]
+        have hnext_ge : βstar ≤ iter P β0 (n + 1) := by
+          simpa [hnext_eq] using hβstar
+        exact (not_lt.mpr hnext_ge) (hlt (n + 1))
+      have hproj_arg : P.proj (βn + P.b n * P.g βn) = βn + P.b n * P.g βn :=
+        hproj.fixed_on ⟨harg_nonneg, harg_le_max⟩
+      have hiter_succ : iter P β0 (n + 1) = βn + P.b n * P.g βn := by
+        simpa [iter, BetaUpdate.update, hproj_arg, hβn_def]
+      have hmul_eps : ε * P.b n ≤ P.b n * P.g βn := by
+        have := mul_le_mul_of_nonneg_left hg_ge (hb n)
+        simpa [mul_comm] using this
+      have hge_step : iter P β0 (n + 1) ≥ βn + ε * P.b n := by
+        have := add_le_add_left hmul_eps βn
+        simpa [hiter_succ, add_comm, add_left_comm, add_assoc, mul_comm] using this
+      have hsum_le : β0 + ε * S n + ε * P.b n ≤ βn + ε * P.b n :=
+        add_le_add_right ih (ε * P.b n)
+      have hgoal : iter P β0 (n + 1) ≥ β0 + ε * S (n + 1) := by
+        have htrans := le_trans hsum_le hge_step
+        simpa [S, Finset.sum_range_succ, Nat.succ_eq_add_one, add_comm,
+              add_left_comm, add_assoc, mul_add] using htrans
+      exact hgoal
+  -- Divergence of ∑ b_n ensures the accumulated drift exceeds β⋆ − β₀.
+  have hEV := Filter.tendsto_atTop.1 hbSum ((βstar - β0) / ε)
+  obtain ⟨N, hN⟩ := Filter.eventually_atTop.1 hEV
+  have hSN : (βstar - β0) / ε ≤ S N := hN N (le_rfl)
+  have hdiff : βstar - β0 ≤ ε * S N := by
+    have hεne : ε ≠ 0 := ne_of_gt hε
+    have := mul_le_mul_of_nonneg_left hSN hε.le
+    simpa [S, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc, hεne]
+      using this
+  have htarget : βstar ≤ β0 + ε * S N := sub_le_iff_le_add.mp hdiff
+  have hiter_ge : βstar ≤ iter P β0 N :=
+    le_trans htarget (hlower N)
+  exact (not_lt.mpr hiter_ge) (hlt N)
 
 /-- Clamp-based drift lemma: delegates to the property-based version via `props_of_is_clamp`. -/
 theorem beta_drift_lower_bound
@@ -286,7 +418,10 @@ theorem beta_drift_lower_bound
     (hproj : ∀ z, P.proj z = clamp P.βmax z) :
     ∀ (β : ℝ) (n : ℕ), 0 ≤ β ∧ β ≤ βstar → P.update β n ≥ β := by
   intro β n hβ
-  have props : ProjIccProps P.βmax P.proj := props_of_is_clamp hproj
+  have hβmax : 0 ≤ P.βmax :=
+    le_trans hβ.1 (le_trans hβ.2 hβstar)
+  have props : ProjIccProps P.βmax P.proj :=
+    props_of_is_clamp hβmax hproj
   exact beta_drift_lower_bound_props βstar ε P hε hβstar hb hg props β n hβ
 
 /-- Clamp-based hitting lemma: delegates to the property-based version via `props_of_is_clamp`. -/
@@ -300,7 +435,10 @@ theorem beta_hits_target
     (hproj : ∀ z, P.proj z = clamp P.βmax z)
     (hβ0 : 0 ≤ β0 ∧ β0 ≤ βstar) :
     ∃ N, (iter P β0 N) ≥ βstar := by
-  have props : ProjIccProps P.βmax P.proj := props_of_is_clamp hproj
+  have hβmax : 0 ≤ P.βmax :=
+    le_trans hβ0.1 (le_trans hβ0.2 hβstar)
+  have props : ProjIccProps P.βmax P.proj :=
+    props_of_is_clamp hβmax hproj
   exact beta_hits_target_props β0 βstar ε P hβ hε hβstar hb hbSum hg props hβ0
 
 end TTSA
@@ -337,8 +475,12 @@ theorem DriftHitThresholdContext.hits_threshold
   (C : DriftHitThresholdContext) :
   ∃ N, C.betaSeq N ≥ C.βstar := by
   classical
+  have hβ0_le : C.β0 ≤ C.βmax :=
+    le_trans C.β0_within.2 C.βstar_within.2
+  have hβmax : 0 ≤ C.βmax := le_trans C.β0_within.1 hβ0_le
   have props : TTSA.ProjIccProps C.βmax C.proj :=
-    TTSA.props_of_is_clamp (βmax:=C.βmax) (proj:=C.proj) C.proj_is_clamp
+    TTSA.props_of_is_clamp (βmax:=C.βmax) (proj:=C.proj)
+      hβmax C.proj_is_clamp
   let Cp : DriftHitThresholdPropsContext :=
   { βmax := C.βmax, βstar := C.βstar, ε := C.ε,
     b := C.b, g := C.g, β0 := C.β0, proj := C.proj,
