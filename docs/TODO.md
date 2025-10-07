@@ -2,11 +2,9 @@
 
 - [ ] **Lemma D / β-meta stability (TTSA)** (`NOC_ROOT/NOC/D/BetaStabilityTTSA.lean`)
   - Context/schedules/noise/regularizer records remain in place; top-level theorem is still a `True` placeholder.
-  - Prove the stepping lemmas (`DriftHitThresholdContext.hits_threshold`, `TTSA.beta_drift_lower_bound`, `TTSA.beta_hits_target`) to replace the current `sorry`s.
-  - Use the new property-based projection interface `TTSA.ProjIccProps`; when `proj` is clamp, reuse `TTSA.clamp_props` (wrapper provided).
-  - Upgrade `TTSA.ProjIccProps` (or introduce `IsProjIcc`) to package monotonicity in the bundle and port the lemmas to consume it; add matching helper lemmas for `DriftHitThresholdPropsContext` so both property routes line up.
-  - After the arithmetic lemmas, hook `g` back to the acceleration window and apply a two-time-scale SA/ODE theorem to obtain the positive fixed point β⋆ > 0 (Tier‑3 target).
-  - Once the arithmetic lemmas land, turn the scaffolded TTSA theorem into the full β-drift result (ODE/SA argument).
+  - Property-layer stepping lemmas are now proved: `TTSA.beta_drift_lower_bound_props`, `TTSA.beta_hits_target_props`, and `DriftHitThresholdPropsContext.hits_threshold_props` (clamp wrappers delegate to them). No `sorry`s remain in the arithmetic layer.
+  - Next: connect the abstract drift bounds back to the acceleration window (`g_lower`), then apply a two-time-scale SA/ODE theorem to replace the top-level `True` placeholder with the β-drift result (Tier‑3 target).
+  - Optional follow-up: package the projection hypotheses into a dedicated structure (e.g., `ProjIccProps` instance/`IsProjIcc`) so future callers can import the monotonicity bundle directly.
 
 - [ ] **Conditional DI–DPI instantiation** (`NOC_ROOT/NOC/E/ConditionalDIDPI.lean` + `NOC_ROOT/NOC/E/Interfaces/DI.lean`)
   - Typeclass interfaces (`DirectedInfo`, `SDPI`, `SDPIStepWitness`) and global lemmas are now available.
@@ -17,7 +15,7 @@
 - [ ] **Interference counterexample (E-0c)** (`NOC_ROOT/NOC/E/Boundary/GaussianMAC.lean`)
   - SNR/MI monotonicity lemmas are proved; the remaining task is to pick explicit channel parameters and show DI increases after ablation (`interference_counterexample`).
   - Vector/log-det scaffolds are in `NOC_ROOT/NOC/E/Boundary/GaussianVector.lean` with helper lemmas in `.../LoewnerHelpers.lean`.
-  - Fill the Loewner helper lemmas (`psd_congr`, `inv_antitone_spd`, `logdet_mono_from_opmonotone`) and close the vector log-det targets (`loewner_logdet_mono`, `mi_after_ablation_logdet`) to finish the Tier‑2 Gaussian upgrade.
+  - `psd_congr` is now proved; finish `inv_antitone_spd` and `logdet_mono_from_opmonotone`, then close the vector log-det goals (`loewner_logdet_mono`, `mi_after_ablation_logdet`) to complete the Tier‑2 Gaussian upgrade.
 
 - [ ] **C′ toy theorem constants** (`NOC_ROOT/NOC/C/CPrimeToy.lean`)
   - Fill in the toy 2×2 instance with explicit Dobrushin/SDPI constants and discharge `toy_Cprime_exists`.
