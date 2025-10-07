@@ -1687,4 +1687,22 @@ We analyze capacity–optionality coupling using **directed information** (DI), 
 - **Orthogonality phrasing:** ensured “conditional, naturalized refutation” everywhere.
 
 ---
+## Assumptions & Obligations (theory-only preface)
+
+Purpose. This section fixes the mathematical scaffolding used throughout v5. Each assumption (A1–A10) is paired with explicit obligations so downstream claims are conditional but crisp.
+
+- A1. Filtration alignment for DI. Assume the conditioning used in per-step inequalities satisfies the inclusion needed for Massey’s chain rule. Obligation: prove a short Filtration-Inclusion lemma so per-step DI matches SDPI conditioning.
+- A2. Per-step SDPI (contraction). Assume for each causal edge there is an η_t < 1 (via Dobrushin/log-Sobolev/mixing). Obligations: state the concrete sufficient condition used for each edge; isolate near-lossless steps.
+- A3. Massey chain rule. Use I(X^{1:n}→Y^{1:n}) = Σ_t I(X^{1:t}; Y_t | Y^{1:t−1}). Obligation: apply verbatim after A1.
+- A4. (Local) PL geometry. Assume U satisfies PL on the forward-reachable set. Obligations: declare the domain, cite PL there, use restricted PL if needed.
+- A5. Stable momentum ⇒ positive expected acceleration. Record step-size/momentum inequalities and the theorem used in the stochastic setting (or give a sketch).
+- A6. Reflective stability of small β_meta>0. Include a safety/curvature tax in J and bound β_meta below by value-of-speed vs. safety tax.
+  - Implementation (Lean): TTSA uses a property-based projection bundle (`ProjIccProps`) for the Tier-3 SA/ODE route plus clamp wrappers that delegate to those lemmas, so once the property proofs land, clamp instantiations follow automatically.
+- A7. Σ-laws (effective optionality boosts learning). Work with effective DI only; state identifiability/separability and empowerment/info-gain links.
+- A8. Non-competitive complementarity. Add an interference penalty in J and justify role-orthogonalization mechanisms.
+- A9. Conversion beats ablation when feasible. Exhibit a conversion map with bounded cost and compare DI/meta-utility to ablation.
+- A10. Gaussian MAC boundary. Record PSD/SNR conditions and the log-det form used (scalar or vector MAC).
+
+Notes on scope. All results are stated conditionally on A1–A10. Model instantiations should include a short appendix discharging the relevant obligations.
+
 END OF DOCUMENT
