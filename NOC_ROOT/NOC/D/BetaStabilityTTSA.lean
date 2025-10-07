@@ -400,10 +400,13 @@ theorem beta_hits_target_props
   have hSN : (βstar - β0) / ε ≤ S N := hN N (le_rfl)
   have hdiff : βstar - β0 ≤ ε * S N := by
     have hεne : ε ≠ 0 := ne_of_gt hε
-    have := mul_le_mul_of_nonneg_left hSN hε.le
-    simpa [S, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc, hεne]
-      using this
-  have htarget : βstar ≤ β0 + ε * S N := sub_le_iff_le_add.mp hdiff
+    have htmp := mul_le_mul_of_nonneg_left hSN hε.le
+    have hlhs : ε * ((βstar - β0) / ε) = βstar - β0 := by
+      field_simp [hεne, sub_eq_add_neg]
+    simpa [S, hlhs, mul_comm, mul_left_comm, mul_assoc] using htmp
+  have htarget : βstar ≤ β0 + ε * S N := by
+    have := add_le_add_right hdiff β0
+    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc, mul_comm] using this
   have hiter_ge : βstar ≤ iter P β0 N :=
     le_trans htarget (hlower N)
   exact (not_lt.mpr hiter_ge) (hlt N)
@@ -468,7 +471,89 @@ def DriftHitThresholdPropsContext.betaSeq (C : DriftHitThresholdPropsContext) : 
 theorem DriftHitThresholdPropsContext.hits_threshold_props
   (C : DriftHitThresholdPropsContext) :
   ∃ N, C.betaSeq N ≥ C.βstar := by
-  sorry
+  classical
+  by_contra hno
+  have hlt : ∀ n, C.betaSeq n < C.βstar := by
+    intro n
+    have hn := (not_exists.mp hno) n
+    exact lt_of_not_ge hn
+  let S : ℕ → ℝ := fun N => (Finset.range N).sum C.b
+  have hβmax_nonneg : 0 ≤ C.βmax :=
+    le_trans C.β0_within.1 (le_trans C.β0_within.2 C.βstar_within.2)
+  have hbounds : ∀ n, 0 ≤ C.betaSeq n ∧ C.betaSeq n ≤ C.βmax := by
+    intro n
+    induction n with
+    | zero =>
+        exact ⟨C.β0_within.1, le_trans C.β0_within.2 C.βstar_within.2⟩
+    | succ n ih =>
+        have h := C.props.range (C.betaSeq n + C.b n * C.g n)
+        simpa [DriftHitThresholdPropsContext.betaSeq] using h
+  have hβmax_proj : C.proj C.βmax = C.βmax :=
+    C.props.fixed_on ⟨hβmax_nonneg, le_rfl⟩
+  have hlower : ∀ n, C.betaSeq n ≥ C.β0 + C.ε * S n := by
+    refine Nat.rec ?base ?step
+    · have hsum_zero : S 0 = 0 := by
+        unfold S
+        simp
+      have hbeta_zero : C.betaSeq 0 = C.β0 := rfl
+      simpa [hbeta_zero, hsum_zero]
+    · intro n ih
+      set βn := C.betaSeq n with hβn_def
+      have hβn_lt : βn < C.βstar := by simpa [hβn_def] using hlt n
+      have hβn_bounds := hbounds n
+      obtain ⟨hβn_nonneg, hβn_le_max⟩ := hβn_bounds
+      have hmul_nonneg : 0 ≤ C.b n * C.g n :=
+        mul_nonneg (C.b_nonneg n) (le_trans (le_of_lt C.ε_pos) (C.g_lb n))
+      have harg_nonneg : 0 ≤ βn + C.b n * C.g n := add_nonneg hβn_nonneg hmul_nonneg
+      have harg_le_max : βn + C.b n * C.g n ≤ C.βmax := by
+        by_contra hgt
+        have hgt' : C.βmax < βn + C.b n * C.g n := lt_of_not_ge hgt
+        have hproj_ge : C.βmax ≤ C.proj (βn + C.b n * C.g n) := by
+          have hle : C.βmax ≤ βn + C.b n * C.g n := le_of_lt hgt'
+          have hmono := C.props.monotone hle
+          simpa [hβmax_proj] using hmono
+        have hproj_le : C.proj (βn + C.b n * C.g n) ≤ C.βmax := (C.props.range _).2
+        have hproj_eq : C.proj (βn + C.b n * C.g n) = C.βmax :=
+          le_antisymm hproj_le hproj_ge
+        have hnext_eq : C.betaSeq (n + 1) = C.βmax := by
+          simpa [DriftHitThresholdPropsContext.betaSeq, hβn_def, hproj_eq]
+        have hnext_ge : C.βstar ≤ C.betaSeq (n + 1) := by
+          simpa [hnext_eq] using C.βstar_within.2
+        exact (not_lt.mpr hnext_ge) (hlt (n + 1))
+      have hproj_arg : C.proj (βn + C.b n * C.g n) = βn + C.b n * C.g n :=
+        C.props.fixed_on ⟨harg_nonneg, harg_le_max⟩
+      have hnext_eq : C.betaSeq (n + 1) = βn + C.b n * C.g n := by
+        simpa [DriftHitThresholdPropsContext.betaSeq, hβn_def, hproj_arg]
+      have hmul_eps : C.ε * C.b n ≤ C.b n * C.g n := by
+        have := mul_le_mul_of_nonneg_left (C.g_lb n) (C.b_nonneg n)
+        simpa [mul_comm] using this
+      have hge_step : βn + C.ε * C.b n ≤ C.betaSeq (n + 1) := by
+        have := add_le_add_left hmul_eps βn
+        simpa [hnext_eq, add_comm, add_left_comm, add_assoc, mul_comm] using this
+      have hsum_le : C.β0 + C.ε * S n + C.ε * C.b n ≤ βn + C.ε * C.b n :=
+        add_le_add_right ih (C.ε * C.b n)
+      have hsum_succ : S (n + 1) = S n + C.b n := by
+        unfold S
+        simp [Finset.sum_range_succ, Nat.succ_eq_add_one]
+      have htrans := le_trans hsum_le hge_step
+      have : C.β0 + C.ε * S (n + 1) ≤ C.betaSeq (n + 1) := by
+        simpa [hsum_succ, mul_add, add_comm, add_left_comm, add_assoc] using htrans
+      exact this
+  have hEV := Filter.tendsto_atTop.1 C.sum_b_diverges
+      ((C.βstar - C.β0) / C.ε)
+  obtain ⟨N, hN⟩ := Filter.eventually_atTop.1 hEV
+  have hSN : (C.βstar - C.β0) / C.ε ≤ S N := hN N le_rfl
+  have hdiff : C.βstar - C.β0 ≤ C.ε * S N := by
+    have hεne : C.ε ≠ 0 := ne_of_gt C.ε_pos
+    have htmp := mul_le_mul_of_nonneg_left hSN (le_of_lt C.ε_pos)
+    have hlhs : C.ε * ((C.βstar - C.β0) / C.ε) = C.βstar - C.β0 := by
+      field_simp [hεne, sub_eq_add_neg]
+    simpa [S, hlhs, mul_comm, mul_left_comm, mul_assoc] using htmp
+  have htarget : C.βstar ≤ C.β0 + C.ε * S N := by
+    have := add_le_add_right hdiff C.β0
+    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc, mul_comm] using this
+  have hge := le_trans htarget (hlower N)
+  exact (not_lt.mpr hge) (hlt N)
 
 /-- Clamp-based hitting lemma delegating to the property-based variant. -/
 theorem DriftHitThresholdContext.hits_threshold
