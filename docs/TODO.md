@@ -38,9 +38,7 @@ The following tasks are currently stalled because the requisite mathematical or 
   - Needs a full two-time-scale SA/ODE meta theorem (measurability, martingale-difference noise bounds, fast attractor selection, ODE limit) which is absent from the library. Until that framework exists the lean proof cannot proceed beyond the arithmetic stepping lemmas.
 
 - **Loewner helper lemmas (`inv_antitone_spd`, `logdet_mono_from_opmonotone`)**
-  - Requires operator-inequality results on the SPD cone: inverse as an order-reversing map and operator-monotonicity of `A ↦ log det(I + A)`. Mathlib currently lacks these, blocking both helpers and the downstream Gaussian vector lemmas.
-
-- **Loewner helper lemmas (`inv_antitone_spd`, `logdet_mono_from_opmonotone`)**
+  - Partial progress: `psd_one_sub_inv_of_ge_one` and a whitening-style proof of `inv_antitone_spd` are sketched in `NOC/E/Boundary/LoewnerHelpers.lean`, but they currently fail to compile because the `Matrix.PosSemidef.sqrt` API we need still has name/signature drift (e.g. rewriting `R := h.psd.sqrt` and establishing `R ⬝ R = C`). Once those namespace calls are normalised, the remaining algebraic cancellations (showing `Sᴴ * S = (R ⬝ R)⁻¹`, etc.) should go through.
   - Action plan (no new library primitives required):
       1. For `inv_antitone_spd`, whiten via the positive-definite square root of `A`, set `C := A^{-1/2} B A^{-1/2}`, show `C - I` is PSD with `psd_congr`, use the same trick with `C`’s square root to deduce `I - C⁻¹` is PSD, then conjugate back to recover `A⁻¹ - B⁻¹` PSD.
       2. For `logdet_mono_from_opmonotone`, define `φ(t) = log det (I + A + t(B - A))` and compute the derivative using `d log det X = tr(X⁻¹ dX)` to get `φ′(t) = tr((I + A + t(B-A))⁻¹ (B-A)) ≥ 0`; monotonicity of `φ` yields the desired inequality at `t = 1`.
