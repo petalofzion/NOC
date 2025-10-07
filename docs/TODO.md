@@ -15,7 +15,7 @@
 - [ ] **Interference counterexample (E-0c)** (`NOC_ROOT/NOC/E/Boundary/GaussianMAC.lean`)
   - SNR/MI monotonicity lemmas are proved; the remaining task is to pick explicit channel parameters and show DI increases after ablation (`interference_counterexample`).
   - Vector/log-det scaffolds are in `NOC_ROOT/NOC/E/Boundary/GaussianVector.lean` with helper lemmas in `.../LoewnerHelpers.lean`.
-  - `psd_congr` is now proved; finish `inv_antitone_spd` and `logdet_mono_from_opmonotone`, then close the vector log-det goals (`loewner_logdet_mono`, `mi_after_ablation_logdet`) to complete the Tier‑2 Gaussian upgrade.
+  - `psd_congr` and `inv_antitone_spd` are now proved. Next: finish `logdet_mono_from_opmonotone`, then close the vector log-det goals (`loewner_logdet_mono`, `mi_after_ablation_logdet`) to complete the Tier‑2 Gaussian upgrade.
 
 - [ ] **C′ toy theorem constants** (`NOC_ROOT/NOC/C/CPrimeToy.lean`)
   - Fill in the toy 2×2 instance with explicit Dobrushin/SDPI constants and discharge `toy_Cprime_exists`.
@@ -38,11 +38,11 @@ The following tasks are currently stalled because the requisite mathematical or 
   - Needs a full two-time-scale SA/ODE meta theorem (measurability, martingale-difference noise bounds, fast attractor selection, ODE limit) which is absent from the library. Until that framework exists the lean proof cannot proceed beyond the arithmetic stepping lemmas.
 
 - **Loewner helper lemmas (`inv_antitone_spd`, `logdet_mono_from_opmonotone`)**
-  - Partial progress: `psd_one_sub_inv_of_ge_one` and a whitening-style proof of `inv_antitone_spd` are sketched in `NOC/E/Boundary/LoewnerHelpers.lean`, but they currently fail to compile because the `Matrix.PosSemidef.sqrt` API we need still has name/signature drift (e.g. rewriting `R := h.psd.sqrt` and establishing `R ⬝ R = C`). Once those namespace calls are normalised, the remaining algebraic cancellations (showing `Sᴴ * S = (R ⬝ R)⁻¹`, etc.) should go through.
+  - Status: `psd_one_sub_inv_of_ge_one` and `inv_antitone_spd` are proved in `NOC/E/Boundary/LoewnerHelpers.lean` (whitening + square‑root argument). `logdet_mono_from_opmonotone` is in progress via the spectral route (whitening, determinant factorization, eigenvalue product bound `∏(1+λᵢ) ≥ 1`). Remaining work is tidying the unitary/conjTranspose rewrites and final determinant equalities.
   - Action plan (no new library primitives required):
-      1. For `inv_antitone_spd`, whiten via the positive-definite square root of `A`, set `C := A^{-1/2} B A^{-1/2}`, show `C - I` is PSD with `psd_congr`, use the same trick with `C`’s square root to deduce `I - C⁻¹` is PSD, then conjugate back to recover `A⁻¹ - B⁻¹` PSD.
-      2. For `logdet_mono_from_opmonotone`, define `φ(t) = log det (I + A + t(B - A))` and compute the derivative using `d log det X = tr(X⁻¹ dX)` to get `φ′(t) = tr((I + A + t(B-A))⁻¹ (B-A)) ≥ 0`; monotonicity of `φ` yields the desired inequality at `t = 1`.
-  - Completing these proofs unblocks the Gaussian vector lemmas.
+      1. Finish `logdet_mono_from_opmonotone` using `det(U*(I+D)*Uᴴ) = det U · det(I+D) · det Uᴴ` and `det(UUᴴ)=1` rather than det-rotation; conclude `det(I+M)=det(I+D)`.
+      2. With that in place, close the vector log-det lemmas in `GaussianVector.lean`.
+  - Completing this item unblocks the Gaussian vector lemmas.
 
 - **Gaussian vector boundary (`loewner_logdet_mono`, `mi_after_ablation_logdet` and the scalar interference example)**
   - Depends on the Loewner lemmas above; once they are implemented, finish the vector comparison and finalize the interference example.

@@ -326,16 +326,42 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
     have hU : U * Uᴴ = (1 : Matrix _ _ ℝ) ∧ Uᴴ * U = (1 : Matrix _ _ ℝ) :=
       (Matrix.mem_unitaryGroup_iff).mp (Matrix.IsHermitian.eigenvectorUnitary hM_herm).2
     have hIplusM : (1 : Matrix _ _ ℝ) + M = U * ((1 : Matrix _ _ ℝ) + D) * Uᴴ := by
-      -- (I + M) = U*I*U† + U*D*U† = U*(I + D)*U†
-      have h1 : U * Uᴴ = (1 : Matrix _ _ ℝ) := hU.2
-      simp [hM_spec, h1, Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
+      -- Prove RHS equals LHS, then take symmetry.
+      have hx : U * ((1 : Matrix _ _ ℝ) + D) * Uᴴ = (1 : Matrix _ _ ℝ) + M := by
+        calc
+          U * ((1 : Matrix _ _ ℝ) + D) * Uᴴ
+              = U * (1 : Matrix _ _ ℝ) * Uᴴ + U * D * Uᴴ := by
+                  simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
+          _   = (1 : Matrix _ _ ℝ) + U * D * Uᴴ := by
+                  simpa [Matrix.conjTranspose, hU.left]
+          _   = (1 : Matrix _ _ ℝ) + M := by
+                  simpa [hM_spec]
+      exact hx.symm
     -- determinant invariance under unitary similarity
     have hdet_eq : (((1 : Matrix _ _ ℝ) + M).det)
         = (((1 : Matrix _ _ ℝ) + D).det) := by
-      -- det(U*(I+D)*U†) = det(U*U†*(I+D)) = det(I*(I+D)) = det(I+D)
-      have h := congr_arg Matrix.det hIplusM
-      have hrot := Matrix.det_mul_right_comm U ((1 : Matrix _ _ ℝ) + D) Uᴴ
-      simpa [Matrix.mul_assoc, hU.2, one_mul] using hrot.trans h
+      -- det(U*(I+D)*U†) = det(U)*det(I+D)*det(U†) = det(I+D)
+      have h₁ : (((1 : Matrix _ _ ℝ) + M).det)
+          = (U * ((1 : Matrix _ _ ℝ) + D) * Uᴴ).det :=
+        congr_arg Matrix.det hIplusM
+      have hProd : U.det * (Uᴴ).det = (1 : ℝ) := by
+        -- take det on both sides of U * Uᴴ = I
+        have := congr_arg Matrix.det hU.left
+        simpa [Matrix.det_mul, Matrix.det_one, Matrix.conjTranspose] using this
+      have h₂ : (U * ((1 : Matrix _ _ ℝ) + D) * Uᴴ).det
+          = ((1 : Matrix _ _ ℝ) + D).det := by
+        calc
+          (U * ((1 : Matrix _ _ ℝ) + D) * Uᴴ).det
+              = (U * ((1 : Matrix _ _ ℝ) + D)).det * (Uᴴ).det := by
+                  simpa [Matrix.mul_assoc] using
+                    (Matrix.det_mul (U * ((1 : Matrix _ _ ℝ) + D)) Uᴴ)
+          _   = (U.det * (((1 : Matrix _ _ ℝ) + D).det)) * (Uᴴ).det := by
+                  simpa [Matrix.det_mul]
+          _   = ((1 : Matrix _ _ ℝ) + D).det * (U.det * (Uᴴ).det) := by
+                  ring
+          _   = ((1 : Matrix _ _ ℝ) + D).det := by
+                  simpa [hProd]
+      simpa using h₁.trans h₂
     -- det(I + D) is a product of (1 + eigenvalues)
     have hdiag : (((1 : Matrix _ _ ℝ) + D).det)
         = ∏ i, (1 + Matrix.IsHermitian.eigenvalues hM_herm i) := by
@@ -349,7 +375,10 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
       simpa [this, Matrix.det_diagonal]
     -- Each factor (1 + λᵢ) ≥ 1 since λᵢ ≥ 0 for PSD M
     have hfac : ∀ i, (1 : ℝ) ≤ 1 + Matrix.IsHermitian.eigenvalues hM_herm i := by
-      intro i; have := hM_psd.eigenvalues_nonneg i; exact add_le_add_left this 1
+      intro i
+      have hnn := hM_psd.eigenvalues_nonneg i
+      have := add_le_add_left hnn 1
+      simpa using this
     have hprod_ge : (1 : ℝ) ≤ ∏ i, (1 + Matrix.IsHermitian.eigenvalues hM_herm i) := by
       -- product of ≥1 terms is ≥ 1
       classical
