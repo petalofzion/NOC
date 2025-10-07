@@ -27,3 +27,21 @@
 
 - [ ] **Documentation sync**
   - After the above items merge, update `docs/README-companion.md`, ChangeLog, and experiment checklists to reflect the completed formalization work.
+
+---
+
+## Blocked Items & Missing Infrastructure
+
+The following tasks are currently stalled because the requisite mathematical or modelling infrastructure is not yet formalised:
+
+- **TTSA β-stability theorem (`lemmaD_beta_stability_TTSA`)**
+  - Needs a full two-time-scale SA/ODE meta theorem (measurability, martingale-difference noise bounds, fast attractor selection, ODE limit) which is absent from the library. Until that framework exists the lean proof cannot proceed beyond the arithmetic stepping lemmas.
+
+- **Loewner helper lemmas (`inv_antitone_spd`, `logdet_mono_from_opmonotone`)**
+  - Requires operator-inequality results on the SPD cone: inverse as an order-reversing map and operator-monotonicity of `A ↦ log det(I + A)`. Mathlib currently lacks these, blocking both helpers and the downstream Gaussian vector lemmas.
+
+- **Gaussian vector boundary (`loewner_logdet_mono`, `mi_after_ablation_logdet` and the scalar interference example)**
+  - Depends on the Loewner lemmas above; until they are proved, the vector comparison and explicit interference example cannot be discharged.
+
+- **DI instantiation (`NOC_ROOT/NOC/E/Interfaces/DI*.lean`)**
+  - Requires a concrete causal model with per-step directed information computations, SDPI witnesses, and filtration-alignment proofs. Those model-specific ingredients are not present, so the typeclass instances and final inequality cannot be instantiated yet.
