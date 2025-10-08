@@ -27,6 +27,11 @@
 - [ ] **Documentation sync**
   - After the above items merge, update `docs/README-companion.md`, ChangeLog, and experiment checklists to reflect the completed formalization work.
 
+- [ ] **API hygiene (Loewner/log‑det)**
+  - Add a minimal lemma `logdet_mono_from_opmonotone_min` using only `A ⪯ B` and `PosDef (I±)`.
+  - Factor out a `det_I_add_sandwich_psd_ge_one` helper encapsulating the diagonal/product step used to show `det(I+M) ≥ 1`.
+  - Optionally migrate GaussianVector to the minimal lemma (or keep domain‑explicit lemma for clarity).
+
 ---
 
 ## Blocked Items & Missing Infrastructure

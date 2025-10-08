@@ -89,3 +89,71 @@ theorem mi_after_ablation_logdet_diag2_id_noise
 
 end
 end NOC
+
+/-!
+Vector→scalar reduction (diagonal case): when the effective SNR matrices are
+diagonal with nonnegative entries, `mi_logdet` monotonicity reduces to the
+componentwise scalar SNR monotonicity via the Loewner order.
+-/
+
+namespace NOC
+noncomputable section
+open Classical Matrix LoewnerHelpers
+open scoped Matrix
+
+variable {n : ℕ}
+
+/-- Diagonal monotonicity: if `a i ≤ b i` and all entries are nonnegative, then
+`mi_logdet (diag a) ≤ mi_logdet (diag b)`. -/
+theorem mi_logdet_diagonal_mono
+  [NeZero n]
+  (a b : Fin n → ℝ)
+  (ha : ∀ i, 0 ≤ a i) (hb : ∀ i, 0 ≤ b i)
+  (hcomp : ∀ i, a i ≤ b i) :
+  mi_logdet (Matrix.diagonal a) ≤ mi_logdet (Matrix.diagonal b) := by
+  classical
+  -- Hermitian/PSD for diagonal matrices
+  have hA_herm : Matrix.IsHermitian (Matrix.diagonal a) := by
+    simpa using (Matrix.isHermitian_diagonal (v := a))
+  have hB_herm : Matrix.IsHermitian (Matrix.diagonal b) := by
+    simpa using (Matrix.isHermitian_diagonal (v := b))
+  have hA_psd : Matrix.PosSemidef (Matrix.diagonal a) := by
+    -- PSD(diag a) iff ∀ i, 0 ≤ a i
+    simpa using (Matrix.PosSemidef.diagonal (h := ha))
+  have hB_psd : Matrix.PosSemidef (Matrix.diagonal b) := by
+    simpa using (Matrix.PosSemidef.diagonal (h := hb))
+  -- Loewner: diag(b) − diag(a) = diag(b − a), with nonnegative diagonal
+  have hBA_psd : Matrix.PosSemidef (Matrix.diagonal b - Matrix.diagonal a) := by
+    -- rewrite as diagonal of (b − a)
+    have hdiff : Matrix.diagonal b - Matrix.diagonal a
+        = Matrix.diagonal (fun i => b i - a i) := by
+      ext i j; by_cases hij : i = j
+      · subst hij; simp
+      · simp [hij]
+    -- show PSD of diagonal with nonnegative entries
+    have hnn : ∀ i, 0 ≤ b i - a i := by intro i; exact sub_nonneg.mpr (hcomp i)
+    simpa [hdiff] using (Matrix.PosSemidef.diagonal (h := hnn))
+  -- PD(I + diag a) and PD(I + diag b)
+  have hIspA : Matrix.PosDef ((1 : Matrix (Fin n) (Fin n) ℝ) + Matrix.diagonal a) := by
+    -- diagonal ((1 + a i)); each entry strictly positive since a i ≥ 0
+    have hpos : ∀ i, 0 < (1 : ℝ) + a i := by
+      intro i; have := add_pos_of_nonneg_of_pos (ha i) zero_lt_one; simpa [add_comm] using this
+    -- PosDef(diagonal d) ↔ ∀ i, 0 < d i
+    simpa using (Matrix.posDef_diagonal_iff (d := fun i => (1 : ℝ) + a i)).2 hpos
+  have hIspB : Matrix.PosDef ((1 : Matrix (Fin n) (Fin n) ℝ) + Matrix.diagonal b) := by
+    have hpos : ∀ i, 0 < (1 : ℝ) + b i := by
+      intro i; have := add_pos_of_nonneg_of_pos (hb i) zero_lt_one; simpa [add_comm] using this
+    simpa using (Matrix.posDef_diagonal_iff (d := fun i => (1 : ℝ) + b i)).2 hpos
+  -- Assemble A ⪯ B and apply the vector monotonicity lemma
+  have hAB : LoewnerLE (Matrix.diagonal a) (Matrix.diagonal b) := by
+    -- A ⪯ B means PSD(B − A)
+    simpa [LoewnerLE] using hBA_psd
+  -- Apply the main lemma
+  exact GaussianVector.loewner_logdet_mono
+    (A := Matrix.diagonal a) (B := Matrix.diagonal b)
+    (hA := hA_herm) (hB := hB_herm)
+    (hA_psd := hA_psd) (hB_psd := hB_psd)
+    (hAB := hAB) (hIspA := hIspA) (hIspB := hIspB)
+
+end
+end NOC
