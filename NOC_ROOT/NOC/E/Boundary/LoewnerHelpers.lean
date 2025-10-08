@@ -81,14 +81,6 @@ private lemma psd_one_sub_inv_of_ge_one
   have hS_trans : S.transpose = S := by
     simpa [Matrix.conjTranspose] using hS_self
   -- Identities for the inverse pair (S,R).
-  have hSR : S * R = (1 : Matrix _ _ ℝ) := by
-    simpa [hS_def, Matrix.mul_assoc] using
-      Matrix.inv_mul_cancel_left_of_invertible (A := R)
-        (B := (1 : Matrix (Fin n) (Fin n) ℝ))
-  have hRS : R * S = (1 : Matrix _ _ ℝ) := by
-    simpa [hS_def, Matrix.mul_assoc] using
-      Matrix.mul_inv_cancel_left_of_invertible (A := R)
-        (B := (1 : Matrix (Fin n) (Fin n) ℝ))
   have hMain : S.transpose * (C - (1 : Matrix _ _ ℝ)) * S =
       (1 : Matrix _ _ ℝ) - C⁻¹ := by simpa [hS_trans] using hSimpl
   -- Push PSD through the congruence
@@ -270,6 +262,8 @@ theorem inv_antitone_spd {n : ℕ}
   have hSand' : Matrix.PosSemidef (S * ((1 : Matrix _ _ ℝ) - C⁻¹) * S) := by
     simpa [hS_trans] using hSand
   simpa [hExpr] using hSand'
+
+
 
 /-- Operator-monotonicity of the logarithm on SPD matrices, expressed via log-det (target). -/
 theorem logdet_mono_from_opmonotone {n : ℕ}
@@ -497,6 +491,40 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
   -- Monotonicity of log on `(0, ∞)`
   have hposA := hIspA.det_pos
   exact Real.log_le_log hposA hDet_ratio
+
+   /-!
+  Typed wrappers (HermitianMat): domain‑disciplined variants with thin
+  matrix‑level wrappers above. These follow the same hypotheses but expose
+  the Loewner order on Hermitian matrices explicitly.
+  -/
+
+  namespace HermitianMat
+
+  /-- Inversion reverses Loewner order on SPD, typed `HermitianMat` form. -/
+  theorem inv_antitone_spd_H {n : ℕ}
+    (A B : HermitianMat n)
+    (hA : Matrix.PosDef A.M) (hB : Matrix.PosDef B.M)
+    (hAB : A ≤ₗ B) :
+    Matrix.PosSemidef (A.M⁻¹ - B.M⁻¹) := by
+    exact LoewnerHelpers.inv_antitone_spd (A:=A.M) (B:=B.M) hA hB hAB
+
+  /-- Log‑det monotonicity under Loewner order, typed `HermitianMat` form. -/
+  theorem logdet_mono_from_opmonotone_H {n : ℕ}
+    (A B : HermitianMat n)
+    (hA_psd : Matrix.PosSemidef A.M) (hB_psd : Matrix.PosSemidef B.M)
+    (hAB : A ≤ₗ B)
+    (hIspA : Matrix.PosDef ((1 : Matrix (Fin n) (Fin n) ℝ) + A.M))
+    (hIspB : Matrix.PosDef ((1 : Matrix (Fin n) (Fin n) ℝ) + B.M)) :
+    Real.log (((1 : Matrix (Fin n) (Fin n) ℝ) + A.M).det)
+      ≤ Real.log (((1 : Matrix (Fin n) (Fin n) ℝ) + B.M).det) := by
+    have h := LoewnerHelpers.logdet_mono_from_opmonotone
+      (A:=A.M) (B:=B.M)
+      (hA:=A.herm) (hB:=B.herm)
+      (hA_psd:=hA_psd) (hB_psd:=hB_psd)
+      (hAB:=hAB) (hIspA:=hIspA) (hIspB:=hIspB)
+    simpa using h
+
+  end HermitianMat
 
 end LoewnerHelpers
 
