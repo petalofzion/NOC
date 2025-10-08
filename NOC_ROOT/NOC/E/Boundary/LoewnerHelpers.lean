@@ -15,8 +15,9 @@ open Classical Matrix
 open scoped Matrix
 
 -- Tame heavy algebraic rewrites in this file
-set_option maxHeartbeats 800000
+set_option maxHeartbeats 2000000
 set_option maxRecDepth 400
+set_option diagnostics true
 
 namespace LoewnerHelpers
 
@@ -88,15 +89,6 @@ private lemma psd_one_sub_inv_of_ge_one
     simpa [hS_def, Matrix.mul_assoc] using
       Matrix.mul_inv_cancel_left_of_invertible (A := R)
         (B := (1 : Matrix (Fin n) (Fin n) ℝ))
-  -- Basic identities with `S = R⁻¹`.
-  have hSR : S * R = (1 : Matrix _ _ ℝ) := by
-    simpa [hS_def, Matrix.mul_assoc] using
-      Matrix.inv_mul_cancel_left_of_invertible (A := R)
-        (B := (1 : Matrix (Fin n) (Fin n) ℝ))
-  have hRS : R * S = (1 : Matrix _ _ ℝ) := by
-    simpa [hS_def, Matrix.mul_assoc] using
-      Matrix.mul_inv_cancel_left_of_invertible (A := R)
-        (B := (1 : Matrix (Fin n) (Fin n) ℝ))
   have hMain : S.transpose * (C - (1 : Matrix _ _ ℝ)) * S =
       (1 : Matrix _ _ ℝ) - C⁻¹ := by simpa [hS_trans] using hSimpl
   -- Push PSD through the congruence
@@ -108,28 +100,7 @@ private lemma psd_one_sub_inv_of_ge_one
 
 /-! Small determinant helpers to avoid heavy `simp` in the spectral/log‑det proof. -/
 
-/-- Determinant invariance under unitary conjugation: if `Uᴴ * U = I`, then
-    `det (Uᴴ * N * U) = det N`. -/
-private lemma det_conj_unitary
-    {n : ℕ} {U N : Matrix (Fin n) (Fin n) ℝ}
-    (hU_right : Uᴴ * U = (1 : Matrix (Fin n) (Fin n) ℝ)) :
-    (Uᴴ * N * U).det = N.det := by
-  classical
-  -- det(Uᴴ * N * U) = det(Uᴴ) · det N · det U, and det(Uᴴ)·det U = 1 by unitarity
-  have h_mulUN : (Uᴴ * N).det = (Uᴴ).det * N.det := by
-    simpa [Matrix.mul_assoc] using Matrix.det_mul Uᴴ N
-  have hdetUUone : (Uᴴ).det * U.det = 1 := by
-    have hdet : (Uᴴ * U).det = 1 := by simpa [hU_right, Matrix.det_one]
-    have hmul : (Uᴴ * U).det = (Uᴴ).det * U.det := by simpa using Matrix.det_mul Uᴴ U
-    simpa [hmul] using hdet
-  calc
-    (Uᴴ * N * U).det
-        = (Uᴴ * N).det * U.det := by
-            simpa [Matrix.mul_assoc] using Matrix.det_mul (Uᴴ * N) U
-    _   = ((Uᴴ).det * N.det) * U.det := by simpa [h_mulUN]
-    _   = N.det * ((Uᴴ).det * U.det) := by ring
-    _   = N.det * 1 := by rw [hdetUUone]
-    _   = N.det := by simp
+-- (helper lemma `det_conj_unitary` removed; we prove the needed fact inline in `logdet_mono_from_opmonotone`)
 
 /-- Diagonal identity: `det (I + diagonal v) = ∏ i, (1 + v i)`. -/
 private lemma det_add_diagonal
@@ -144,6 +115,17 @@ private lemma det_add_diagonal
     · subst hij; simp
     · simp [hij]
   simpa [this, Matrix.det_diagonal]
+
+-- Over ℝ the star-operation is the identity; mapping by `starRingEnd ℝ` is pointwise the identity.
+@[simp] private lemma map_starRingEnd_real
+    {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ) :
+    A.map (starRingEnd ℝ) = A := by
+  ext i j; simp
+
+@[simp] private lemma transpose_map_starRingEnd_real
+    {n : ℕ} (A : Matrix (Fin n) (Fin n) ℝ) :
+    A.transpose.map (starRingEnd ℝ) = A.transpose := by
+  ext i j; simp
 
 /-- Loewner order on real Hermitian matrices: `A ⪯ B` iff `B − A` is PSD. -/
 def LoewnerLE {n : ℕ} (A B : Matrix (Fin n) (Fin n) ℝ) : Prop :=
@@ -170,14 +152,11 @@ end HermitianMat
 `Mᵀ B M − Mᵀ A M = Mᵀ (B − A) M`. -/
 theorem psd_congr {n : ℕ}
   (A B M : Matrix (Fin n) (Fin n) ℝ)
-  (hA : Matrix.IsHermitian A) (hB : Matrix.IsHermitian B)
-  (hA_psd : Matrix.PosSemidef A) (hB_psd : Matrix.PosSemidef B)
-  (hAB : A ⪯ B) :
-  Matrix.PosSemidef ((M.transpose * B * M) - (M.transpose * A * M)) := by
+  (hAB : Matrix.PosSemidef (B - A)) :
+  Matrix.PosSemidef (Mᴴ * B * M - (Mᴴ * A * M)) := by
   classical
-  have hdiff : Matrix.PosSemidef (B - A) := hAB
-  have hcongr := Matrix.PosSemidef.conjTranspose_mul_mul_same hdiff M
-  simpa [Matrix.mul_sub, Matrix.sub_mul] using hcongr
+  simpa [Matrix.mul_sub, Matrix.sub_mul] using
+    (Matrix.PosSemidef.conjTranspose_mul_mul_same (A := B - A) hAB M)
 
 /-- Matrix inversion reverses the Loewner order on the SPD cone (target statement). -/
 theorem inv_antitone_spd {n : ℕ}
@@ -300,21 +279,22 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
   -- Whitening with respect to X := I + A
   let X : Matrix (Fin n) (Fin n) ℝ := (1 : Matrix _ _ ℝ) + A
   have hX_psd : Matrix.PosSemidef X := hIspA.posSemidef
-  let R : Matrix (Fin n) (Fin n) ℝ := Matrix.PosSemidef.sqrt hX_psd
-  have hR_mul : R * R = X := by simpa using Matrix.PosSemidef.sqrt_mul_self hX_psd
+  let R : Matrix (Fin n) (Fin n) ℝ := hX_psd.sqrt
+  have hR_mul : R * R = X := by simpa [R] using hX_psd.sqrt_mul_self
   have hR_pos : Matrix.PosDef R := by simpa using Matrix.PosDef.posDef_sqrt hIspA
   haveI : Invertible R := (hR_pos.isUnit).invertible
   let S : Matrix (Fin n) (Fin n) ℝ := (⅟ R)
   have hS_pos : Matrix.PosDef S := by simpa [S] using Matrix.PosDef.inv hR_pos
   have hS_herm : S.IsHermitian := hS_pos.isHermitian
   have hS_self : Sᴴ = S := hS_herm.eq
+  have hS_trans : S.transpose = S := by
+    simpa [Matrix.conjTranspose] using hS_self
   -- Define M := S (B−A) S, then M ⪰ 0
   let Y : Matrix (Fin n) (Fin n) ℝ := B - A
   have hY_psd : Matrix.PosSemidef Y := hAB
-  let M : Matrix (Fin n) (Fin n) ℝ := S * Y * S
+  let M : Matrix (Fin n) (Fin n) ℝ := Sᴴ * Y * S
   have hM_psd : Matrix.PosSemidef M := by
-    simpa [M, Matrix.mul_assoc, hS_self] using
-      Matrix.PosSemidef.conjTranspose_mul_mul_same hY_psd S
+    simpa [M] using Matrix.PosSemidef.conjTranspose_mul_mul_same hY_psd S
   -- Algebra: S X S = I and S (I + B) S = I + M
   have hSR : S * R = (1 : Matrix _ _ ℝ) := by
     simpa [S, Matrix.mul_assoc] using
@@ -329,13 +309,30 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
       S * X * S = S * (R * R) * S := by simp [X, hR_mul]
       _ = (S * R) * (R * S) := by simp [Matrix.mul_assoc]
       _ = (1 : Matrix _ _ ℝ) := by simp [hSR, hRS]
-  have hSIBS : S * ((1 : Matrix _ _ ℝ) + B) * S
-      = (1 : Matrix _ _ ℝ) + M := by
-    -- since (I+B) = X + Y with X = (I+A) and Y = (B−A)
-    have hIB : (1 : Matrix _ _ ℝ) + B = X + Y := by
-      simp [X, Y, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
-    -- expand and collapse using `hSXS` and the definition of `M`
-    simp [hIB, X, Y, M, Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc, hSXS, hS_self]
+  have hSIBS : S * ((1 : Matrix _ _ ℝ) + B) * S = (1 : Matrix _ _ ℝ) + M := by
+    -- Expand algebraically and rewrite B as A + (B - A).
+    calc
+      S * ((1 : Matrix _ _ ℝ) + B) * S
+          = S * (1 : Matrix _ _ ℝ) * S + S * B * S := by
+                simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
+      _   = S * (1 : Matrix _ _ ℝ) * S + S * (A + (B - A)) * S := by
+                simp [Matrix.mul_add, Matrix.mul_assoc, add_comm, add_left_comm, add_assoc]
+      _   = S * (1 : Matrix _ _ ℝ) * S + S * A * S + S * (B - A) * S := by
+                simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
+      _   = (S * (1 : Matrix _ _ ℝ) * S + S * A * S) + S * (B - A) * S := by
+                ac_rfl
+      _   = (S * ((1 : Matrix _ _ ℝ) + A) * S) + S * (B - A) * S := by
+                simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
+      _   = (1 : Matrix _ _ ℝ) + S * (B - A) * S := by
+                simpa [hSXS]
+      _   = (1 : Matrix _ _ ℝ) + M := by
+                -- Since S is Hermitian over ℝ, Sᴴ = S, and over ℝ the star-map is the identity,
+                -- so `M = S*(B-A)*S`.
+                have hM_def : M = S * (B - A) * S := by
+                  simp [M, Y, Matrix.conjTranspose, map_starRingEnd_real,
+                        transpose_map_starRingEnd_real, hS_trans, hS_self]
+                have hEq : S * (B - A) * S = M := hM_def.symm
+                simpa [hEq]
   -- Move back from whitened coordinates:
   have hIB_eq : (1 : Matrix _ _ ℝ) + B = R * ((1 : Matrix _ _ ℝ) + M) * R := by
     calc
@@ -355,18 +352,19 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
     -- det(1+B) = det(R * (1+M) * R) = det R · det (1+M) · det R
     have h : det ((1 : Matrix _ _ ℝ) + B) = det (R * ((1 : Matrix _ _ ℝ) + M) * R) :=
       congr_arg Matrix.det hIB_eq
-    have h1 : det (R * ((1 : Matrix _ _ ℝ) + M) * R)
+    have hA : det (R * ((1 : Matrix _ _ ℝ) + M) * R)
         = det (R * ((1 : Matrix _ _ ℝ) + M)) * det R := by
-      simpa [Matrix.mul_assoc] using (Matrix.det_mul (A := R * ((1 : Matrix _ _ ℝ) + M)) (B := R))
-    have h2 : det (R * ((1 : Matrix _ _ ℝ) + M))
+      have htmp := Matrix.det_mul (R * ((1 : Matrix _ _ ℝ) + M)) R
+      simpa [Matrix.mul_assoc] using htmp
+    have hB : det (R * ((1 : Matrix _ _ ℝ) + M))
         = det R * det ((1 : Matrix _ _ ℝ) + M) := by
-      simpa [Matrix.mul_assoc] using (Matrix.det_mul (A := R) (B := ((1 : Matrix _ _ ℝ) + M)))
+      have htmp := Matrix.det_mul R ((1 : Matrix _ _ ℝ) + M)
+      simpa [Matrix.mul_assoc] using htmp
     calc
       det ((1 : Matrix _ _ ℝ) + B)
           = det (R * ((1 : Matrix _ _ ℝ) + M) * R) := h
-      _   = det (R * ((1 : Matrix _ _ ℝ) + M)) * det R := h1
-      _   = (det R * det ((1 : Matrix _ _ ℝ) + M)) * det R := by
-              simpa [h2]
+      _   = det (R * ((1 : Matrix _ _ ℝ) + M)) * det R := hA
+      _   = (det R * det ((1 : Matrix _ _ ℝ) + M)) * det R := by simpa [hB]
       _   = (det R)^2 * det ((1 : Matrix _ _ ℝ) + M) := by ring
   -- Show det(I+M) ≥ 1 via spectral theorem: product of (1+λᵢ), λᵢ ≥ 0
   have hDetM_ge : (1 : ℝ) ≤ (((1 : Matrix _ _ ℝ) + M).det) := by
@@ -389,50 +387,61 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
                 simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
         _   = (Uᴴ * U) + Uᴴ * M * U := by simp
         _   = (1 : Matrix _ _ ℝ) + Uᴴ * M * U := by simpa [hU_right]
-    have hconj2 : Uᴴ * M * U = Matrix.diagonal
-        (fun i => Matrix.IsHermitian.eigenvalues (hM_psd.isHermitian) i) := by
+    have hU_rightT : U.transpose * U = (1 : Matrix _ _ ℝ) := by
+      simpa [Matrix.conjTranspose] using hU_right
+    have hconj2 : Uᴴ * M * U = D := by
+      have htmp : U.transpose * M * U = (U.transpose * U) * D * (U.transpose * U) := by
+        simp [hM_spec, Matrix.mul_assoc]
+      -- close with `hU_rightT` and associativity
+      simpa [Matrix.conjTranspose, hU_rightT, Matrix.mul_assoc] using htmp
+    have hconj : Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U = (1 : Matrix _ _ ℝ) + D := by
       calc
-        Uᴴ * M * U = Uᴴ * (U * D * Uᴴ) * U := by simpa [hM_spec]
-        _ = ((Uᴴ * U) * D) * (Uᴴ * U) := by simp [Matrix.mul_assoc, Matrix.conjTranspose]
-        _ = (1 * D) * 1 := by simpa [hU_right]
-        _ = D := by simp
-    have hconj : Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U
-        = (1 : Matrix _ _ ℝ)
-            + Matrix.diagonal (fun i => Matrix.IsHermitian.eigenvalues (hM_psd.isHermitian) i) := by
-      simpa [hconj1, hconj2, Matrix.conjTranspose]
-    -- Determinant invariance under conjugation by U (compute directly)
-    have hdetUUone : (Uᴴ).det * U.det = 1 := by
-      have hdet : (Uᴴ * U).det = 1 := by simpa [hU_right, Matrix.det_one]
-      have hmul : (Uᴴ * U).det = (Uᴴ).det * U.det := by simpa using Matrix.det_mul Uᴴ U
-      simpa [hmul] using hdet
-    have hdet_conj : (Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U).det = (((1 : Matrix _ _ ℝ) + M).det) := by
-      have h1 := Matrix.det_mul Uᴴ ((1 : Matrix _ _ ℝ) + M)
-      have h2 := Matrix.det_mul (Uᴴ * ((1 : Matrix _ _ ℝ) + M)) U
-      have hchain : (Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U).det
-          = (Uᴴ).det * (((1 : Matrix _ _ ℝ) + M).det) * U.det := by
-        simpa [Matrix.mul_assoc, h1, mul_comm, mul_left_comm, mul_assoc] using h2
-      calc
-        (Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U).det
-            = (Uᴴ).det * (((1 : Matrix _ _ ℝ) + M).det) * U.det := hchain
-        _   = ((Uᴴ).det * U.det) * (((1 : Matrix _ _ ℝ) + M).det) := by ring
-        _   = 1 * (((1 : Matrix _ _ ℝ) + M).det) := by rw [hdetUUone]
-        _   = (((1 : Matrix _ _ ℝ) + M).det) := by simp
-    have hdet_invar : (((1 : Matrix _ _ ℝ) + M).det)
-        = (((1 : Matrix _ _ ℝ)
-              + Matrix.diagonal (fun i => Matrix.IsHermitian.eigenvalues (hM_psd.isHermitian) i)).det) := by
-      -- (I+M).det = det(Uᴴ (I+M) U) = det(1 + D)
-      have hright : (Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U).det
-            = (((1 : Matrix _ _ ℝ)
-                  + Matrix.diagonal (fun i => Matrix.IsHermitian.eigenvalues (hM_psd.isHermitian) i)).det) := by
+        Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U
+            = (1 : Matrix _ _ ℝ) + Uᴴ * M * U := hconj1
+        _   = (1 : Matrix _ _ ℝ) + D := by simpa [hconj2]
+    -- Determinant invariance under unitary conjugation: det(I+M) = det(I+D)
+    -- First, a robust determinant identity via the transpose route over ℝ.
+    have hdet_sq : U.det * U.det = 1 := by
+      have hmul_symm : (U.transpose).det * U.det = (U.transpose * U).det := by
+        simpa using (Matrix.det_mul (U.transpose) U).symm
+      have hdet_eq1 : (U.transpose * U).det = 1 := by
+        simpa [hU_rightT, Matrix.det_one]
+      simpa [Matrix.det_transpose] using hmul_symm.trans hdet_eq1
+    have hdetU : (Uᴴ).det * U.det = 1 := by
+      have hdet_conj : (Uᴴ).det = U.det := by
+        simpa using (Matrix.det_conjTranspose U)
+      simpa [hdet_conj] using hdet_sq
+    have hdet_mul1 : (Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U).det
+        = ((Uᴴ).det * (((1 : Matrix _ _ ℝ) + M).det)) * U.det := by
+      have h1 := Matrix.det_mul (Uᴴ * ((1 : Matrix _ _ ℝ) + M)) U
+      have h2 := Matrix.det_mul Uᴴ ((1 : Matrix _ _ ℝ) + M)
+      have h2' : det (Uᴴ * ((1 : Matrix _ _ ℝ) + M))
+          = det (Uᴴ) * det ((1 : Matrix _ _ ℝ) + M) := by
+        simpa using h2
+      simpa [Matrix.mul_assoc, h2'] using h1
+    have hdet_invar : (((1 : Matrix _ _ ℝ) + M).det) = (((1 : Matrix _ _ ℝ) + D).det) := by
+      -- From `Uᴴ (I+M) U = I + D`, compare determinants and cancel `det Uᴴ · det U = 1`.
+      have hconj_det : (Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U).det = (((1 : Matrix _ _ ℝ) + D).det) := by
         simpa using congrArg Matrix.det hconj
-      have hleft : (((1 : Matrix _ _ ℝ) + M).det) = (Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U).det :=
-        hdet_conj.symm
-      simpa [hleft] using hright
+      have hdetU_mul : (Uᴴ).det * U.det = 1 := by
+        have hdet : (Uᴴ * U).det = 1 := by simpa [hU_right, Matrix.det_one]
+        have hmul : (Uᴴ).det * U.det = (Uᴴ * U).det := by
+          simpa using (Matrix.det_mul Uᴴ U).symm
+        simpa [hmul] using hdet
+      calc
+        (((1 : Matrix _ _ ℝ) + M).det)
+            = (((1 : Matrix _ _ ℝ) + M).det) * (U.det * U.det) := by
+                simpa [hdet_sq, mul_comm]
+        _   = ((Uᴴ).det * (((1 : Matrix _ _ ℝ) + M).det)) * U.det := by
+                have hdet_conj : (Uᴴ).det = U.det := by
+                  simpa using (Matrix.det_conjTranspose U)
+                simpa [hdet_conj, mul_comm, mul_left_comm, mul_assoc]
+        _   = (Uᴴ * ((1 : Matrix _ _ ℝ) + M) * U).det := by
+                simpa [Matrix.mul_assoc] using (hdet_mul1).symm
+        _   = (((1 : Matrix _ _ ℝ) + D).det) := by simpa using hconj_det
     -- det(I + diagonal(eigs)) is the product of (1 + eigenvalues)
-    have hdiag : (((1 : Matrix _ _ ℝ)
-                      + Matrix.diagonal (fun i => Matrix.IsHermitian.eigenvalues (hM_psd.isHermitian) i)).det)
-        = ∏ i, (1 + Matrix.IsHermitian.eigenvalues hM_herm i) := by
-      simpa using det_add_diagonal (fun i => Matrix.IsHermitian.eigenvalues hM_herm i)
+    have hdiag : (((1 : Matrix _ _ ℝ) + D).det) = ∏ i, (1 + Matrix.IsHermitian.eigenvalues hM_herm i) := by
+      simpa [D] using det_add_diagonal (fun i => Matrix.IsHermitian.eigenvalues hM_herm i)
     -- Each factor (1 + λᵢ) ≥ 1 since λᵢ ≥ 0 for PSD M
     have hfac : ∀ i, (1 : ℝ) ≤ 1 + Matrix.IsHermitian.eigenvalues hM_herm i := by
       intro i
@@ -443,18 +452,23 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
       classical
       have hnonneg : ∀ i, 0 ≤ (1 : ℝ) + Matrix.IsHermitian.eigenvalues hM_herm i := by
         intro i; exact add_nonneg zero_le_one (hM_psd.eigenvalues_nonneg i)
-      refine Finset.induction_on (Finset.univ : Finset (Fin n)) ?base ?step
-      · simp
-      · intro a s ha hs
-        have ha_not : a ∉ s := by simpa using ha
-        have hage := hfac a
-        have hs_ge := hs
-        have hs_nonneg : 0 ≤ ∏ i ∈ s, (1 + Matrix.IsHermitian.eigenvalues hM_herm i) :=
-          Finset.prod_nonneg (by intro _ _; exact hnonneg _)
-        have := mul_le_mul hage hs_ge (by norm_num) (hnonneg a)
-        simpa [Finset.prod_insert ha_not, one_mul] using this
-    -- put all together
-    simpa [hdet_invar, hdiag] using hprod_ge
+      refine Finset.induction_on (Finset.univ : Finset (Fin n)) (by simp) ?_
+      intro a s ha hs
+      have ha_not : a ∉ s := by simpa using ha
+      have hage := hfac a
+      -- By induction hypothesis and `hage`, both factors are ≥ 1
+      have hs1 : (1 : ℝ) ≤ ∏ i ∈ s, (1 + Matrix.IsHermitian.eigenvalues hM_herm i) := hs
+      have step' : (1 : ℝ)
+          ≤ (1 + Matrix.IsHermitian.eigenvalues hM_herm a)
+              * ∏ i ∈ s, (1 + Matrix.IsHermitian.eigenvalues hM_herm i) :=
+        one_le_mul_of_one_le_of_one_le hage hs1
+      simpa [Finset.prod_insert ha_not, one_mul] using step'
+    -- put all together: 1 ≤ det(I+D) and hence 1 ≤ det(I+M)
+    have hDetD_ge : (1 : ℝ) ≤ (((1 : Matrix _ _ ℝ) + D).det) := by
+      simpa [hdiag] using hprod_ge
+    have hDetM_ge' : (1 : ℝ) ≤ (((1 : Matrix _ _ ℝ) + M).det) := by
+      simpa [hdet_invar] using hDetD_ge
+    exact hDetM_ge'
   -- Det inequality via factorization
   have hDet_ratio : (((1 : Matrix _ _ ℝ) + A).det)
       ≤ (((1 : Matrix _ _ ℝ) + B).det) := by
@@ -464,6 +478,7 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
       simpa [mul_comm] using mul_le_mul_of_nonneg_left hDetM_ge hdetR_sq_nonneg
     simpa [hIA_det, hIB_det, mul_comm, mul_left_comm, mul_assoc] using this
   -- Finally, apply log monotonicity on positive reals
+  -- Monotonicity of log on `(0, ∞)`
   have hposA := hIspA.det_pos
   have hposB := hIspB.det_pos
   exact (Real.log_le_log hposA hposB) hDet_ratio

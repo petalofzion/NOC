@@ -15,10 +15,15 @@
 - [ ] **Interference counterexample (E-0c)** (`NOC_ROOT/NOC/E/Boundary/GaussianMAC.lean`)
   - Scalar status: SNR/MI monotonicity lemmas are proved (e.g., `mi_of_snr_mono`, `mi_after_ablation_ge_with_interference`). Pick explicit channel parameters and finalize the illustrative counterexample.
   - Vector path: scaffolds live in `NOC_ROOT/NOC/E/Boundary/GaussianVector.lean`; helper lemmas in `.../LoewnerHelpers.lean`.
-  - Loewner helpers: `psd_congr` and `inv_antitone_spd` are proved. `logdet_mono_from_opmonotone` is in progress with the spectral route wired (whitening, conjugation identity, determinant factorization); remaining work is to finish the unitary equalities and diagonal det step.
-  - Next actions (concrete):
-    - In `LoewnerHelpers.logdet_mono_from_opmonotone`, keep U/D local, use `det(Uᴴ (I+M) U) = det(I+D)` via two `Matrix.det_mul` steps and `det(Uᴴ)·det(U)=1`, then apply the diagonal determinant product identity.
-    - Once that compiles, close `GaussianVector.lean`: prove `loewner_logdet_mono` and `mi_after_ablation_logdet` by delegating to the helper.
+  - Loewner helpers: `psd_congr` and `inv_antitone_spd` are proved. `logdet_mono_from_opmonotone` is nearly complete: whitening, unitary conjugation, and determinant factorization are implemented with explicit `calc` chains (no heavy `simp`).
+  - Remaining mechanical items in `LoewnerHelpers.logdet_mono_from_opmonotone`:
+    - Close the S·(1+B)·S = 1 + M step entirely with `calc` (no recursion): use `B = A + (B−A)`, distribute with `Matrix.mul_add`/`Matrix.add_mul`, and rewrite `Sᴴ = S` once.
+    - Keep `U`/`D` local; derive `det(Uᴴ (I+M) U) = det(I+D)` via two `Matrix.det_mul` calls and the identity `det(Uᴴ)·det(U) = 1` (proved via transpose on ℝ).
+    - Apply the diagonal determinant identity `det(I + diagonal v) = ∏ (1+vᵢ)` and `eigenvalues(M) ≥ 0` to conclude `det(I+M) ≥ 1`.
+    - Finish with `Real.log_le_log` using `det(1+A) = det(R)^2` and `det(1+B) = det(R)^2 · det(1+M)`.
+  - Once green, close `GaussianVector.lean` by delegating to the helper for:
+    - `loewner_logdet_mono` (matrix Loewner monotonicity of log-det), and
+    - `mi_after_ablation_logdet` (PSD-ordering of effective SNR matrices ⇒ MI proxy increases).
 
 - [ ] **C′ toy theorem constants** (`NOC_ROOT/NOC/C/CPrimeToy.lean`)
   - Fill in the toy 2×2 instance with explicit Dobrushin/SDPI constants and discharge `toy_Cprime_exists`.
