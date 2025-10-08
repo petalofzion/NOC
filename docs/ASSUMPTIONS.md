@@ -69,6 +69,48 @@ Notes for Lean (impl)
 - Robust proof uses explicit congrArg + a local “sandwich_add” lemma; avoids fragile simp paths.
 
 -------------------------------------------------------------------------------
+Lemma: E (Boundary) — Vector Gaussian log‑det boundary
+File(s): NOC_ROOT/NOC/E/Boundary/GaussianVector.lean
+Theorems: loewner_logdet_mono, mi_after_ablation_logdet
+
+Statement (summary)
+- loewner_logdet_mono: If A ⪯ B and I+A, I+B ≻ 0, then mi_logdet A ≤ mi_logdet B.
+- mi_after_ablation_logdet: With ΣN ≻ 0, ΣI ⪰ 0, ΣX ⪰ 0, removing interference (using clean inverse ΣN⁻¹) increases the vector MI proxy relative to treating ΣI as noise ((ΣN+ΣI)⁻¹).
+
+Hypotheses
+- A,B ∈ ℝ^{n×n} Hermitian, PSD; A ⪯ B; I+A ≻ 0, I+B ≻ 0. (For the vector reduction.)
+- ΣN ≻ 0 (noise PD), ΣI ⪰ 0 (interference PSD), ΣX ⪰ 0 (input covariance PSD).
+- H arbitrary real matrix (channel gain) of compatible dimension.
+- n ≠ 0 (Lean: [NeZero n]) so that the identity matrix is strictly PD and `log det` is well‑typed with positive arguments.
+
+Why needed
+- Hermitian/PSD and Loewner order drive log‑det monotonicity via the Loewner helpers.
+- ΣN ≻ 0 gives invertibility and ensures (ΣN+ΣI) ≻ 0; inverse antitonicity then yields (ΣN+ΣI)⁻¹ ⪯ ΣN⁻¹.
+- ΣX ⪰ 0 allows a PSD square root ΣX = R R; congruence by H R transports the inverse order to the symmetric forms used under determinant.
+- [NeZero n] provides PD(I) witnesses for I + PSD, required to call the log lemma on positive determinants.
+
+Fit to NOC
+- Matches the Gaussian boundary story: comparing ablation vs. interference‑as‑noise through effective SNR matrices.
+- The log‑det proxy is the standard Gaussian MI surrogate; using Sylvester’s identity and congruence is canonical for such vectorizations.
+
+Questionable?
+- For non‑Gaussian channels Σ‑proxies may be bounds rather than exact MI; state accordingly when instantiating non‑Gaussian models.
+- The assumption n ≠ 0 is mild and avoids the degenerate 0×0 case; if required, a trivial case split can handle n = 0.
+
+Critiques/Alternatives
+- One can express SNR as ΣN^{-1/2} H ΣX Hᵀ ΣN^{-1/2} (log‑det of a similarity), but the chosen form with Sylvester is algebraically simpler for determinant rewrites.
+- If ΣX is singular, the square‑root route still works (PSD), but strict inequalities are not expected — the proof handles non‑strict monotonicity.
+
+Verification obligations
+- Show ΣI ⪰ 0 and ΣN ≻ 0; conclude (ΣN+ΣI) ≻ 0 and apply inverse antitone.
+- Produce R with ΣX = R R (via PosSemidef.sqrt) and note Rᵀ = R (Hermitian) to align the Sylvester identity shapes.
+- Use LoewnerHelpers.psd_congr to push the inverse order through M := H R.
+- Apply the log‑det monotonicity lemma and rewrite determinants via det(I + AB) = det(I + BA).
+
+Notes for Lean (impl)
+- Sylvester identity is used with explicit calc; avoid fragile `simpa` by spelling out `snrMat` expansions and the `Rᵀ = R` rewrite.
+- Identity PD witness is obtained via `Matrix.posDef_natCast_iff (d:=1)` and the class constraint `[NeZero n]`.
+
 Template — fill for each future lemma/file
 
 Lemma: <Label> — <Short name>
@@ -98,4 +140,3 @@ Verification obligations
 
 Notes for Lean (impl)
 - <proof‑engineering tips or required helper lemmas>
-
