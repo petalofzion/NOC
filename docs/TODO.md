@@ -13,9 +13,12 @@
   - Provide the filtration-alignment proof for the concrete model and register concrete `PerStepData`/`SDPIData`/`SDPIStepData` instances so the global lemmas specialize (Tier‑2 deliverable).
 
 - [ ] **Interference counterexample (E-0c)** (`NOC_ROOT/NOC/E/Boundary/GaussianMAC.lean`)
-  - SNR/MI monotonicity lemmas are proved; the remaining task is to pick explicit channel parameters and show DI increases after ablation (`interference_counterexample`).
-  - Vector/log-det scaffolds are in `NOC_ROOT/NOC/E/Boundary/GaussianVector.lean` with helper lemmas in `.../LoewnerHelpers.lean`.
-  - `psd_congr` and `inv_antitone_spd` are now proved. Next: finish `logdet_mono_from_opmonotone`, then close the vector log-det goals (`loewner_logdet_mono`, `mi_after_ablation_logdet`) to complete the Tier‑2 Gaussian upgrade.
+  - Scalar status: SNR/MI monotonicity lemmas are proved (e.g., `mi_of_snr_mono`, `mi_after_ablation_ge_with_interference`). Pick explicit channel parameters and finalize the illustrative counterexample.
+  - Vector path: scaffolds live in `NOC_ROOT/NOC/E/Boundary/GaussianVector.lean`; helper lemmas in `.../LoewnerHelpers.lean`.
+  - Loewner helpers: `psd_congr` and `inv_antitone_spd` are proved. `logdet_mono_from_opmonotone` is in progress with the spectral route wired (whitening, conjugation identity, determinant factorization); remaining work is to finish the unitary equalities and diagonal det step.
+  - Next actions (concrete):
+    - In `LoewnerHelpers.logdet_mono_from_opmonotone`, keep U/D local, use `det(Uᴴ (I+M) U) = det(I+D)` via two `Matrix.det_mul` steps and `det(Uᴴ)·det(U)=1`, then apply the diagonal determinant product identity.
+    - Once that compiles, close `GaussianVector.lean`: prove `loewner_logdet_mono` and `mi_after_ablation_logdet` by delegating to the helper.
 
 - [ ] **C′ toy theorem constants** (`NOC_ROOT/NOC/C/CPrimeToy.lean`)
   - Fill in the toy 2×2 instance with explicit Dobrushin/SDPI constants and discharge `toy_Cprime_exists`.
@@ -38,10 +41,12 @@ The following tasks are currently stalled because the requisite mathematical or 
   - Needs a full two-time-scale SA/ODE meta theorem (measurability, martingale-difference noise bounds, fast attractor selection, ODE limit) which is absent from the library. Until that framework exists the lean proof cannot proceed beyond the arithmetic stepping lemmas.
 
 - **Loewner helper lemmas (`inv_antitone_spd`, `logdet_mono_from_opmonotone`)**
-  - Status: `psd_one_sub_inv_of_ge_one` and `inv_antitone_spd` are proved in `NOC/E/Boundary/LoewnerHelpers.lean` (whitening + square‑root argument). `logdet_mono_from_opmonotone` is in progress via the spectral route (whitening, determinant factorization, eigenvalue product bound `∏(1+λᵢ) ≥ 1`). Remaining work is tidying the unitary/conjTranspose rewrites and final determinant equalities.
-  - Action plan (no new library primitives required):
-      1. Finish `logdet_mono_from_opmonotone` using `det(U*(I+D)*Uᴴ) = det U · det(I+D) · det Uᴴ` and `det(UUᴴ)=1` rather than det-rotation; conclude `det(I+M)=det(I+D)`.
-      2. With that in place, close the vector log-det lemmas in `GaussianVector.lean`.
+  - Current status: `psd_one_sub_inv_of_ge_one` and `inv_antitone_spd` are proved. For `logdet_mono_from_opmonotone`, whitening/conjugation and determinant factorization are implemented; remaining work is to finalize the unitary equalities and the diagonal det product rewrite.
+  - Concrete next steps (targeted, robust):
+      1. Derive `Uᴴ*U = I` (from `eigenvectorUnitary` property) and `U*Uᴴ = I` (via conjTranspose); use `calc` blocks instead of large `simp` chains.
+      2. Prove `det(Uᴴ (I+M) U) = det(I+D)` using `Matrix.det_mul` twice and `det(Uᴴ)·det(U)=1`.
+      3. Conclude `det(I+M) = det(I+D)` and apply `det(I + diagonal v) = ∏ (1+v_i)` with `v_i = eigenvalues(M) ≥ 0` to get `det(I+M) ≥ 1`.
+      4. Apply `Real.log_le_log` using `det(I+A) = det(R)^2` and `det(I+B) = det(R)^2·det(I+M)`.
   - Completing this item unblocks the Gaussian vector lemmas.
 
 - **Gaussian vector boundary (`loewner_logdet_mono`, `mi_after_ablation_logdet` and the scalar interference example)**
