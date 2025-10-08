@@ -265,6 +265,28 @@ theorem inv_antitone_spd {n : ℕ}
 
 
 
+/--
+Log‑det monotonicity under Loewner order (operator‑monotone log on SPD), expressed
+via `log det (I + ·)`.
+
+Note on hypotheses and minimality
+- The proof effectively uses only:
+  * `hAB : A ⪯ B` (i.e., `B − A` is PSD), and
+  * `PosDef (I + A)` and `PosDef (I + B)` (to enable whitening, square‑root/inverse,
+    and positivity of determinants for `Real.log_le_log`).
+- The `IsHermitian`/`PosSemidef` hypotheses for `A` and `B` are carried to make the
+  domain context explicit and to align with adjacent infrastructure lemmas; they are
+  typical in NOC’s boundary setting and may be useful for future generalizations.
+
+Planned follow‑up (API hygiene)
+- Add a minimal variant `logdet_mono_from_opmonotone_min` that assumes only the
+  core requirements above. Migrate call sites to the minimal lemma and then
+  deprecate this heavier signature once usage has been updated.
+
+Reason to keep current signature for now
+- Documents the intended PSD/Hermitian context explicitly and avoids churn for
+  existing callers; enables a smooth migration path once the minimal lemma is added.
+-/
 /-- Operator-monotonicity of the logarithm on SPD matrices, expressed via log-det (target). -/
 theorem logdet_mono_from_opmonotone {n : ℕ}
   (A B : Matrix (Fin n) (Fin n) ℝ)
