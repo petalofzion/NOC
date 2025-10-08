@@ -127,6 +127,12 @@ private lemma det_add_diagonal
     A.transpose.map (starRingEnd ℝ) = A.transpose := by
   ext i j; simp
 
+-- Sandwiching distributes over addition: S*(A+B)*S = S*A*S + S*B*S
+private lemma sandwich_add {n : ℕ}
+    (S A B : Matrix (Fin n) (Fin n) ℝ) :
+    S * (A + B) * S = S * A * S + S * B * S := by
+  simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
+
 /-- Loewner order on real Hermitian matrices: `A ⪯ B` iff `B − A` is PSD. -/
 def LoewnerLE {n : ℕ} (A B : Matrix (Fin n) (Fin n) ℝ) : Prop :=
   Matrix.PosSemidef (B - A)
@@ -310,29 +316,40 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
       _ = (S * R) * (R * S) := by simp [Matrix.mul_assoc]
       _ = (1 : Matrix _ _ ℝ) := by simp [hSR, hRS]
   have hSIBS : S * ((1 : Matrix _ _ ℝ) + B) * S = (1 : Matrix _ _ ℝ) + M := by
-    -- Expand algebraically and rewrite B as A + (B - A).
-    calc
-      S * ((1 : Matrix _ _ ℝ) + B) * S
-          = S * (1 : Matrix _ _ ℝ) * S + S * B * S := by
-                simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
-      _   = S * (1 : Matrix _ _ ℝ) * S + S * (A + (B - A)) * S := by
-                simp [Matrix.mul_add, Matrix.mul_assoc, add_comm, add_left_comm, add_assoc]
-      _   = S * (1 : Matrix _ _ ℝ) * S + S * A * S + S * (B - A) * S := by
-                simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
-      _   = (S * (1 : Matrix _ _ ℝ) * S + S * A * S) + S * (B - A) * S := by
-                ac_rfl
-      _   = (S * ((1 : Matrix _ _ ℝ) + A) * S) + S * (B - A) * S := by
-                simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
-      _   = (1 : Matrix _ _ ℝ) + S * (B - A) * S := by
-                simpa [hSXS]
-      _   = (1 : Matrix _ _ ℝ) + M := by
-                -- Since S is Hermitian over ℝ, Sᴴ = S, and over ℝ the star-map is the identity,
-                -- so `M = S*(B-A)*S`.
-                have hM_def : M = S * (B - A) * S := by
-                  simp [M, Y, Matrix.conjTranspose, map_starRingEnd_real,
-                        transpose_map_starRingEnd_real, hS_trans, hS_self]
-                have hEq : S * (B - A) * S = M := hM_def.symm
-                simpa [hEq]
+    -- Rewrite `B`, expand the sandwich stepwise, then fold `S*X*S` to 1 and identify `M`.
+    have hBsplit : B = A + (B - A) := by
+      have : (A + B) - A = B := by simpa using add_sub_cancel' (A) (B)
+      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+    -- Step 1: transport through the sandwich
+    have h0 : S * ((1 : Matrix _ _ ℝ) + B) * S
+              = S * ((1 : Matrix _ _ ℝ) + (A + (B - A))) * S := by
+      simpa using congrArg (fun M => S * M * S)
+        (congrArg (fun t => (1 : Matrix _ _ ℝ) + t) hBsplit)
+    -- Step 2: reassociate inside: 1 + (A + (B - A)) = (1 + A) + (B - A)
+    have h1 : S * ((1 : Matrix _ _ ℝ) + (A + (B - A))) * S
+              = S * (((1 : Matrix _ _ ℝ) + A) + (B - A)) * S := by
+      simpa [add_assoc] using congrArg (fun M => S * M * S)
+        (by
+          have : (1 : Matrix _ _ ℝ) + (A + (B - A))
+                  = ((1 : Matrix _ _ ℝ) + A) + (B - A) := by
+            simpa [add_assoc]
+          exact this)
+    -- Step 3: expand the sandwich over +
+    have h2 : S * (((1 : Matrix _ _ ℝ) + A) + (B - A)) * S
+              = S * ((1 : Matrix _ _ ℝ) + A) * S + S * (B - A) * S :=
+      sandwich_add S ((1 : Matrix _ _ ℝ) + A) (B - A)
+    -- Combine
+    have hsum : S * ((1 : Matrix _ _ ℝ) + B) * S
+              = S * ((1 : Matrix _ _ ℝ) + A) * S + S * (B - A) * S :=
+      h0.trans (h1.trans h2)
+    -- Fold S*X*S to 1
+    have hfold : S * ((1 : Matrix _ _ ℝ) + B) * S = (1 : Matrix _ _ ℝ) + S * (B - A) * S := by
+      simpa [X, hSXS] using hsum
+    -- Identify M = S*(B−A)*S (since S is Hermitian over ℝ)
+    have hM_def : M = S * (B - A) * S := by
+      simp [M, Y, Matrix.conjTranspose, map_starRingEnd_real,
+            transpose_map_starRingEnd_real, hS_trans, hS_self]
+    simpa [hM_def] using hfold
   -- Move back from whitened coordinates:
   have hIB_eq : (1 : Matrix _ _ ℝ) + B = R * ((1 : Matrix _ _ ℝ) + M) * R := by
     calc
@@ -452,8 +469,7 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
       classical
       have hnonneg : ∀ i, 0 ≤ (1 : ℝ) + Matrix.IsHermitian.eigenvalues hM_herm i := by
         intro i; exact add_nonneg zero_le_one (hM_psd.eigenvalues_nonneg i)
-      refine Finset.induction_on (Finset.univ : Finset (Fin n)) (by simp) ?_
-      intro a s ha hs
+      refine Finset.induction_on (Finset.univ : Finset (Fin n)) (by simp) (fun a s ha hs => ?_)
       have ha_not : a ∉ s := by simpa using ha
       have hage := hfac a
       -- By induction hypothesis and `hage`, both factors are ≥ 1
@@ -480,8 +496,7 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
   -- Finally, apply log monotonicity on positive reals
   -- Monotonicity of log on `(0, ∞)`
   have hposA := hIspA.det_pos
-  have hposB := hIspB.det_pos
-  exact (Real.log_le_log hposA hposB) hDet_ratio
+  exact Real.log_le_log hposA hDet_ratio
 
 end LoewnerHelpers
 
