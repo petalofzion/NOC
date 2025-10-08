@@ -111,6 +111,52 @@ Notes for Lean (impl)
 - Sylvester identity is used with explicit calc; avoid fragile `simpa` by spelling out `snrMat` expansions and the `Rᵀ = R` rewrite.
 - Identity PD witness is obtained via `Matrix.posDef_natCast_iff (d:=1)` and the class constraint `[NeZero n]`.
 
+-------------------------------------------------------------------------------
+Lemma: E (Boundary) — Scalar Gaussian MI monotonicity
+File(s): NOC_ROOT/NOC/E/Boundary/GaussianMAC.lean
+Theorems: mi_of_snr_strict_mono, mi_after_ablation_ge_with_interference, scalar instances
+
+Statement (summary)
+- For scalar AWGN, MI proxy `(1/2)·log(1 + snr)` is monotone in SNR on `snr ≥ 0`. Treating interference as noise reduces SNR, while ablation removes it, so MI weakly (strictly) increases when interference (strictly) positive.
+
+Hypotheses
+- σₙ > 0 (noise std), P₁ ≥ 0 (power), P₂ ≥ 0 (interference power). Strict version uses P₁>0 and P₂>0.
+
+Why needed
+- Ensures denominators are positive and `1 + snr > 0` so `log` monotonicity applies.
+
+Fit to NOC
+- Scalar illustration of the boundary story; aligns with the vector log‑det form in the diagonal case.
+
+Verification obligations
+- Check sign conditions on σₙ, P₁, P₂; the rest is elementary real algebra.
+
+Notes for Lean (impl)
+- Use `one_div_le_one_div_of_le`/`one_div_lt_one_div_of_lt` for denominator comparisons, then `Real.log_*` monotonicity and scaling by `1/2`.
+
+-------------------------------------------------------------------------------
+Lemma: E (Composition) — Conditional DI–DPI (toy instantiation)
+File(s): NOC_ROOT/NOC/E/Interfaces/DI_ToyExample.lean, NOC_ROOT/NOC/E/Interfaces/DI.lean
+Theorems: DI.di_monotone_under_garbling (specialized), conditional_DI_DPI (aggregator form)
+
+Statement (summary)
+- In a finite toy model (Unit×Unit), per-step DI is a fixed contraction `ηₜ = 1/2`, `preₜ = 1`, `postₜ = ηₜ`; the global DI contraction inequality holds by the aggregator.
+
+Hypotheses
+- `DirectedInfo`, `SDPI`, and `SDPIStepWitness` instances present; `ηₜ ∈ [0,1)`.
+
+Why needed
+- Demonstrates the composition lemma is live and ready for concrete instantiations with real channels.
+
+Fit to NOC
+- Serves as a sanity harness for the Lemma E composition path (Massey + per-step SDPI).
+
+Questionable?
+- This is a demonstration model, not a real channel; it is intentionally simple.
+
+Verification obligations
+- For a concrete model: provide per-step decomposition, SDPI witnesses, and filtration alignment; then the aggregator yields the global DI inequality.
+
 Template — fill for each future lemma/file
 
 Lemma: <Label> — <Short name>
