@@ -81,6 +81,12 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 - **Does:** show how a client supplies *their* \(A, B, \Delta U, \Delta\Sigma\), chooses a “good set” \(G\), and calls the expectation Σ‑law. Good template for reviewers and tests.
 - **Does not:** compute MI — this is a structural usage example.
 
+### Boundary (Gaussian) — `NOC/E/Boundary/LoewnerHelpers.lean`, `NOC/E/Boundary/GaussianVector.lean`
+- **Does:** provide matrix‑analysis infrastructure and vector MI‑proxy comparisons used as boundary illustrations for Lemma E:
+  - `LoewnerHelpers`: PSD congruence (`psd_congr`), inverse antitone on SPD (`inv_antitone_spd`), and log‑det monotonicity (`logdet_mono_from_opmonotone`, proved via whitening + spectral/product route).
+  - `GaussianVector`: monotonicity of the log‑det proxy under Loewner (`loewner_logdet_mono`) and the ablation‑beats‑interference inequality (`mi_after_ablation_logdet`), using Sylvester’s determinant identity and the helpers.
+- **Does not:** pick numerical parameters or compute MI; scalar `GaussianMAC` hosts the parameterized counterexample once you choose concrete values.
+
 ---
 
 ## 4) Interfaces for empirical Lemma‑E‑style premises
