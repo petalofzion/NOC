@@ -332,10 +332,12 @@ theorem logdet_mono_from_opmonotone {n : ℕ}
     have hM_spec : M = U * D * Uᴴ := hM_herm.spectral_theorem
     have hU_right : Uᴴ * U = (1 : Matrix _ _ ℝ) := by
       -- from the unitary property `star U * U = 1`
-      simpa [U, Matrix.conjTranspose] using (G.2.1)
+      simpa [U, Matrix.star_eq_conjTranspose] using Matrix.UnitaryGroup.star_mul_self G
     have hU_left : U * Uᴴ = (1 : Matrix _ _ ℝ) := by
-      -- from the unitary property `U * star U = 1`
-      simpa [U, Matrix.conjTranspose] using (G.2.2)
+      -- take conjTranspose of `Uᴴ * U = 1`
+      have := congrArg Matrix.conjTranspose hU_right
+      -- (Uᴴ * U)ᴴ = Uᴴᴴ * Uᴴ = U * Uᴴ; conjTranspose 1 = 1
+      simpa using this
     -- determinant invariance under unitary similarity, via conjugation by Uᴴ
     have hdet_eq : (((1 : Matrix _ _ ℝ) + M).det)
           = (((1 : Matrix _ _ ℝ)
