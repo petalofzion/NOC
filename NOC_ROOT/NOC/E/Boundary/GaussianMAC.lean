@@ -147,5 +147,25 @@ theorem mi_increase_after_ablation (_M : GaussianMAC) :
 theorem interference_counterexample (_M : GaussianMAC) : True := by
   trivial
 
+/-- Concrete scalar instance (non‑strict): with σn=1, P1=1, P2=1, removing interference
+increases the MI proxy (at least weakly). -/
+theorem scalar_instance_ge :
+  mi_of_snr (snr_with_interference (σn:=1) (P1:=1) (P2:=1))
+    ≤ mi_of_snr (snr_after_ablation (σn:=1) (P1:=1)) := by
+  have hσ : 0 < (1 : ℝ) := by norm_num
+  have hP1 : 0 ≤ (1 : ℝ) := by norm_num
+  have hP2 : 0 ≤ (1 : ℝ) := by norm_num
+  simpa using mi_after_ablation_ge_with_interference (σn:=1) (P1:=1) (P2:=1) hσ hP1 hP2
+
+/-- Concrete scalar instance (strict): with σn=1, P1=1, P2=1, the MI proxy strictly increases
+after removing interference. -/
+theorem scalar_instance_strict :
+  mi_of_snr (snr_with_interference (σn:=1) (P1:=1) (P2:=1))
+    < mi_of_snr (snr_after_ablation (σn:=1) (P1:=1)) := by
+  have hσ : 0 < (1 : ℝ) := by norm_num
+  have hP1 : 0 < (1 : ℝ) := by norm_num
+  have hP2 : 0 < (1 : ℝ) := by norm_num
+  simpa using mi_after_ablation_strict (σn:=1) (P1:=1) (P2:=1) hσ hP1 hP2
+
 end
 end NOC
