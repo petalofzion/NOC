@@ -265,7 +265,7 @@ theorem inv_antitone_spd {n : ℕ}
 
 
 
-/--
+/-
 Log‑det monotonicity under Loewner order (operator‑monotone log on SPD), expressed
 via `log det (I + ·)`.
 
@@ -287,6 +287,7 @@ Reason to keep current signature for now
 - Documents the intended PSD/Hermitian context explicitly and avoids churn for
   existing callers; enables a smooth migration path once the minimal lemma is added.
 -/
+
 /-- Operator-monotonicity of the logarithm on SPD matrices, expressed via log-det (target). -/
 theorem logdet_mono_from_opmonotone {n : ℕ}
   (A B : Matrix (Fin n) (Fin n) ℝ)
