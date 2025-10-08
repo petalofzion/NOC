@@ -14,6 +14,9 @@ noncomputable section
 open Classical Matrix LoewnerHelpers
 open scoped Matrix
 
+-- Silence linter hints like "try 'simp' instead of 'simpa'" in this file.
+set_option linter.unnecessarySimpa false
+
 variable {n : ℕ}
 
 /-- Mutual-information proxy via `(1/2)·log det (I + A)` for an effective SNR matrix `A`. -/
@@ -121,10 +124,9 @@ theorem mi_after_ablation_logdet [NeZero n]
         (R.transpose * H.transpose * (SigmaN + SigmaI)⁻¹ * H * R) := hPSD_noisy.isHermitian
     have hHerm_clean : Matrix.IsHermitian
         (R.transpose * H.transpose * SigmaN⁻¹ * H * R) := hPSD_clean.isHermitian
-    -- PD witnesses for I + (·), using that 1 is PD and add_posSemidef
-    have hI_pos : Matrix.PosDef ((1 : Matrix (Fin n) (Fin n) ℝ)) := by
-      simpa using
-        (Matrix.posDef_natCast_iff (R:=ℝ) (n:=Fin n) (d:=1)).2 Nat.one_pos
+  -- PD witnesses for I + (·), using that 1 is PD and add_posSemidef
+    have hI_pos : Matrix.PosDef ((1 : Matrix (Fin n) (Fin n) ℝ)) :=
+      LoewnerHelpers.posDef_one
     have hPos_noisy : Matrix.PosDef ((1 : Matrix (Fin n) (Fin n) ℝ) +
         (R.transpose * H.transpose * (SigmaN + SigmaI)⁻¹ * H * R)) :=
       Matrix.PosDef.add_posSemidef hI_pos hPSD_noisy

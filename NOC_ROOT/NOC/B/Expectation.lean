@@ -28,6 +28,9 @@ noncomputable section
 open Classical
 open scoped BigOperators
 
+-- Silence linter hints like "try 'simp' instead of 'simpa'" in this file.
+set_option linter.unnecessarySimpa false
+
 
 /-- Uniform arithmetic average of a function `x : Ω → ℝ` over a nonempty finite support `S`. -/
 def avg {Ω : Type*} (S : Finset Ω) (x : Ω → ℝ) : ℝ :=

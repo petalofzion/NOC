@@ -55,6 +55,9 @@ namespace NOC
 noncomputable section
 open Classical
 
+-- Silence linter hints like "try 'simp' instead of 'simpa'" in this file.
+set_option linter.unnecessarySimpa false
+
 /-- Step-size schedules for TTSA: `θ` runs at the fast rate `a_n`, and
     the meta-parameter β runs at the slow rate `b_n`. -/
 structure TTSASchedules where

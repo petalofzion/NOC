@@ -14,12 +14,19 @@ noncomputable section
 open Classical Matrix
 open scoped Matrix
 
--- Tame heavy algebraic rewrites in this file
-set_option maxHeartbeats 2000000
-set_option maxRecDepth 400
-set_option diagnostics true
+-- Silence linter hints like "try 'simp' instead of 'simpa'" in this file.
+set_option linter.unnecessarySimpa false
 
 namespace LoewnerHelpers
+  
+/-! Small helpers -/
+
+/-- `I` is positive definite in any nontrivial dimension. -/
+@[simp]
+theorem posDef_one {n : ℕ} [NeZero n] :
+    Matrix.PosDef ((1 : Matrix (Fin n) (Fin n) ℝ)) := by
+  simpa using
+    (Matrix.posDef_natCast_iff (R:=ℝ) (n:=Fin n) (d:=1)).2 Nat.one_pos
 
 /--
 Helper: if `C` is SPD and `C − I` is PSD, then `I − C⁻¹` is PSD.
@@ -288,6 +295,7 @@ Reason to keep current signature for now
   existing callers; enables a smooth migration path once the minimal lemma is added.
 -/
 
+set_option maxHeartbeats 2000000 in
 /-- Operator-monotonicity of the logarithm on SPD matrices, expressed via log-det (target). -/
 theorem logdet_mono_from_opmonotone {n : ℕ}
   (A B : Matrix (Fin n) (Fin n) ℝ)

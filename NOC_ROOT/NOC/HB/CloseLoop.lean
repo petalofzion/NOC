@@ -13,6 +13,9 @@ namespace NOC
 noncomputable section
 open Classical
 
+-- Silence linter hints like "try 'simp' instead of 'simpa'" in this file.
+set_option linter.unnecessarySimpa false
+
 
 
 /-! ## Notation & reminders
