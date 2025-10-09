@@ -558,6 +558,35 @@ theorem DriftHitThresholdPropsContext.hits_threshold_props
   have hge := le_trans htarget (hlower N)
   exact (not_lt.mpr hge) (hlt N)
 
+/-- Consolidated monotonicity on a drift window for the clamped update.
+If `g(β) ≥ ε ≥ 0` for all `β ∈ [0, β⋆]` and `b n ≥ 0`, then every one‑step update
+is non‑decreasing on that window (and clamped into `[0, βmax]`). This is a convenient
+front‑door statement bundling `beta_drift_lower_bound_props` for callers. -/
+theorem clamped_monotone_on_window
+    (βstar ε : ℝ) (P : TTSA.BetaUpdate)
+    (hε : 0 ≤ ε)
+    (hβstar : βstar ≤ P.βmax)
+    (hb : ∀ n, 0 ≤ P.b n)
+    (hg : ∀ β, 0 ≤ β ∧ β ≤ βstar → P.g β ≥ ε)
+    (hproj : TTSA.ProjIccProps P.βmax P.proj) :
+    ∀ (β : ℝ) (n : ℕ), 0 ≤ β ∧ β ≤ βstar → P.update β n ≥ β :=
+  TTSA.beta_drift_lower_bound_props βstar ε P hε hβstar hb hg hproj
+
+/-- Consolidated hitting time under a positive‑drift window for the clamped update.
+If `g(β) ≥ ε > 0` for `β ∈ [0, β⋆]`, `b n ≥ 0` with `∑ b(n) = ∞`, and `β0 ≤ β⋆ ≤ βmax`, then
+the clamped recursion `β_{n+1} = proj(β_n + b_n g(β_n))` reaches `β⋆` in finite time. -/
+theorem clamped_hitting_time_under_window
+    (β0 βstar ε : ℝ) (P : TTSA.BetaUpdate)
+    (hβ : βstar < P.βmax) (hε : 0 < ε)
+    (hβstar : βstar ≤ P.βmax)
+    (hb : ∀ n, 0 ≤ P.b n)
+    (hbSum : Filter.Tendsto (fun N => (Finset.range N).sum P.b) Filter.atTop Filter.atTop)
+    (hg : ∀ β, 0 ≤ β ∧ β ≤ βstar → P.g β ≥ ε)
+    (hproj : TTSA.ProjIccProps P.βmax P.proj)
+    (hβ0 : 0 ≤ β0 ∧ β0 ≤ βstar) :
+    ∃ N, (TTSA.iter P β0 N) ≥ βstar :=
+  TTSA.beta_hits_target_props β0 βstar ε P hβ hε hβstar hb hbSum hg hproj hβ0
+
 /-- Clamp-based hitting lemma delegating to the property-based variant. -/
 theorem DriftHitThresholdContext.hits_threshold
   (C : DriftHitThresholdContext) :

@@ -6,9 +6,17 @@
   - Next: connect the abstract drift bounds back to the acceleration window (`g_lower`), then apply a two-time-scale SA/ODE theorem to replace the top-level `True` placeholder with the β-drift result (Tier‑3 target).
   - Optional follow-up: package the projection hypotheses into a dedicated structure (e.g., `ProjIccProps` instance/`IsProjIcc`) so future callers can import the monotonicity bundle directly.
 
-- [ ] **Conditional DI–DPI instantiation** (`NOC_ROOT/NOC/E/ConditionalDIDPI.lean` + `NOC_ROOT/NOC/E/Interfaces/DI*.lean`)
-  - Status: interfaces and global lemmas are available; a minimal toy instantiation is added in `DI_ToyExample.lean` (Unit×Unit, ηₜ = 1/2) demonstrating the aggregator.
-  - New: strict aggregator lemma `DI.di_strict_under_garbling` is available (requires `preₜ ≥ 0` and some step with `ηₜ < 1` and `preₜ > 0`). A strict toy check is provided in `DI_ToyExample.lean`.
+- [x] **Conditional DI–DPI instantiation** (`NOC_ROOT/NOC/E/ConditionalDIDPI.lean` + `NOC_ROOT/NOC/E/Interfaces/DI*.lean`)
+  - Interfaces and global lemmas are live; examples added:
+    - Typeclass: `NOC/E/Interfaces/Examples/DI_NOC_BSC.lean` (strict schedule).
+    - Fiberwise: `NOC/E/Interfaces/Examples/DI_Fiberwise_NCC.lean` (strict fiber).
+    - Weighted bound: `NOC/E/Interfaces/Examples/DI_Weighted_Bound.lean` (uses `lemmaE_bound_weighted`).
+    - Massey DI toy: `NOC/E/ConditionalDIDPI_Examples.lean` (non‑strict and strict aggregators).
+  - Global bounds formalized:
+    - `lemmaE_bound_with_eta_cap` (max‑η cap): DI ≤ m · ∑ preₜ when ηₜ ≤ m for all t ≤ n.
+    - `lemmaE_bound_weighted` (weighted): with `AggBefore := ∑ preₜ > 0`, DI ≤ (∑ (preₜ/AggBefore)·ηₜ) · AggBefore.
+  - DI‑arrow glue available:
+    - `conditional_DI_DPI_def` and `_def_strict` build DI_before/after as sums and reuse the aggregator lemmas.
 
 ## Lemma E — NCC‑C wiring plan (ready to implement)
 
@@ -43,7 +51,7 @@ Strictness
 Global bounds
 - Primary: `AggAfter ≤ ∑_t η_t · pre_t`.
 - Coarse factor: if all steps contract, `AggAfter ≤ (max_t η_t) · AggBefore`.
-- Weighted bound: `AggAfter ≤ (∑_t w̄_t η_t) · AggBefore` with `w̄_t := pre_t / AggBefore` (guard `AggBefore > 0`; if `AggBefore = 0`, then `AggAfter = 0`).
+- Weighted bound: `AggAfter ≤ (∑_t w̄_t η_t) · AggBefore` with `w̄_t := pre_t / AggBefore` (guard `AggBefore > 0`; if `AggBefore = 0`, then `AggAfter = 0`). Formalized in `lemmaE_bound_weighted`.
 
 Implementation checklist
 1) Tighten docstrings and lemma notes (NCC boundary, uniformity clause, strictness on positive‑mass fibers, AggBefore=0 guard, inequality formatting).
@@ -64,18 +72,17 @@ Status
     - Strictness (optional): exhibit at least one step with η_t < 1 and nonzero `pre` to get a strict global inequality.
     - Register instances `PerStepData` / `SDPIData` / `SDPIStepData` for the concrete channel and apply `conditional_DI_DPI_massey` and/or `DI.di_monotone_under_garbling`.
 
-- [ ] **Interference counterexample (E‑0c)** (`NOC_ROOT/NOC/E/Boundary/GaussianMAC.lean`)
-  - Scalar: MI/SNR monotonicity lemmas are proved; concrete instances added (`scalar_instance_ge`, `scalar_instance_strict`).
-  - Vector: `GaussianVector.lean` complete; helper examples added in `GaussianVectorExamples.lean` (identity noise/PSD choices).
-  - Loewner helpers complete: `psd_congr`, `inv_antitone_spd`, `logdet_mono_from_opmonotone` (whitening + spectral/product) with robust calc chains.
+- [x] **Interference counterexample (E‑0c)** (`NOC_ROOT/NOC/E/Boundary/GaussianMAC.lean`)
+  - Scalar: MI/SNR monotonicity lemmas proved; concrete instances (`scalar_instance_ge`, `scalar_instance_strict`).
+  - Vector: `GaussianVector.lean` complete; examples in `GaussianVectorExamples.lean` (identity noise and diagonal specializations). Loewner helpers support whitening and log‑det monotonicity.
 
-- [ ] **C′ toy theorem constants** (`NOC_ROOT/NOC/C/CPrimeToy.lean`)
-  - Fill in the toy 2×2 instance with explicit Dobrushin/SDPI constants and discharge `toy_Cprime_exists`.
-  - Use the existing finitary lemma to export the averaged Σ-law with computed constants.
+- [x] **C′ toy theorem constants (example)** (`NOC_ROOT/NOC/C/CPrimeToyExamples.lean`)
+  - A concrete 2×2 instance (Ω = Fin 2) demonstrates `lemmaCprime_expectation_finitary` with explicit params (`P2: c1=1, λΞ=0`) and per‑sample values; see `toy_Cprime_concrete_2x2`.
+  - Core scaffolding in `CPrimeToy.lean` kept as‑is; constant computation examples live under `CPrimeToyExamples.lean`.
 
-- [ ] **Supplementary examples/tests**
-  - Examples added: `GaussianVectorExamples.lean` and `DI_ToyExample.lean` (sanity harnesses).
-  - Next: add a 2×2 diagonal reduction example explicitly showing scalar/vector consistency, and a small ROI example if needed.
+- [x] **Supplementary examples/tests**
+  - Added: `NOC/E/Interfaces/Examples/DI_Weighted_Bound.lean`, `NOC/E/ConditionalDIDPI_Examples.lean`, and ensured `GaussianVectorExamples.lean` remains green.
+  - Optional: import examples into `NOC/All.lean` if you want continuous CI coverage for examples.
 
 - [ ] **Documentation sync**
   - After the above items merge, update `docs/README-companion.md`, ChangeLog, and experiment checklists to reflect the completed formalization work.

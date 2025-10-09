@@ -134,6 +134,82 @@ theorem lemmaE_bound_with_eta_cap
   -- Chain inequalities
   exact le_trans h0 (by simpa [h2] using h1)
 
--- (Weighted bound available on request: express ∑ η_t pre_t as (∑ η_t pre_t / AggBefore)·AggBefore.)
+/--- Weighted global bound: with `AggBefore := ∑ pre_t > 0`, rewrite `∑ η_t pre_t` as
+`(∑ (pre_t/AggBefore)·η_t) · AggBefore` to expose the average contraction factor. -/
+theorem lemmaE_bound_weighted
+  [DirectedInfo X Y] [SDPI X Y]
+  (s : Finset ι) (w : ι → ℝ)
+  (pre_f post_f : Time → (Time → X) → (Time → Y) → ι → ℝ)
+  (n : Nat) (x : Time → X) (y : Time → Y)
+  (h_per_le_post : ∀ t, DirectedInfo.perStep t x y ≤ aggPost (s:=s) (w:=w) post_f t x y)
+  (hw_nonneg : ∀ i ∈ s, 0 ≤ w i)
+  (hpre_nonneg_f : ∀ t i, i ∈ s → 0 ≤ pre_f t x y i)
+  (h_uniform_sdpi : ∀ t i, i ∈ s → post_f t x y i ≤ SDPI.η (X:=X) (Y:=Y) t * pre_f t x y i)
+  (hAggPos : 0 < (Finset.range (n+1)).sum (fun t => aggPre (s:=s) (w:=w) pre_f t x y))
+  :
+  DirectedInfo.DI n x y
+    ≤ ((Finset.range (n+1)).sum (fun t =>
+          (aggPre (s:=s) (w:=w) pre_f t x y)
+            / (Finset.range (n+1)).sum (fun t' => aggPre (s:=s) (w:=w) pre_f t' x y)
+            * SDPI.η (X:=X) (Y:=Y) t))
+        * (Finset.range (n+1)).sum (fun t => aggPre (s:=s) (w:=w) pre_f t x y) := by
+  classical
+  -- Base contraction via fiberwise composition
+  have h0 := lemmaE_monotone (X:=X) (Y:=Y) (ι:=ι)
+    s w pre_f post_f n x y h_per_le_post hw_nonneg hpre_nonneg_f h_uniform_sdpi
+  -- Shorthand S := AggBefore
+  set S := (Finset.range (n+1)).sum (fun t => aggPre (s:=s) (w:=w) pre_f t x y) with hSdef
+  have hSpos : 0 < S := by simpa [hSdef] using hAggPos
+  -- Rewrite ∑ η_t pre_t = (∑ (pre_t/S)·η_t) · S
+  have hSne : S ≠ 0 := ne_of_gt hSpos
+  -- Local shorthands to improve readability
+  let pre : Time → ℝ := fun t => aggPre (s:=s) (w:=w) pre_f t x y
+  let eta : Time → ℝ := fun t => SDPI.η (X:=X) (Y:=Y) t
+  have hrewrite :
+      ((Finset.range (n+1)).sum (fun t => (pre t) / S * eta t)) * S
+        = (Finset.range (n+1)).sum (fun t => eta t * pre t) := by
+    -- Distribute S across the sum, then cancel division termwise
+    have hdist :
+        ((Finset.range (n+1)).sum (fun t => (pre t) / S * eta t)) * S
+          = (Finset.range (n+1)).sum (fun t => ((pre t) / S * eta t) * S) := by
+            simpa [Finset.sum_mul]
+    have hterm : ∀ t ∈ Finset.range (n+1), ((pre t) / S * eta t) * S = eta t * pre t := by
+      intro t ht
+      have hcancel : (pre t) / S * S = pre t := by
+        have hS_ne : S ≠ 0 := hSne
+        have hstep : (pre t) / S * S = (pre t * S) / S := by
+          simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+            using (div_mul_eq_mul_div (pre t) S S)
+        have hstep2 : (pre t * S) / S = pre t := by
+          -- (a * S) / S = a when S ≠ 0
+          have : S ≠ 0 := hS_ne
+          field_simp [this, mul_comm, mul_left_comm, mul_assoc]
+        simpa [hstep] using hstep2
+      -- rearrange to expose (pre/S)*S, then cancel
+      have hreorder : ((pre t) / S * eta t) * S = eta t * ((pre t) / S * S) := by
+        have h1 : ((pre t) / S * eta t) * S = (eta t * ((pre t) / S)) * S := by
+          simp [mul_comm]
+        have h2 : (eta t * ((pre t) / S)) * S = eta t * ((pre t) / S * S) := by
+          simp [mul_comm, mul_left_comm, mul_assoc]
+        simpa [h1] using h2
+      have hcancel' : S * (pre t / S) = pre t := by simpa [mul_comm] using hcancel
+      -- Convert `eta * ((pre/S) * S)` to `eta * (S * (pre/S))` then cancel
+      have : eta t * ((pre t) / S * S) = eta t * (S * (pre t / S)) := by
+        simp [mul_comm, mul_left_comm, mul_assoc]
+      simpa [hreorder, this, hcancel', mul_comm, mul_left_comm, mul_assoc]
+    have hsum : (Finset.range (n+1)).sum (fun t => ((pre t) / S * eta t) * S)
+                  = (Finset.range (n+1)).sum (fun t => eta t * pre t) := by
+      refine Finset.sum_congr rfl (by intro t ht; exact hterm t ht)
+    simpa [hdist] using hsum
+  -- Chain DI ≤ ∑ η·pre with the equality rewrite
+  have : DirectedInfo.DI n x y ≤
+      ((Finset.range (n+1)).sum (fun t => (pre t) / S * eta t)) * S := by
+    -- Replace ∑ η·pre by the weighted form using hrewrite
+    have := h0
+    -- h0: DI ≤ ∑ eta·pre; rewrite RHS by hrewrite.symm
+    simpa [hrewrite, pre, eta] using this
+  simpa [hSdef, pre]
+    using this
+
 
 end NOC

@@ -155,6 +155,45 @@ theorem conditional_DI_DPI_massey_strict
   · rcases hStrict with ⟨t, ht, hlt⟩; exact ⟨t, ht, hlt⟩
 -- (Aggregator lemmas are defined above.)
 
+/-- Definitional glue (non‑strict): build DI_before/DI_after as sums and conclude DI_after ≤ DI_before. -/
+theorem conditional_DI_DPI_def
+  (P : FiniteProcess) (garble : Garbling)
+  (perBefore perAfter : ℕ → ℝ)
+  (hStep   : ∀ t ∈ Finset.range P.T, perAfter t ≤ perBefore t) :
+  let ctx : DIDPIContext :=
+    { P := P, garble := garble,
+      DI_before := { value := (Finset.range P.T).sum perBefore },
+      DI_after  := { value := (Finset.range P.T).sum perAfter } }
+  ctx.DI_after.value ≤ ctx.DI_before.value := by
+  classical
+  intro ctx
+  -- Trivial expansions by definition
+  have hBefore : ctx.DI_before.value = (Finset.range ctx.P.T).sum perBefore := rfl
+  have hAfter  : ctx.DI_after.value  = (Finset.range ctx.P.T).sum perAfter  := rfl
+  exact di_dpi_from_perstep (ctx := ctx) (perBefore := perBefore) (perAfter := perAfter)
+    (hBefore := hBefore) (hAfter := hAfter) (hStep := by intro t ht; exact hStep t ht)
+
+/-- Definitional glue (strict): build DI_before/DI_after as sums and conclude strict inequality. -/
+theorem conditional_DI_DPI_def_strict
+  (P : FiniteProcess) (garble : Garbling)
+  (perBefore perAfter : ℕ → ℝ)
+  (hStep   : ∀ t ∈ Finset.range P.T, perAfter t ≤ perBefore t)
+  (hStrict : ∃ t ∈ Finset.range P.T, perAfter t < perBefore t) :
+  let ctx : DIDPIContext :=
+    { P := P, garble := garble,
+      DI_before := { value := (Finset.range P.T).sum perBefore },
+      DI_after  := { value := (Finset.range P.T).sum perAfter } }
+  ctx.DI_after.value < ctx.DI_before.value := by
+  classical
+  intro ctx
+  have hBefore : ctx.DI_before.value = (Finset.range ctx.P.T).sum perBefore := rfl
+  have hAfter  : ctx.DI_after.value  = (Finset.range ctx.P.T).sum perAfter  := rfl
+  exact di_dpi_from_perstep_strict (ctx := ctx)
+    (perBefore := perBefore) (perAfter := perAfter)
+    (hBefore := hBefore) (hAfter := hAfter)
+    (hStep := by intro t ht; exact hStep t ht)
+    (hStrict := by rcases hStrict with ⟨t, ht, hlt⟩; exact ⟨t, ht, hlt⟩)
+
  /-- Conditional DI–DPI: if the DI of the “before” and “after” processes expand over the same
  index set and each per-step term after ablation is bounded above by the original term, then the
  total DI cannot increase. This is the Lean version of the Massey + per-step SDPI argument. -/
