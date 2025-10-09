@@ -13,6 +13,16 @@ and conclusions. These statements are ready for the proof agent to fill.
 Design: conclusions are packaged as `Prop` fields in hypothesis bundles
 so we avoid committing to a specific measure API in this file. Once the
 probability layer lands (NOC.Prob.*), these fields can be realized.
+
+Mathlib toolkit referenced by this scaffold:
+- D3 (clamp nonexpansive): `LipschitzWith.id.const_min`,
+  `LipschitzWith.const_max` (Topology/MetricSpace/Holder.lean)
+- D1 (MDS sums, used by Option 1): see `NOC.Prob.MDS` notes — conditional
+  expectation API, martingale construction, Chebyshev/BC and/or a.e.
+  martingale convergence.
+- D2 (Robbins–Siegmund, used by Option 1 + D6): see `NOC.Prob.RobbinsSiegmund`.
+- Deterministic stepping lemmas (window/hitting) already live in
+  `NOC.D.BetaStabilityTTSA` and are imported above.
 -/
 
 namespace NOC.TTSA
@@ -57,6 +67,27 @@ def projected_SA_converges_1D (H : OneDProjectedSAHypotheses) : Prop :=
 This name matches the meta‑theorem referenced by downstream modules. -/
 def projected_SA_converges (H : OneDProjectedSAHypotheses) : Prop :=
   projected_SA_converges_1D H
+
+/-! ## D6 — Interior positivity (bridge lemma)
+
+This is the 1‑D “interior hit” statement used to pass from a positive
+drift window near 0 to eventual positivity of the clamped recursion. We
+keep it as a Prop‑level target here; downstream files can instantiate it
+with Robbins–Siegmund once the probability layer is finalized. -/
+
+/-- Hypotheses for the 1‑D interior hit under stochasticity. -/
+structure OneDInteriorHitHypotheses where
+  βmax        : ℝ
+  steps       : Prop   -- ∑ b_n^2 < ∞ and b_n → 0 (Robbins–Monro)
+  noise       : Prop   -- MDS noise with bounded conditional variance
+  bias        : Prop   -- ∑ b_n E|δ_{n+1}| < ∞ (or a.s.)
+  pos_window  : Prop   -- ḡ(β) ≥ ε on [0, K]
+  alignment   : Prop   -- β_{n+1} = clamp(β_n + b_n (ḡ(β_n)+ξ_{n+1}+δ_{n+1}))
+  conclusion  : Prop   -- ∃ K>0, τ_K < ∞ a.s. and β_n ≥ K for n ≥ τ_K
+
+/-- D6: interior positivity (stochastic window → a.s. hit). -/
+def projected_SA_interior_hit (H : OneDInteriorHitHypotheses) : Prop :=
+  H.conclusion
 
 /-! ## Option 2A — Full TTSA with unique fast equilibrium (vector) -/
 

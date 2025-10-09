@@ -9,6 +9,14 @@ summable bias. This is consumed by the projected SA meta-theorem.
 This file is intentionally light on measure-theory bindings: the fields
 are `Prop`s so concrete applications can instantiate them with mathlib
 statements as they become available.
+
+Notes (mathlib, for downstream instantiations):
+- Filtration/process: `Filtration`, `Adapted` (Probability/Process/*).
+- Conditional expectation MDS condition: `μ[ξ (n+1) | ℱ n] = 0` via
+  `MeasureTheory.ConditionalExpectation` (Real-valued API in
+  MeasureTheory/Function/ConditionalExpectation/Real.lean).
+- Variance bounds and integrability are typically expressed with `MemLp`
+  or `Integrable` from `MeasureTheory`.
 -/
 
 namespace NOC

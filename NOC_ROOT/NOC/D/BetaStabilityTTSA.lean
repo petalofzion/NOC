@@ -762,6 +762,19 @@ Notes for the proof agent:
 - Replace the placeholders in the conclusion with your concrete
   β‑sequence definition if you carry explicit noise terms; the clamp is
   `ctx.proj` with `proj_is_clamp` already registered in `ctx`. -/
+
+/- Mathlib toolkit used by this TTSA/ODE scaffold (when the proof is filled):
+  • D1 (MDS sums): conditional expectation API and martingale convergence
+    (see `NOC.Prob.MDS` notes; files include
+    `Probability/Martingale/Basic.lean`,
+    `MeasureTheory/Function/ConditionalExpectation/Real.lean`, and
+    optional `Probability/Martingale/Convergence.lean`).
+  • D2 (Robbins–Siegmund): supermartingale construction and convergence
+    helpers (see `NOC.Prob.RobbinsSiegmund`).
+  • D3 (clamp nonexpansive): Lipschitz combinators
+    `LipschitzWith.id.const_min`, `LipschitzWith.const_max`.
+  • Deterministic stepping lemmas already provided in this file for the
+    positive‑window route. No external axioms are required. -/
 theorem lemmaD_beta_stability_TTSA_ode
   (ctx : BetaTTSAContext) (H : TTSATrackingHypotheses ctx) :
   ∃ K, 0 < K ∧ K ≤ ctx.Reg.βmax ∧

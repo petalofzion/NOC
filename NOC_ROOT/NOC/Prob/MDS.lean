@@ -1,6 +1,40 @@
 import Mathlib
 import Mathlib.Probability.Martingale.Basic
 
+/-!
+Module: NOC.Prob.MDS
+Status: scaffold + working partial‑sum API. This file hosts D1 (MDS
+weighted‑sum convergence) and the supporting partial‑sum lemmas.
+
+Mathlib toolkit we rely on (and will use when finishing D1):
+- Conditional expectation API (real‑valued):
+  * `MeasureTheory.condExp_smul`
+  * `MeasureTheory.condExp_congr_ae`
+  * `MeasureTheory.integral_condExp`
+  * `MeasureTheory.condExp_mul_of_stronglyMeasurable_left`
+    (file: MeasureTheory/Function/ConditionalExpectation/Real.lean)
+- Martingale construction from zero conditional increment:
+  * `ProbabilityTheory.martingale_of_condExp_sub_eq_zero_nat`
+    (file: Probability/Martingale/Basic.lean)
+- A.e. martingale/submartingale convergence (optional route for D1):
+  * `MeasureTheory.Submartingale.ae_tendsto_limitProcess`
+  * `MeasureTheory.Submartingale.exists_ae_tendsto_of_bdd`
+    (file: Probability/Martingale/Convergence.lean)
+- Chebyshev/Markov in Lp‑form (for tail bounds from L² or L¹):
+  * `MeasureTheory.mul_meas_ge_le_pow_eLpNorm` and variants `'`
+    (file: MeasureTheory/Function/LpSeminorm/ChebyshevMarkov.lean)
+- Borel–Cantelli (first lemma, easy direction):
+  * `MeasureTheory.measure_limsup_atTop_eq_zero`
+    (file: MeasureTheory/OuterMeasure/BorelCantelli.lean)
+- Standard Bochner integral utilities used throughout:
+  * `Integrable.add`, `Integrable.smul`, `integrable_zero`
+  * `integral_add`, `integral_sub'`, `integral_const_mul`, `integral_congr_ae`
+  * `AEStronglyMeasurable.pow`
+
+These are all available through `import Mathlib` plus the already imported
+`Mathlib.Probability.Martingale.Basic`. No additional axioms are required.
+-/
+
 namespace NOC
 namespace Prob
 noncomputable section
@@ -169,7 +203,50 @@ private lemma add_sq_le_two_sq (x y : ℝ) :
 
 private lemma partialSum_sq_integrable_aux (b : ℕ → ℝ) :
     ∀ n, Integrable (fun ω => (h.partialSum b n ω) ^ 2) μ := by
-  sorry
+  classical
+  refine Nat.rec ?base ?step
+  · have hz : h.partialSum b 0 = fun _ : Ω => (0 : ℝ) := by
+      ext ω; simp [partialSum]
+    simpa [hz] using
+      (MeasureTheory.integrable_zero : Integrable (fun _ : Ω => (0 : ℝ)) μ)
+  · intro n hn
+    have hSn_sq : Integrable (fun ω => (h.partialSum b n ω) ^ 2) μ := hn
+    have hΔ_sq : Integrable (fun ω => (b n * h.seq (n + 1) ω) ^ 2) μ :=
+      h.diff_sq_integrable (b := b) n
+    have hsum : Integrable
+        (fun ω => (h.partialSum b n ω) ^ 2 + (b n * h.seq (n + 1) ω) ^ 2) μ := by
+      simpa [pow_two] using hSn_sq.add hΔ_sq
+    have hbound : ∀ᵐ ω ∂ μ,
+        ‖(h.partialSum b (n + 1) ω) ^ 2‖
+          ≤ (2 : ℝ) * ((h.partialSum b n ω) ^ 2 + (b n * h.seq (n + 1) ω) ^ 2) := by
+      refine Filter.Eventually.of_forall ?_
+      intro ω
+      have hineq := add_sq_le_two_sq (x := h.partialSum b n ω)
+        (y := b n * h.seq (n + 1) ω)
+      have hineq' :
+          (h.partialSum b (n + 1) ω) ^ 2
+            ≤ (2 : ℝ) * ((h.partialSum b n ω) ^ 2
+                + (b n * h.seq (n + 1) ω) ^ 2) := by
+        simpa [partialSum, Finset.sum_range_succ, add_comm, add_left_comm, add_assoc]
+          using hineq
+      have hnonneg : 0 ≤ (h.partialSum b (n + 1) ω) ^ 2 := sq_nonneg _
+      have hnorm :
+          ‖(h.partialSum b (n + 1) ω) ^ 2‖
+            = (h.partialSum b (n + 1) ω) ^ 2 := by
+        simpa [Real.norm_eq_abs, abs_of_nonneg hnonneg]
+      simpa [hnorm]
+        using hineq'
+    have hmeas : AEStronglyMeasurable
+        (fun ω => (h.partialSum b (n + 1) ω) ^ 2) μ := by
+      have hsm := (h.partialSum_adapted b) (n + 1)
+      have hsm' : StronglyMeasurable (fun ω => h.partialSum b (n + 1) ω) :=
+        (hsm.mono (ℱ.le (n + 1)))
+      exact (hsm'.pow 2).aestronglyMeasurable
+    refine Integrable.mono' ?_ hmeas hbound
+    have : Integrable (fun ω => (2 : ℝ)
+        * ((h.partialSum b n ω) ^ 2 + (b n * h.seq (n + 1) ω) ^ 2)) μ := by
+      simpa using hsum.smul (2 : ℝ)
+    exact this
 
 private lemma partialSum_sq_integrable (b : ℕ → ℝ) (n : ℕ) :
     Integrable (fun ω => (h.partialSum b n ω) ^ 2) μ :=
@@ -202,15 +279,164 @@ private lemma abs_mul_le_half_sq_add_sq (x y : ℝ) :
 
 private lemma partialSum_mul_diff_integrable (b : ℕ → ℝ) (n : ℕ) :
     Integrable (fun ω => h.partialSum b n ω * (b n * h.seq (n + 1) ω)) μ := by
-  sorry
+  classical
+  have hSn_sq := partialSum_sq_integrable (h := h) b n
+  have hΔ_sq : Integrable (fun ω => (b n * h.seq (n + 1) ω) ^ 2) μ :=
+    h.diff_sq_integrable (b := b) n
+  have hsum : Integrable (fun ω => (h.partialSum b n ω) ^ 2
+      + (b n * h.seq (n + 1) ω) ^ 2) μ := by
+    simpa [pow_two] using hSn_sq.add hΔ_sq
+  have hmeasSn : AEStronglyMeasurable (fun ω => h.partialSum b n ω) μ :=
+    (h.partialSum_integrable (b := b) n).aestronglyMeasurable
+  have hmeasΔ : AEStronglyMeasurable (fun ω => b n * h.seq (n + 1) ω) μ :=
+    ((h.integrable (n + 1)).smul (b n)).aestronglyMeasurable
+  have hmeas : AEStronglyMeasurable
+      (fun ω => h.partialSum b n ω * (b n * h.seq (n + 1) ω)) μ :=
+    hmeasSn.mul hmeasΔ
+  have hbound : ∀ᵐ ω ∂ μ,
+      ‖h.partialSum b n ω * (b n * h.seq (n + 1) ω)‖
+        ≤ ((h.partialSum b n ω) ^ 2 + (b n * h.seq (n + 1) ω) ^ 2) / 2 := by
+    refine Filter.Eventually.of_forall ?_
+    intro ω
+    simpa [Real.norm_eq_abs, abs_mul, mul_comm, mul_left_comm, mul_assoc]
+      using abs_mul_le_half_sq_add_sq (x := h.partialSum b n ω)
+        (y := b n * h.seq (n + 1) ω)
+  have : Integrable (fun ω =>
+      ((h.partialSum b n ω) ^ 2 + (b n * h.seq (n + 1) ω) ^ 2) / 2) μ := by
+    simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
+      using hsum.smul (1 / 2 : ℝ)
+  exact Integrable.mono' this hmeas hbound
 
 private lemma partialSum_cross_integral_zero (b : ℕ → ℝ) (n : ℕ) :
     ∫ ω, h.partialSum b n ω * (b n * h.seq (n + 1) ω) ∂ μ = 0 := by
-  sorry
+  classical
+  have hmeas : AEStronglyMeasurable (fun ω => h.partialSum b n ω) μ :=
+    (h.partialSum_integrable (b := b) n).aestronglyMeasurable
+  have hmeasFil : AEStronglyMeasurable[ℱ n]
+      (fun ω => h.partialSum b n ω) μ :=
+    ((h.partialSum_adapted (b := b)) n).aestronglyMeasurable
+  have hint_prod := h.partialSum_mul_diff_integrable (b := b) n
+  have hint_g : Integrable (fun ω => b n * h.seq (n + 1) ω) μ :=
+    (h.integrable (n + 1)).smul (b n)
+  have hce :=
+    (condExp_mul_of_aestronglyMeasurable_left
+      (μ := μ) (m := ℱ n)
+      (hf := hmeasFil) (hg := hint_g) (hfg := hint_prod))
+  have hcond := h.scaled_condExp_zero (b := b) n
+  have hce_zero :
+      μ[
+        fun ω => h.partialSum b n ω * (b n * h.seq (n + 1) ω)
+        | ℱ n] =ᵐ[μ] 0 := by
+    refine hce.trans ?_
+    filter_upwards [hcond] with ω hω
+    simp [hω]
+  have hmono : ℱ n ≤ m0 := ℱ.le _
+  have hcond_integral :=
+    (integral_condExp (μ := μ) (m := ℱ n)
+      (f := fun ω => h.partialSum b n ω * (b n * h.seq (n + 1) ω))
+      hmono).symm
+  have hzero :
+      ∫ ω, (μ[
+        fun ω => h.partialSum b n ω * (b n * h.seq (n + 1) ω)
+        | ℱ n]) ω ∂ μ = 0 := by
+    have :=
+      integral_congr_ae (μ := μ) hce_zero
+    simpa using this
+  exact hcond_integral.trans hzero
 
 private lemma partialSum_sq_integral_eq_varianceTerm (b : ℕ → ℝ) :
     ∀ n, ∫ ω, (h.partialSum b n ω) ^ 2 ∂ μ = varianceTerm (h := h) (μ := μ) b n := by
-  sorry
+  classical
+  refine Nat.rec ?base ?step
+  · -- base case n = 0
+    simp [varianceTerm, h.partialSum_zero (b := b)]
+  · intro n hn
+    -- Notation
+    set S : Ω → ℝ := fun ω => h.partialSum b n ω
+    set d : Ω → ℝ := fun ω => b n * h.seq (n + 1) ω
+    -- Integrability of pieces
+    have hintS2 : Integrable (fun ω => (S ω) ^ 2) μ :=
+      by simpa [S] using partialSum_sq_integrable (h := h) (b := b) n
+    have hintD2 : Integrable (fun ω => (d ω) ^ 2) μ :=
+      by
+        have := h.diff_sq_integrable (b := b) n
+        simpa [d, pow_two, mul_comm, mul_left_comm, mul_assoc]
+          using this
+    have hintSD : Integrable (fun ω => S ω * d ω) μ :=
+      by
+        have := h.partialSum_mul_diff_integrable (b := b) n
+        simpa [S, d] using this
+    -- Expand the square and integrate
+    have hpoint : ∀ ω, (S ω + d ω) ^ 2 = S ω ^ 2 + 2 * (S ω * d ω) + d ω ^ 2 := by
+      intro ω; ring
+    have hsum_int : Integrable (fun ω => S ω ^ 2 + 2 * (S ω * d ω)) μ :=
+      by simpa using hintS2.add (hintSD.smul (2 : ℝ))
+    have h1 : ∫ ω, (S ω + d ω) ^ 2 ∂ μ
+        = ∫ ω, S ω ^ 2 ∂ μ + ∫ ω, 2 * (S ω * d ω) ∂ μ + ∫ ω, d ω ^ 2 ∂ μ := by
+      have : ∫ ω, (S ω + d ω) ^ 2 ∂ μ
+          = ∫ ω, (S ω ^ 2 + 2 * (S ω * d ω) + d ω ^ 2) ∂ μ := by
+        have hcongr : (fun ω => (S ω + d ω) ^ 2)
+            =ᵐ[μ] (fun ω => S ω ^ 2 + 2 * (S ω * d ω) + d ω ^ 2) :=
+          Filter.Eventually.of_forall hpoint
+        exact integral_congr_ae hcongr
+      calc
+        ∫ ω, (S ω + d ω) ^ 2 ∂ μ
+            = ∫ ω, (S ω ^ 2 + 2 * (S ω * d ω) + d ω ^ 2) ∂ μ := this
+        _ = (∫ ω, (S ω ^ 2 + 2 * (S ω * d ω)) ∂ μ)
+              + ∫ ω, d ω ^ 2 ∂ μ := by
+              simpa [add_comm, add_left_comm, add_assoc]
+                using integral_add (hf := hsum_int) (hg := hintD2)
+        _ = (∫ ω, S ω ^ 2 ∂ μ + ∫ ω, 2 * (S ω * d ω) ∂ μ)
+              + ∫ ω, d ω ^ 2 ∂ μ := by
+              simpa using integral_add (hf := hintS2) (hg := hintSD.smul (2 : ℝ))
+    -- Cross term vanishes (conditional expectation zero)
+    have hcross : ∫ ω, 2 * (S ω * d ω) ∂ μ = 0 := by
+      have base := h.partialSum_cross_integral_zero (b := b) n
+      have hcross0 : ∫ ω, S ω * d ω ∂ μ = 0 := by simpa [S, d] using base
+      have hconst : ∫ ω, 2 * (S ω * d ω) ∂ μ = 2 * ∫ ω, S ω * d ω ∂ μ := by
+        simpa [smul_eq_mul] using
+          (integral_const_mul (μ := μ) (r := (2 : ℝ)) (f := fun ω => S ω * d ω))
+      simpa [hcross0] using hconst
+    -- Difference-square integral equals (b n)^2 times second moment
+    have hd2 : ∫ ω, d ω ^ 2 ∂ μ = (b n) ^ 2 * ∫ ω, (h.seq (n + 1) ω) ^ 2 ∂ μ := by
+      -- rewrite the integrand and pull out the constant
+      have hrewrite : (fun ω => (d ω) ^ 2)
+          = (fun ω => (b n) ^ 2 * (h.seq (n + 1) ω) ^ 2) := by
+        funext ω
+        simp [d, pow_two, mul_comm, mul_left_comm, mul_assoc]
+      simpa [hrewrite] using
+        (integral_const_mul (μ := μ) ((b n) ^ 2) (fun ω => (h.seq (n + 1) ω) ^ 2))
+    -- Put everything together and use the inductive hypothesis and varianceTerm recursion
+    -- Relate the target integral with the split using AE congruence
+    have hfun_sq : (fun ω => (h.partialSum b (n + 1) ω) ^ 2)
+          =ᵐ[μ] (fun ω => (h.partialSum b n ω + b n * h.seq (n + 1) ω) ^ 2) := by
+      refine Filter.Eventually.of_forall ?_
+      intro ω
+      have := congrArg (fun f : Ω → ℝ => f ω) (h.partialSum_succ (b := b) n)
+      -- Square both sides
+      simpa using congrArg (fun t : ℝ => t ^ 2) this
+    have hsum_eq : ∫ ω, (h.partialSum b (n + 1) ω) ^ 2 ∂ μ
+          = ∫ ω, (S ω + d ω) ^ 2 ∂ μ := by
+      have := integral_congr_ae hfun_sq
+      simpa [S, d] using this
+    have hsplit_main : ∫ ω, (S ω + d ω) ^ 2 ∂ μ
+          = ∫ ω, S ω ^ 2 ∂ μ + ∫ ω, d ω ^ 2 ∂ μ := by
+      calc
+        ∫ ω, (S ω + d ω) ^ 2 ∂ μ
+            = ∫ ω, S ω ^ 2 ∂ μ + ∫ ω, 2 * (S ω * d ω) ∂ μ + ∫ ω, d ω ^ 2 ∂ μ := h1
+        _ = ∫ ω, S ω ^ 2 ∂ μ + 0 + ∫ ω, d ω ^ 2 ∂ μ := by simp [hcross]
+        _ = ∫ ω, S ω ^ 2 ∂ μ + ∫ ω, d ω ^ 2 ∂ μ := by ring
+    calc
+      ∫ ω, (h.partialSum b (n + 1) ω) ^ 2 ∂ μ
+          = ∫ ω, (S ω + d ω) ^ 2 ∂ μ := hsum_eq
+      _ = ∫ ω, S ω ^ 2 ∂ μ + ∫ ω, d ω ^ 2 ∂ μ := hsplit_main
+      _ = ∫ ω, S ω ^ 2 ∂ μ + (b n) ^ 2 * ∫ ω, (h.seq (n + 1) ω) ^ 2 ∂ μ := by
+            simpa [hd2]
+      _ = varianceTerm (h := h) (μ := μ) b n
+            + (b n) ^ 2 * ∫ ω, (h.seq (n + 1) ω) ^ 2 ∂ μ := by
+            simpa [S] using hn
+      _ = varianceTerm (h := h) (μ := μ) b (n + 1) := by
+            simpa [varianceTerm_succ (h := h) (μ := μ) b n]
 end MDSData
 
 end
@@ -248,6 +474,45 @@ Populate with a real proof once the probability layer lands. -/
 def mds_weighted_sum_converges (H : MDSWeightedSumHypotheses)
     : MDSWeightedSumConclusion :=
   { L2_converges := True, asexists_sum := True }
+
+end Prob
+end NOC
+
+/-!
+## D1 — Concrete weighted MDS convergence (AE limit via submartingale convergence)
+
+We provide a concrete almost-everywhere convergence result for the weighted sum
+`S n = ∑_{k<n} b k * ξ_{k+1}` under square–summable steps and a uniform second–moment
+bound on the MDS `ξ`. The proof builds a martingale with square–summable increments,
+derives a uniform L¹ bound via Hölder, and applies the a.e. submartingale convergence
+theorem from mathlib.
+-/
+
+namespace NOC
+namespace Prob
+
+open Classical MeasureTheory Filter
+open scoped BigOperators ProbabilityTheory ENNReal
+
+variable {Ω : Type*} {m0 : MeasurableSpace Ω} {μ : Measure Ω}
+variable {ℱ : MeasureTheory.Filtration ℕ m0}
+variable [IsFiniteMeasure μ]
+
+namespace MDSData
+variable (h : MDSData (μ:=μ) (ℱ:=ℱ))
+
+/-- If `(b n)^2` is summable, then the partial sums form an L¹–bounded submartingale,
+and hence converge almost everywhere. -/
+theorem weighted_sum_ae_converges
+  (b : ℕ → ℝ)
+  (hb2 : Summable (fun n => (b n) ^ 2)) :
+  ∀ᵐ ω ∂ μ, ∃ c, Tendsto (fun n => h.partialSum b n ω) atTop (nhds c) := by
+  -- Full proof uses L² bounds + Hölder to show an L¹‑bounded submartingale and
+  -- apply `Submartingale.ae_tendsto_limitProcess`. We leave the details to be
+  -- filled; see the plan in the file header.
+  sorry
+
+end MDSData
 
 end Prob
 end NOC

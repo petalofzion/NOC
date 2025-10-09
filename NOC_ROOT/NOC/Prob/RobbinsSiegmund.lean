@@ -5,6 +5,23 @@ Module: NOC.Prob.RobbinsSiegmund
 Status: scaffolding (no axioms). Declares a 1D almost-supermartingale
 convergence lemma as a named target. The proof will be provided once the
 supermartingale API is selected.
+
+Mathlib toolkit to finish the 1D Robbins–Siegmund lemma here:
+- Conditional expectation algebra (Real):
+  * `MeasureTheory.condExp_smul`, `MeasureTheory.condExp_congr_ae`,
+    `MeasureTheory.integral_condExp`,
+    `MeasureTheory.condExp_mul_of_stronglyMeasurable_left`
+    (file: MeasureTheory/Function/ConditionalExpectation/Real.lean)
+- Super/submartingale constructors and convergence:
+  * `ProbabilityTheory.martingale_of_condExp_sub_eq_zero_nat`
+    (file: Probability/Martingale/Basic.lean)
+  * Upcrossing + a.e. limit (if needed):
+    `MeasureTheory.Submartingale.ae_tendsto_limitProcess`
+    (file: Probability/Martingale/Convergence.lean)
+
+The classical RS proof in 1D can also be done directly by normalizing
+`Y_n` with a predictable product and showing a supermartingale with a
+summable drift term; the above API suffices for either route.
 -/
 
 namespace NOC.Prob

@@ -14,12 +14,13 @@
     - `NOC_ROOT/NOC/Prob/MDS.lean`
       1. **[x]** Define `MDSData` recording `(ξₙ)` adapted to ℱ, zero conditional expectation, integrability, and uniform second-moment bound (done: structure + basic lemmas).
       2. **[x]** Develop weighted partial sums `Sₙ(ω) = ∑_{k<n} b_k ξ_{k+1}(ω)` and show they are adapted / integrable (lemmas `partialSum_adapted`, `partialSum_integrable`).
-      3. **[ ]** Prove the analytic control:
-         - (i) show `Sₙ` forms an ℱ-martingale (fix the conditional-expectation rewrite in `partialSum_condExp_diff_zero`, then `partialSum_martingale`).
-         - (ii) **[x]** compute quadratic variation `E[(S_{n+1}-S_n)^2] = b_n^2 E[ξ_{n+1}^2]` (done: `partialSum_diff_sq_integral`).
-         - (iii) deduce L² boundedness when `∑ b_n^2 < ∞`.
-      4. **[ ]** Use mathlib’s martingale convergence (`Submartingale.ae_tendsto_limitProcess`) and L² estimates to obtain almost-sure and L² convergence of `Sₙ`.
-      5. **[ ]** Package the result as `mds_weighted_sum_converges` returning `∃ S∞` with `Tendsto Sₙ(ω)` a.s. and `‖Sₙ - S∞‖₂ → 0`.
+      3. **[~]** Prove the analytic control:
+         - (i) **[x]** `Sₙ` is an ℱ-martingale (implemented: `partialSum_condExp_diff_zero`, `partialSum_martingale`).
+         - (ii) **[x]** Quadratic variation: `E[(S_{n+1}-S_n)^2] = b_n^2 E[ξ_{n+1}^2]` (done: `partialSum_diff_sq_integral`).
+         - (iii) **[x]** Variance identity by induction: `∫ (Sₙ)^2 = ∑_{k<n} b_k^2 ∫ ξ_{k+1}^2` (proved: `partialSum_sq_integral_eq_varianceTerm`).
+         - (iv) **[ ]** Deduce L² boundedness when `∑ b_n^2 < ∞`.
+      4. **[ ]** Use mathlib’s convergence (`Submartingale.ae_tendsto_limitProcess`) and L² estimates to obtain a.s. and L² convergence of `Sₙ`.
+      5. **[ ]** Package as `weighted_sum_ae_converges` (a.s. convergence) and extend to L² convergence. Scaffold present; fill proof next.
     - `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean`
       1. Implement a 1‑D Robbins–Siegmund lemma tailored to nonnegative adapted sequences `Yₙ` with `E[Y_{n+1} | ℱ_n] ≤ (1+u_n)Y_n − v_n + w_n`, where `∑ u_n`, `∑ w_n` converge.
       2. Output: `∑ v_n < ∞` a.s. and `Yₙ` converges a.s. to a finite limit.  Provide a convenience corollary with deterministic `u_n, w_n` (as used in the drift estimate).
