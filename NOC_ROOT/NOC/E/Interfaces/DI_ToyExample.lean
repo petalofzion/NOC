@@ -50,6 +50,27 @@ lemma toy_di_contraction (n : Nat) :
   simpa using
     (NOC.DI.di_monotone_under_garbling (X:=Unit) (Y:=Unit) n (fun _ => ()) (fun _ => ()))
 
+/- Strict contraction variant: since `η_t = 1/2` and `pre_t = 1`, we have a strict
+   global drop `DI n < ∑ pre_t`. This exercises the strict typeclass lemma. -/
+lemma toy_di_strict_contraction (n : Nat) :
+  DirectedInfo.DI (X:=Unit) (Y:=Unit) n (fun _ => ()) (fun _ => ())
+    < (Finset.range (n+1)).sum (fun _t => (1 : ℝ)) := by
+  -- Use the strict lemma with pre≥0, a strict step at t0=0, and pre_0 > 0.
+  have hpre_nonneg : ∀ t ∈ Finset.range (n+1), 0 ≤ (1 : ℝ) := by
+    intro t ht; norm_num
+  have ht0 : 0 ∈ Finset.range (n+1) := by
+    simpa using Nat.succ_pos n
+  have hη_lt : SDPI.η (X:=Unit) (Y:=Unit) 0 < 1 := by
+    -- η 0 = 1/2
+    norm_num [toyEta]
+  have hpre_pos : 0 < (1 : ℝ) := by norm_num
+  -- Apply strict lemma; all instances are in scope, and `pre` reduces to `1` by def.
+  simpa using
+    (NOC.DI.di_strict_under_garbling (X:=Unit) (Y:=Unit)
+      n (fun _ => ()) (fun _ => ()) (by
+        -- rewrite `pre` to `1` and apply `hpre_nonneg`
+        intro t ht; simpa using hpre_nonneg t ht)
+      0 ht0 hη_lt (by simpa using hpre_pos))
+
 end DI
 end NOC
-

@@ -18,6 +18,10 @@ import NOC.E.Boundary.GaussianMAC
 import NOC.E.Boundary.LoewnerHelpers
 import NOC.E.Boundary.GaussianVector
 import NOC.E.Interfaces.DI_Toy
+import NOC.E.Interfaces.DI_Averaging
+import NOC.E.Interfaces.DI_Fiberwise
+import NOC.E.Interfaces.DI_NOC_Wrapper
+import NOC.E.Interfaces.DI_NOC_Instance
 import NOC.C.CPrimeToy
 
 /-!

@@ -31,6 +31,18 @@ Tactic outline:
 - Conclude by replacing each term after ablation with its bound in terms of the
   corresponding pre‑ablation term and summing inequalities.
 Currently, we keep the final theorem as a placeholder to unblock downstream usage.
+
+NOC instantiation requirements (for the real model)
+- Fix the per‑step conditioning (filtration) used in Massey’s term, and prove
+  filtration inclusion so the chain rule and SDPI conditioning align.
+- Specify the per‑step DI terms `perBefore/perAfter` precisely (e.g.,
+  I(A^{≤t}; S_t | S^{<t}) vs a causally conditioned variant), and prove the
+  equalities `chain_before/chain_after`.
+- Provide a per‑step SDPI statement: a contraction constant η_t < 1 and a
+  Markov/garbling witness ensuring `perAfter_t ≤ perBefore_t` under the chosen
+  conditioning (strict if some step has η_t < 1 with a nonzero before term).
+- With those in place, the algebraic aggregators below discharge the global
+  inequality directly.
 -/
 
 namespace NOC

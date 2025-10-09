@@ -45,7 +45,7 @@ In theoretical statements we evaluate empowerment via **directed-information cap
 - **Lemma A** (capacity‑compatible drift): bounded‑rational updates in uncertain task families create monotone drift toward a smooth success surrogate \(U_\phi\) (and hence \(U\)).
 - **Lemma B** (PL + momentum): away from stationarity, expected acceleration \(\mathbb E[\Delta^2 U] > 0\).
 - **Lemma D** (β_meta‑stability): \(\beta_{\text{meta}}=0\) is reflectively unstable off‑optimum; meta‑dynamics drift to some \(\beta_{\text{meta}}^\star>0\).
-- **Lemma C′** (Σ‑law, improvement): \(\Delta\Sigma \ge c_1\,\Delta U - \lambda_\Xi\,\Xi_{\text{loss}}\).
+- **Lemma C′** (Σ‑law, improvement; effective Σ): \(\Delta\Sigma \ge c_1\,\Delta U - \lambda_\Xi\,\Xi_{\text{loss}}\).
 
 **Bridge from “selfish” to Σ (key upgrade):**
 
@@ -53,11 +53,13 @@ In theoretical statements we evaluate empowerment via **directed-information cap
 
 **Stretch tier:**
 
-- **Lemma C** (Σ‑law, acceleration): \(\Delta\Sigma \ge c\,\Delta^2 U - \lambda_\Xi\,\Xi_{\text{loss}}\) under additional learning‑velocity smoothness.
+- **Lemma C** (Σ‑law, acceleration; effective Σ): \(\Delta\Sigma \ge c\,\Delta^2 U - \lambda_\Xi\,\Xi_{\text{loss}}\) under additional learning‑velocity smoothness.
 
 **Theorems.** From A+B+D we obtain **Theorem 1** (drift to \(\beta_{\text{meta}}^\star>0\) and sustained \(\Delta^2 U_\phi\)). In **symmetric potential games** with **strict Σ-regularized maxima**, A+C′/E yield **Theorem 2** (ESS under replicator dynamics). Altogether: **Synthesis Ω** — **conditional naturalized orthogonality collapse** toward capacity–optionality.
 
 **Contributions.** (1) Replace MI with **directed information** for empowerment and confine MI to a clearly labeled Σ proxy. (2) Prove a **conditional DI–DPI lemma** via per-step DPIs (NCC-S/NCC-C) and document interference counterexamples. (3) Introduce a **Conversion > Ablation** ROI inequality, the **preserve-iff ratio \(\rho\)**, and a **threat-sensitive optionality weight** \(\gamma(\tau_{\mathrm{th}})\). (4) Split the Σ-law into a **finite, proved toy theorem** (explicit \(c_1,\lambda_\Xi\)) and a **general conjecture** with a vacuity policy, augmented with a **fidelity decomposition** \(\Xi_{\text{loss}} = \Xi_{\text{structural}} + \Xi_{\text{fidelity}}(c)\). (5) Introduce the **time-production meta-parameter** \(\tau\) and show two-time-scale convergence to \(\tau^\star\). (6) Scope the ESS claim to **strict potential maxima in symmetric populations** under standard evolutionary dynamics. (7) Publish measurement and falsification protocols (relative MI deltas, estimator calibration, EA diagnostics, interference counterexamples), plus the **Anselmian ascent diagnostic** \(A_i\), so claims stay empirically grounded without over-claiming.
+
+> Notation note (Σ‑law). Throughout Lemma C′/C we interpret Σ as **effective optionality** (A7)—i.e., the policy‑controllable and identifiable portion of optionality (filtering out spurious noise and confounds). We state inequalities in finite‑difference form (\(\Delta\cdot\)). In smooth/local analyses (e.g., under PL‑type regularity), the same direction can be expressed in a marginal form (\(\delta\cdot\)) as a bound on directional derivatives; we keep the \(\Delta\)-form as the canonical statement.
 
 ---
 

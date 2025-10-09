@@ -24,7 +24,7 @@ Entry format
 -------------------------------------------------------------------------------
 Lemma: E (Boundary) — Log‑det monotonicity (support)
 File(s): NOC_ROOT/NOC/E/Boundary/LoewnerHelpers.lean
-Theorems: inv_antitone_spd, logdet_mono_from_opmonotone
+Theorems: inv_antitone_spd, logdet_mono_from_opmonotone, logdet_mono_from_opmonotone_min
 
 Statement (summary)
 - If A ⪯ B and I + A, I + B are SPD, then log det(I + A) ≤ log det(I + B).
@@ -67,6 +67,8 @@ Notes for Lean (impl)
 - Spectral: M Hermitian PSD ⇒ det(I + M) = ∏(1 + λᵢ) ≥ 1.
 - Determinant: det(I + B) = det(R)^2 · det(I + M) ≥ det(R)^2 = det(I + A) ⇒ log monotone.
 - Robust proof uses explicit congrArg + a local “sandwich_add” lemma; avoids fragile simp paths.
+ - Minimal variant `logdet_mono_from_opmonotone_min` exposes only the truly necessary hypotheses
+   (A ⪯ B, PosDef(I±)); it calls a factored helper `det_I_add_psd_ge_one` for the spectral/product step.
 
 -------------------------------------------------------------------------------
 Lemma: E (Boundary) — Vector Gaussian log‑det boundary
@@ -137,13 +139,14 @@ Notes for Lean (impl)
 -------------------------------------------------------------------------------
 Lemma: E (Composition) — Conditional DI–DPI (toy instantiation)
 File(s): NOC_ROOT/NOC/E/Interfaces/DI_ToyExample.lean, NOC_ROOT/NOC/E/Interfaces/DI.lean
-Theorems: DI.di_monotone_under_garbling (specialized), conditional_DI_DPI (aggregator form)
+Theorems: DI.di_monotone_under_garbling (specialized), DI.di_strict_under_garbling (strict variant), conditional_DI_DPI (aggregator form)
 
 Statement (summary)
 - In a finite toy model (Unit×Unit), per-step DI is a fixed contraction `ηₜ = 1/2`, `preₜ = 1`, `postₜ = ηₜ`; the global DI contraction inequality holds by the aggregator.
 
 Hypotheses
 - `DirectedInfo`, `SDPI`, and `SDPIStepWitness` instances present; `ηₜ ∈ [0,1)`.
+- For strict inequality via the typeclass route: nonnegativity of `preₜ` for all steps and existence of a step `t₀` with `η_{t₀} < 1` and `pre_{t₀} > 0`.
 
 Why needed
 - Demonstrates the composition lemma is live and ready for concrete instantiations with real channels.
@@ -156,6 +159,7 @@ Questionable?
 
 Verification obligations
 - For a concrete model: provide per-step decomposition, SDPI witnesses, and filtration alignment; then the aggregator yields the global DI inequality.
+ - For strictness: certify `preₜ ≥ 0` and a step with `ηₜ < 1` and `preₜ > 0` (e.g., a strictly contracting channel step and a nondegenerate upstream).
 
 Template — fill for each future lemma/file
 
