@@ -1,10 +1,41 @@
 # TODO — Next Formalization Steps
 
 - [ ] **Lemma D / β-meta stability (TTSA)** (`NOC_ROOT/NOC/D/BetaStabilityTTSA.lean`)
-  - Context/schedules/noise/regularizer records remain in place; top-level theorem is still a `True` placeholder.
-  - Property-layer stepping lemmas are now proved: `TTSA.beta_drift_lower_bound_props`, `TTSA.beta_hits_target_props`, and `DriftHitThresholdPropsContext.hits_threshold_props` (clamp wrappers delegate to them). No `sorry`s remain in the arithmetic layer.
-  - Next: connect the abstract drift bounds back to the acceleration window (`g_lower`), then apply a two-time-scale SA/ODE theorem to replace the top-level `True` placeholder with the β-drift result (Tier‑3 target).
-  - Optional follow-up: package the projection hypotheses into a dedicated structure (e.g., `ProjIccProps` instance/`IsProjIcc`) so future callers can import the monotonicity bundle directly.
+  - New: full ODE-style statement added as `lemmaD_beta_stability_TTSA_ode`, bundling standard hypotheses in `TTSATrackingHypotheses` (schedules, noise, averaged drift `ḡ`, positive window, interior root). Proof pending (Borkar ODE method).
+  - Context/schedules/noise/regularizer records remain in place; the earlier front-door finitary theorem `lemmaD_beta_stability_TTSA_window` is proved from the arithmetic layer.
+  - Property-layer stepping lemmas are proved: `TTSA.beta_drift_lower_bound_props`, `TTSA.beta_hits_target_props`, and `DriftHitThresholdPropsContext.hits_threshold_props` (clamp wrappers delegate). No `sorry`s in the arithmetic layer.
+  - Next: discharge `aligns_with_gbar` and root stability in your concrete model, then carry out the TTSA ODE tracking proof for `lemmaD_beta_stability_TTSA_ode`.
+
+- [ ] **Option 1: 1‑D Projected SA Meta‑Theorem** (`NOC_ROOT/NOC/D/TTSA_Convergence.lean`)
+  - **Scaffolding already in repo**
+    - `OneDProjectedSAHypotheses` packages the requirements: Robbins–Monro stepsizes (∑bₙ=∞, ∑bₙ²<∞), real MDS noise, bias summability (∑ bₙ E|δₙ₊₁| < ∞ or a.s.), drift regularity (continuity + local Lipschitz + positive window), unique locally stable interior root β⋆, and an alignment clause for the stochastic recursion.
+    - `projected_SA_converges_1D` currently returns `conclusion` (a `Prop` placeholder); we will replace it with the fully proved “a.s. interior hit + convergence to β⋆”.
+  - **Probability layer to implement (new work)**
+    - `NOC_ROOT/NOC/Prob/MDS.lean`
+      1. **[x]** Define `MDSData` recording `(ξₙ)` adapted to ℱ, zero conditional expectation, integrability, and uniform second-moment bound (done: structure + basic lemmas).
+      2. **[x]** Develop weighted partial sums `Sₙ(ω) = ∑_{k<n} b_k ξ_{k+1}(ω)` and show they are adapted / integrable (lemmas `partialSum_adapted`, `partialSum_integrable`).
+      3. **[ ]** Prove the analytic control:
+         - (i) show `Sₙ` forms an ℱ-martingale (fix the conditional-expectation rewrite in `partialSum_condExp_diff_zero`, then `partialSum_martingale`).
+         - (ii) **[x]** compute quadratic variation `E[(S_{n+1}-S_n)^2] = b_n^2 E[ξ_{n+1}^2]` (done: `partialSum_diff_sq_integral`).
+         - (iii) deduce L² boundedness when `∑ b_n^2 < ∞`.
+      4. **[ ]** Use mathlib’s martingale convergence (`Submartingale.ae_tendsto_limitProcess`) and L² estimates to obtain almost-sure and L² convergence of `Sₙ`.
+      5. **[ ]** Package the result as `mds_weighted_sum_converges` returning `∃ S∞` with `Tendsto Sₙ(ω)` a.s. and `‖Sₙ - S∞‖₂ → 0`.
+    - `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean`
+      1. Implement a 1‑D Robbins–Siegmund lemma tailored to nonnegative adapted sequences `Yₙ` with `E[Y_{n+1} | ℱ_n] ≤ (1+u_n)Y_n − v_n + w_n`, where `∑ u_n`, `∑ w_n` converge.
+      2. Output: `∑ v_n < ∞` a.s. and `Yₙ` converges a.s. to a finite limit.  Provide a convenience corollary with deterministic `u_n, w_n` (as used in the drift estimate).
+  - **Deterministic SA layer (same file)**
+    - Add a pathwise lemma: with square-summable noise weights and summable bias on each trajectory, show the clamped recursion hits the positive window and converges; relies on clamp Lipschitz and monotone drift bounds.
+    - Lift to the probabilistic theorem by invoking `mds_weighted_sum_converges` and the probabilistic Robbins–Siegmund lemma to discharge the almost-sure assumptions.
+  - **Deliverable**: `projected_SA_converges_1D` becomes a fully proved theorem returning the actual convergence statement; this will be used inside `lemmaD_beta_stability_TTSA_ode`.
+
+- [ ] **Option 2A: Full TTSA (unique fast equilibrium)** (`NOC_ROOT/NOC/D/TTSA_Convergence.lean`)
+  - Added bundle `TTSAUniqueEqHypotheses` with abstract projections, schedule separation (b_n/a_n→0), Lipschitz drifts, unique globally stable fast equilibrium y*(β), averaged slow drift Ḡ, projected ODE well‑posedness, MDS noise, and a `conclusion` field (tracking + APT + convergence).
+  - Added theorem `TTSA_projected_unique_equilibrium` to return `conclusion`.
+  - Action: Prove fast tracking (discrete Grönwall + MDS), then reduce to projected SA on B via Ḡ and call the Option 1 theorem.
+
+- [ ] **Option 2B: Full TTSA (ergodic fast dynamics)** (`NOC_ROOT/NOC/D/TTSA_Convergence.lean`)
+  - Added bundle `TTSAErgodicHypotheses` with invariant‑measure averaging μ_β and mixing; theorem `TTSA_projected_ergodic` returns `conclusion` (averaging + APT + convergence).
+  - Action: Provide minimal averaging hypothesis (Poisson‑equation style) and reuse Option 1 after averaging; state projected ODE result with tangent‑cone inclusion.
 
 - [x] **Conditional DI–DPI instantiation** (`NOC_ROOT/NOC/E/ConditionalDIDPI.lean` + `NOC_ROOT/NOC/E/Interfaces/DI*.lean`)
   - Interfaces and global lemmas are live; examples added:
