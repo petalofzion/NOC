@@ -1,5 +1,6 @@
 import Mathlib
 import Mathlib.Probability.Martingale.Basic
+import Mathlib.Probability.Martingale.Convergence
 
 /-!
 Module: NOC.Prob.MDS
@@ -39,7 +40,7 @@ namespace NOC
 namespace Prob
 noncomputable section
 open scoped BigOperators MeasureTheory ProbabilityTheory ENNReal
-open Classical MeasureTheory
+open Classical MeasureTheory Filter TopologicalSpace
 
 variable {Ω : Type*} {m0 : MeasurableSpace Ω} {μ : Measure Ω}
 variable {ℱ : MeasureTheory.Filtration ℕ m0}
@@ -57,6 +58,27 @@ structure MDSData where
 
 namespace MDSData
 variable (h : MDSData (μ:=μ) (ℱ:=ℱ))
+
+-- (wrapper lemma removed; we directly use mathlib's Submartingale.exists_ae_tendsto_of_bdd at call sites)
+
+-- (lemma removed; we perform the necessary pointwise identity inline where needed)
+
+-- Helpers for exponent handling and `eLpNorm` at `p=2`.
+private def half : ℝ := (1 / (2 : ℝ))
+
+private lemma half_nonneg : 0 ≤ half := by
+  simpa [half] using (by norm_num : 0 ≤ (1 / (2 : ℝ)))
+
+/-- `eLpNorm` at `p = 2` in a convenient form (extended ℝ). -/
+private lemma eLpNorm_two_eq_rpow
+  (f : Ω → ℝ) :
+  eLpNorm f (2 : ℝ≥0∞) μ
+    = (∫⁻ ω, ‖f ω‖ₑ ^ (2 : ℝ) ∂ μ) ^ half := by
+  have p_ne_zero : (2 : ℝ≥0∞) ≠ 0 := by simp
+  have p_ne_top  : (2 : ℝ≥0∞) ≠ ∞ := by simp
+  simpa [half] using
+    (eLpNorm_eq_lintegral_rpow_enorm
+      (μ := μ) (f := f) (p := (2 : ℝ≥0∞)) p_ne_zero p_ne_top)
 
 @[simp] def partialSum (b : ℕ → ℝ) (n : ℕ) : Ω → ℝ :=
   fun ω => (Finset.range n).sum (fun k => b k * h.seq (k + 1) ω)
@@ -248,7 +270,7 @@ private lemma partialSum_sq_integrable_aux (b : ℕ → ℝ) :
       simpa using hsum.smul (2 : ℝ)
     exact this
 
-private lemma partialSum_sq_integrable (b : ℕ → ℝ) (n : ℕ) :
+lemma partialSum_sq_integrable (b : ℕ → ℝ) (n : ℕ) :
     Integrable (fun ω => (h.partialSum b n ω) ^ 2) μ :=
   partialSum_sq_integrable_aux (h := h) b n
 
@@ -507,10 +529,188 @@ theorem weighted_sum_ae_converges
   (b : ℕ → ℝ)
   (hb2 : Summable (fun n => (b n) ^ 2)) :
   ∀ᵐ ω ∂ μ, ∃ c, Tendsto (fun n => h.partialSum b n ω) atTop (nhds c) := by
-  -- Full proof uses L² bounds + Hölder to show an L¹‑bounded submartingale and
-  -- apply `Submartingale.ae_tendsto_limitProcess`. We leave the details to be
-  -- filled; see the plan in the file header.
-  sorry
+  classical
+  -- Consider the martingale (and submartingale) of partial sums.
+  have hmart : Martingale (fun n => h.partialSum b n) ℱ μ := h.partialSum_martingale b
+  have hsub : Submartingale (fun n => h.partialSum b n) ℱ μ := hmart.submartingale
+
+  -- Helper: nonnegativity of (b n)^2
+  have h_nonneg_sq : ∀ n, 0 ≤ (b n) ^ 2 := fun _ => sq_nonneg _
+
+  -- Real second-moment bound: ∫ (S n)^2 ≤ variance_bound * ∑_{k<n} (b k)^2
+  have h_variance_bound_sum :
+      ∀ n, ∫ ω, (h.partialSum b n ω) ^ 2 ∂ μ
+          ≤ h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2) := by
+    intro n
+    -- Expand by variance identity
+    have hvar :
+        ∫ ω, (h.partialSum b n ω) ^ 2 ∂ μ
+          = (Finset.range n).sum (fun k => (b k) ^ 2 * ∫ ω, (h.seq (k + 1) ω) ^ 2 ∂ μ) := by
+      simpa using h.partialSum_sq_integral_eq_varianceTerm (b := b) n
+    -- Bound each term and pull out the constant
+    have hsum_le :
+        (Finset.range n).sum (fun k => (b k) ^ 2 * ∫ ω, (h.seq (k + 1) ω) ^ 2 ∂ μ)
+          ≤ (Finset.range n).sum (fun k => (b k) ^ 2 * h.variance_bound) := by
+      refine Finset.sum_le_sum ?_
+      intro k hk
+      have hk_nonneg : 0 ≤ (b k) ^ 2 := h_nonneg_sq k
+      have := h.second_moment_le k
+      have hx : (b k) ^ 2 * ∫ ω, (h.seq (k + 1) ω) ^ 2 ∂ μ
+                ≤ (b k) ^ 2 * h.variance_bound := by
+        exact mul_le_mul_of_nonneg_left this hk_nonneg
+      simpa using hx
+    have hpull :
+        (Finset.range n).sum (fun k => (b k) ^ 2 * h.variance_bound)
+          = h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2) := by
+      classical
+      -- `∑ (b k)^2 * C = C * ∑ (b k)^2`.
+      simpa [mul_comm, mul_left_comm, mul_assoc] using
+        (Finset.sum_mul (s := Finset.range n)
+          (f := fun k => (b k) ^ 2) (a := h.variance_bound)).symm
+    -- Conclude the desired bound on the real second moment of `S`.
+    have : ∫ ω, (h.partialSum b n ω) ^ 2 ∂ μ
+          ≤ h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2) := by
+      calc
+        ∫ ω, (h.partialSum b n ω) ^ 2 ∂ μ
+            = (Finset.range n).sum (fun k => (b k) ^ 2 * ∫ ω, (h.seq (k + 1) ω) ^ 2 ∂ μ) := by
+              simpa [hvar]
+        _ ≤ (Finset.range n).sum (fun k => (b k) ^ 2 * h.variance_bound) := hsum_le
+        _ = h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2) := by
+              simpa [hpull]
+    exact this
+
+  -- Compare finite sums to series: ∑_{k<n} (b k)^2 ≤ ∑' (b k)^2
+  have hsum_le_tsum : ∀ n, (Finset.range n).sum (fun k => (b k) ^ 2)
+      ≤ ∑' n, (b n) ^ 2 := by
+    intro n
+    -- order version works for nonnegative terms
+    refine Summable.sum_le_tsum (s := Finset.range n)
+      (f := fun k => (b k) ^ 2) (fun k _ => h_nonneg_sq k) ?_
+    exact hb2
+
+  -- L² bound on eLpNorm(S n): eLpNorm 2 ≤ const (independent of n)
+  have hL2_bound : ∀ n,
+      eLpNorm (h.partialSum b n) (2 : ℝ≥0∞) μ
+        ≤ (ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2))) ^ ((1 : ℝ) / 2) := by
+    intro n
+    -- convert lintegral of ‖·‖ₑ^2 to ofReal of the (Bochner) integral of (·)^2
+    let S : Ω → ℝ := fun ω => h.partialSum b n ω
+    have hint : Integrable (fun ω => (S ω) ^ 2) μ :=
+      (NOC.Prob.MDSData.partialSum_sq_integrable (h := h) (b := b) n)
+    have hnn : 0 ≤ᵐ[μ] (fun ω => (S ω) ^ 2) :=
+      Filter.Eventually.of_forall (by intro ω; exact sq_nonneg _)
+    have hpoint : ∀ ω, (‖S ω‖ₑ ^ 2) = ENNReal.ofReal ((S ω) ^ 2) := by
+      intro ω
+      have hnn : 0 ≤ ‖S ω‖ := norm_nonneg _
+      calc
+        ‖S ω‖ₑ ^ 2 = ‖S ω‖ₑ * ‖S ω‖ₑ := by simp [pow_two]
+        _ = ENNReal.ofReal ‖S ω‖ * ENNReal.ofReal ‖S ω‖ := by rfl
+        _ = ENNReal.ofReal (‖S ω‖ * ‖S ω‖) := by
+          simpa [mul_comm] using
+            ((ENNReal.ofReal_mul (hp := hnn)
+                : ENNReal.ofReal (‖S ω‖ * ‖S ω‖)
+                  = ENNReal.ofReal ‖S ω‖ * ENNReal.ofReal ‖S ω‖).symm)
+        _ = ENNReal.ofReal (‖S ω‖ ^ 2) := by simp [pow_two]
+        _ = ENNReal.ofReal ((S ω) ^ 2) := by simp [Real.norm_eq_abs, sq_abs]
+    have hlin : ∫⁻ ω, ‖S ω‖ₑ ^ 2 ∂ μ = ENNReal.ofReal (∫ ω, (S ω) ^ 2 ∂ μ) := by
+      have h₁ : ∫⁻ ω, ‖S ω‖ₑ ^ 2 ∂ μ
+          = ∫⁻ ω, ENNReal.ofReal ((S ω) ^ 2) ∂ μ :=
+        lintegral_congr_ae (Filter.Eventually.of_forall hpoint)
+      have h₂ : ∫⁻ ω, ENNReal.ofReal ((S ω) ^ 2) ∂ μ
+          = ENNReal.ofReal (∫ ω, (S ω) ^ 2 ∂ μ) :=
+        (ofReal_integral_eq_lintegral_ofReal (μ := μ)
+          (f := fun ω => (S ω) ^ 2) hint hnn).symm
+      exact h₁.trans h₂
+    -- push the real inequality via ofReal and take 1/2-power
+    have hb_real : ∫ ω, (S ω) ^ 2 ∂ μ
+        ≤ h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2) :=
+      h_variance_bound_sum n
+    have hb_lint : ∫⁻ ω, ‖S ω‖ₑ ^ 2 ∂ μ
+        ≤ ENNReal.ofReal (h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2)) := by
+      calc
+        ∫⁻ ω, ‖S ω‖ₑ ^ 2 ∂ μ
+            = ENNReal.ofReal (∫ ω, (S ω) ^ 2 ∂ μ) := hlin
+        _ ≤ ENNReal.ofReal (h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2)) :=
+            ENNReal.ofReal_le_ofReal hb_real
+    -- First bound with the finite sum inside `ofReal`.
+    have hA : eLpNorm (h.partialSum b n) (2 : ℝ≥0∞) μ
+        ≤ (ENNReal.ofReal (h.variance_bound
+            * (Finset.range n).sum (fun k => (b k) ^ 2))) ^ ((1 : ℝ) / 2) := by
+      have hpow := ENNReal.rpow_le_rpow hb_lint (by norm_num : 0 ≤ ((1 : ℝ) / 2))
+      have p_ne_zero : (2 : ℝ≥0∞) ≠ 0 := by simp
+      have p_ne_top  : (2 : ℝ≥0∞) ≠ ∞ := by simp
+      have e2 :=
+        (eLpNorm_eq_lintegral_rpow_enorm (μ := μ) (f := S)
+          (p := (2 : ℝ≥0∞)) p_ne_zero p_ne_top)
+      have e2' : eLpNorm (h.partialSum b n) (2 : ℝ≥0∞) μ
+            = (∫⁻ ω, ‖S ω‖ₑ ^ 2 ∂ μ) ^ ((1 : ℝ) / 2) := by
+        simpa [S] using e2
+      -- Now rewrite the left side by `e2'`.
+      simpa [e2'] using hpow
+    -- Then upgrade finite sum to the full series by monotonicity.
+    have hsum_le' :
+      ENNReal.ofReal (h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2))
+        ≤ ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2)) := by
+      have hmul_mono :
+          h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2)
+            ≤ h.variance_bound * (∑' n, (b n) ^ 2) := by
+        exact mul_le_mul_of_nonneg_left (hsum_le_tsum n) h.variance_nonneg
+      exact ENNReal.ofReal_le_ofReal hmul_mono
+    have hB : (ENNReal.ofReal (h.variance_bound * (Finset.range n).sum (fun k => (b k) ^ 2))) ^ ((1 : ℝ) / 2)
+        ≤ (ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2))) ^ ((1 : ℝ) / 2) := by
+      exact ENNReal.rpow_le_rpow hsum_le' (by norm_num : 0 ≤ ((1 : ℝ) / 2))
+    exact hA.trans hB
+
+  -- L¹ bound via exponent comparison (p = 1 ≤ 2 = q) and finite measure
+  have hpq : (1 : ℝ≥0∞) ≤ (2 : ℝ≥0∞) := by norm_num
+  have hL1_bound' : ∀ n,
+      eLpNorm (h.partialSum b n) (1 : ℝ≥0∞) μ
+        ≤ ((ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2))) ^ ((1 : ℝ) / 2))
+          * (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ)) := by
+    intro n
+    have hsm : AEStronglyMeasurable (h.partialSum b n) μ :=
+      (h.partialSum_integrable (b := b) n).aestronglyMeasurable
+    have base :
+        eLpNorm (h.partialSum b n) (1 : ℝ≥0∞) μ
+          ≤ eLpNorm (h.partialSum b n) (2 : ℝ≥0∞) μ
+              * (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ)) := by
+      simpa using
+        (eLpNorm_le_eLpNorm_mul_rpow_measure_univ (μ := μ)
+          (f := h.partialSum b n) hpq hsm)
+    have step :
+        eLpNorm (h.partialSum b n) (2 : ℝ≥0∞) μ
+            * (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ))
+          ≤ (ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2))) ^ ((1 : ℝ) / 2)
+              * (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ)) := by
+      -- multiply both sides of the L² bound by a nonnegative constant
+      have hnonneg : 0 ≤ (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ)) := by
+        simpa using (bot_le : (0 : ℝ≥0∞) ≤ (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ)))
+      exact (mul_le_mul_of_nonneg_right (hL2_bound n) hnonneg)
+    exact base.trans step
+
+  -- Package the bound into ℝ≥0 as expected by the convergence theorem
+  set Rbound : ℝ≥0∞ :=
+    ((ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2))) ^ ((1 : ℝ) / 2))
+      * (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ))
+  have hRfinite : Rbound < ∞ := by
+    have A : ((ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2))) ^ ((1 : ℝ) / 2)) < ∞ := by
+      refine ENNReal.rpow_lt_top_of_nonneg (by norm_num : 0 ≤ ((1 : ℝ) / 2)) ?hne
+      simpa using (by simp : ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2)) ≠ (⊤ : ℝ≥0∞))
+    have B : (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ)) < ∞ := by
+      exact ENNReal.rpow_lt_top_of_nonneg (by norm_num) (measure_ne_top μ Set.univ)
+    exact ENNReal.mul_lt_top_iff.2 (Or.inl ⟨A, B⟩)
+  -- Provide an ℝ≥0 bound as required by the convergence lemma.
+  -- Prepare the ℝ≥0 bound expected by the lemma
+  have hRne_top : Rbound ≠ ∞ := ne_of_lt hRfinite
+  let R : ℝ≥0 := ENNReal.toNNReal Rbound
+  have hR_coe : (R : ℝ≥0∞) = Rbound := ENNReal.coe_toNNReal hRne_top
+  -- Option A: a.e. convergence via L¹-bounded submartingale
+  have hbdd : ∀ n, eLpNorm (h.partialSum b n) (1 : ℝ≥0∞) μ ≤ (R : ℝ≥0∞) := by
+    intro n
+    have hbd : eLpNorm (h.partialSum b n) (1 : ℝ≥0∞) μ ≤ Rbound := hL1_bound' n
+    simpa [hR_coe] using hbd
+  -- Apply a.e. convergence for submartingales: existence of a.s. limit
+  exact hsub.exists_ae_tendsto_of_bdd (μ := μ) (R := R) hbdd
 
 end MDSData
 
