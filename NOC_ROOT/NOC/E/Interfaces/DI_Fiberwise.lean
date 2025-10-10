@@ -2,6 +2,14 @@ import Mathlib
 import NOC.E.Interfaces.DI
 import NOC.E.Interfaces.DI_Averaging
 
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 /-!
 Module: NOC.E.Interfaces.DI_Fiberwise
 Status: reusable DI–DPI composition from fiberwise (conditional) step bounds (no sorrys).
@@ -31,7 +39,7 @@ namespace NOC
 open Classical
 open scoped BigOperators
 
-variables {X Y ι : Type}
+variable {X Y ι : Type}
 
 /-- Aggregated per-step quantities from fiberwise pieces on a finite index set `s`. -/
 def aggPre (s : Finset ι) (w : ι → ℝ)
@@ -145,3 +153,10 @@ theorem di_dpi_from_fibers_strict
     h_per_le_post h_sdpi_step hpre_nonneg_sum t0 ht0 hη_lt hpre_t0_pos
 
 end NOC
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false

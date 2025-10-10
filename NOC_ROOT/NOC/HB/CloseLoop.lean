@@ -9,6 +9,14 @@ import Mathlib
 import NOC.HB.Quadratic
 import NOC.B.Core
 
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 namespace NOC
 noncomputable section
 open Classical
@@ -650,3 +658,10 @@ Module: NOC.HB.CloseLoop
 Summary: HB closed‑loop Δ²f algebra; one‑variable reduction via relative step; Δ²f≤0 ⇒ Δ²U≥0 for affine capacity.
 Public entry points: `delta2_f_hb_in_e_d`, `delta2_f_upper_bound_via_rho`, `hb_rhoStar`, `hb_delta2f_nonpos_of_small_rel_step`, `lemmaB_HB_affine_capacity`.
 -/
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false

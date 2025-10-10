@@ -34,3 +34,22 @@ Outcome:
 - `weighted_sum_ae_converges` is proved and used to obtain a.e. convergence of
   the weighted MDS partial sums under `∑ b_n^2 < ∞` and a uniform second‑moment
   bound for the increments.
+
+---
+
+Context: NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean — Robbins–Siegmund (RS)
+
+Update (resolved)
+- Completed the RS conditional-expectation algebra and derived the needed
+  increment bound from the RS inequality:
+  - `RS_increment_bound_of_RS_ineq` now proves
+    `μ[RSIncTerm(u,Y,w,v,n)|ℱ n] ≤ 0` a.e. under the standard RS assumptions.
+  - The proof composes mathlib’s `condExp_*` linearity lemmas
+    (`condExp_congr_ae`, `condExp_add`, `condExp_smul`, `condExp_sub`,
+    `condExp_const`) and uses `μ[Y_n|ℱ_n] = Y_n` a.e. for adapted, integrable
+    `Y_n`.
+- Built the supermartingale and convergence wrappers on top:
+  - `RSNormalizedDrifted_supermartingale_from_RS_ineq`.
+  - `RSNormalizedDrifted_ae_converges` (explicitly using `Filter.Tendsto`).
+
+No further math help is needed for this item.

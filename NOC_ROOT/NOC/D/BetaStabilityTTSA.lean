@@ -2,6 +2,14 @@ import Mathlib
 import NOC.B.Core
 import NOC.B.Expectation
 
+-- Silence common linter warnings for this file (place before declarations)
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 /-!
 Module: NOC.D.BetaStabilityTTSA
 Status: scaffolding (with proof plan and tactic outline).
@@ -54,9 +62,6 @@ Currently we keep a placeholder theorem to unblock downstream modules.
 namespace NOC
 noncomputable section
 open Classical
-
--- Silence linter hints like "try 'simp' instead of 'simpa'" in this file.
-set_option linter.unnecessarySimpa false
 
 /-- Step-size schedules for TTSA: `θ` runs at the fast rate `a_n`, and
     the meta-parameter β runs at the slow rate `b_n`. -/
@@ -793,3 +798,10 @@ theorem lemmaD_beta_stability_TTSA_ode
 
 end
 end NOC
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false

@@ -1,5 +1,13 @@
 import Mathlib
 
+-- Silence common linter warnings for this file (place before declarations)
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 /-!
 Module: NOC.E.Boundary.LoewnerHelpers
 Status: helper lemmas and main targets proved (inverse antitonicity and log-det monotonicity).
@@ -13,9 +21,6 @@ namespace NOC
 noncomputable section
 open Classical Matrix
 open scoped Matrix
-
--- Silence linter hints like "try 'simp' instead of 'simpa'" in this file.
-set_option linter.unnecessarySimpa false
 
 namespace LoewnerHelpers
   
@@ -870,3 +875,10 @@ end LoewnerHelpers
 
 end
 end NOC
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false

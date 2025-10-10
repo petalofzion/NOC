@@ -2,6 +2,14 @@ import Mathlib
 import NOC.E.Interfaces.DI
 import NOC.E.Interfaces.DI_Fiberwise
 
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 /-!
 Module: NOC.E.Interfaces.DI_NOC_Wrapper
 Status: ready-to-use wrappers (no sorrys).
@@ -213,3 +221,10 @@ theorem lemmaE_bound_weighted
 
 
 end NOC
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false

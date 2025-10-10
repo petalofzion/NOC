@@ -23,8 +23,16 @@
       5. [x] Package as `weighted_sum_ae_converges` (a.e. convergence). L² convergence can be added if needed; the L² bounds are in place.
       6. Cleared: the submartingale convergence call requires `R : NNReal` and exponent `(1 : ℝ≥0∞)` in `eLpNorm`; we now coerce the `ℝ≥0∞` bound via `toNNReal` and apply the lemma. A small pointwise identity is handled using `Real.enorm_eq_ofReal_abs`.
     - `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean`
-      1. Implement a 1‑D Robbins–Siegmund lemma tailored to nonnegative adapted sequences `Yₙ` with `E[Y_{n+1} | ℱ_n] ≤ (1+u_n)Y_n − v_n + w_n`, where `∑ u_n`, `∑ w_n` converge.
-      2. Output: `∑ v_n < ∞` a.s. and `Yₙ` converges a.s. to a finite limit.  Provide a convenience corollary with deterministic `u_n, w_n` (as used in the drift estimate).
+      1. [x] Implement a 1‑D Robbins–Siegmund lemma tailored to nonnegative adapted sequences `Yₙ` with `E[Y_{n+1} | ℱ_n] ≤ (1+u_n)Y_n − v_n + w_n`, where `∑ u_n`, `∑ w_n` converge.
+         - Done:
+           - `supermartingale_exists_ae_tendsto_of_bdd`: a.e. convergence of supermartingales under an L¹ bound (via negating to a submartingale and mathlib convergence).
+           - Deterministic normalization utilities: `RSWeight` (+ positivity), `RSNormalized`, `RSNormalizedComp`, and `RSNormalizedDrifted` with step identities `RSNormalized_succ_eq`, `RSNormalizedComp_succ_eq`, `RSNormalizedDrifted_succ_eq`, and `RSNormalizedDrifted_sub_succ_eq`.
+           - Increment and supermartingale bridge: `RSIncTerm` and `RSNormalizedDrifted_supermartingale_of_increment_bound`.
+           - Conditional‑expectation algebra closed: `RS_increment_bound_of_RS_ineq` derives `μ[RSIncTerm|ℱ_n] ≤ 0` from the RS inequality using `condExp_*` linearity and the adaptedness identity `μ[Y_n|ℱ_n] = Y_n`.
+           - Final wrappers:
+             - `RSNormalizedDrifted_supermartingale_from_RS_ineq`.
+             - `RSNormalizedDrifted_ae_converges` (uses `Filter.Tendsto` explicitly).
+      2. [ ] Output: `∑ v_n < ∞` a.s. and `Yₙ` converges a.s. to a finite limit. Provide a convenience corollary with deterministic `u_n, w_n` (as used in the drift estimate).
   - **Deterministic SA layer (same file)**
     - Add a pathwise lemma: with square-summable noise weights and summable bias on each trajectory, show the clamped recursion hits the positive window and converges; relies on clamp Lipschitz and monotone drift bounds.
     - Lift to the probabilistic theorem by invoking `mds_weighted_sum_converges` and the probabilistic Robbins–Siegmund lemma to discharge the almost-sure assumptions.

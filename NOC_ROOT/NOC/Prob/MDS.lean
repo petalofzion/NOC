@@ -2,6 +2,14 @@ import Mathlib
 import Mathlib.Probability.Martingale.Basic
 import Mathlib.Probability.Martingale.Convergence
 
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 /-!
 Module: NOC.Prob.MDS
 Status: scaffold + working partial‑sum API. This file hosts D1 (MDS

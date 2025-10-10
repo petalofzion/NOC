@@ -1,5 +1,13 @@
 import Mathlib
 
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 /-!
 Module: NOC.E.Interfaces.DI_Averaging
 Status: small helper lemmas (no sorrys).
@@ -70,3 +78,10 @@ lemma sum_uniform_sdpi
   exact h1.trans (h2.trans (by simpa [hsum]))
 
 end NOC
+-- Silence common linter warnings for this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false

@@ -1,5 +1,13 @@
 import Mathlib
 
+-- Silence common linter warnings for this file (place before declarations)
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 /-!
 Module: NOC.D.BetaStability
 Status: scaffolding.
