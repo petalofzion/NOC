@@ -32,6 +32,13 @@
            - Final wrappers:
              - `RSNormalizedDrifted_supermartingale_from_RS_ineq`.
              - `RSNormalizedDrifted_ae_converges` (uses `Filter.Tendsto` explicitly).
+        - Next:
+          - [x] Prove v‑sum partial‑sum bound via unconditional expectations and telescoping (`RS_vsum_partial_bound`).
+          - [ ] Add the summability corollary under `∑ w_n/RSWeight u (n+1) < ∞` (deduce `∑ v_n/RSWeight u (n+1) < ∞`).
+          - [ ] Provide L¹‑bound constructors for `RSNormalizedDrifted` from summability/boundedness hypotheses to feed `RSNormalizedDrifted_ae_converges`.
+           - [ ] Wire RS results into Option 1 conclusion (replace Prop placeholders in `NOC_ROOT/NOC/D/TTSA_Convergence.lean`).
+           - [ ] Implement the D6 interior‑hit path using RS (eventual positivity under a positive window + summable biases).
+           - [ ] Triage/resolve the remaining `sorry` in `NOC_ROOT/NOC/D/BetaStabilityTTSA.lean:783` (unrelated to RS but blocks fully green builds).
       2. [ ] Output: `∑ v_n < ∞` a.s. and `Yₙ` converges a.s. to a finite limit. Provide a convenience corollary with deterministic `u_n, w_n` (as used in the drift estimate).
   - **Deterministic SA layer (same file)**
     - Add a pathwise lemma: with square-summable noise weights and summable bias on each trajectory, show the clamped recursion hits the positive window and converges; relies on clamp Lipschitz and monotone drift bounds.

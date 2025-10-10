@@ -380,6 +380,33 @@ the **directed information** from the agent’s action process to future states.
 
 ## 2) Core lemmas — statements with proof sketches
 
+### Convergence Spine — MDS + RS for TTSA
+This records the probability‑theory backbone that lets NOC’s claims ride on explicit budgets rather than hand‑waving. Two reusable pillars, braided under two‑time‑scale stochastic approximation (TTSA):
+
+- MDS (martingale‑difference sums) — contingency tamed: weighted fair‑game noise converges a.e. under an NNReal L¹ bound.
+- Robbins–Siegmund (RS) — necessity expressed: a Lyapunov‑like process with small positive drift and explicit “useful loss” ledger converges a.s. after normalization, and the loss ledger is bounded by a clean telescope.
+
+Why it matters. MDS guarantees that stochastic perturbations don’t inject a spurious trend; RS guarantees that the intended direction (capacity/optionality push) survives friction and perturbations. TTSA separates fast policy motion from slow meta‑parameters so both arguments apply on their natural scales.
+
+- Operational assumptions (budgets).
+  - Finite measure context for convergence lemmas: `[IsFiniteMeasure μ]` for MDS; `[IsProbabilityMeasure μ]` in the RS expectation/telescope (constants integrate cleanly).
+  - Adaptedness + integrability: processes are ℱ‑adapted; `Integrable` where conditional expectations/integrals are formed.
+  - MDS weight budget: `∑ (b n)^2 < ∞` ⇒ uniform L² ⇒ uniform L¹ bound.
+  - RS drift budget: `E[Y_{n+1} | ℱ_n] ≤ (1+u_n) Y_n − v_n + w_n` with `u_n, v_n, w_n ≥ 0`; normalize by `W_n = ∏_{k<n} (1+u_k)`.
+
+- Lean API (where to call it).
+  - MDS a.e. convergence of weighted sums (under `R : NNReal` L¹ bound): `NOC_ROOT/NOC/Prob/MDS.lean:538`.
+  - Supermartingale a.e. convergence wrapper (negate to submartingale): `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:70`.
+  - RS normalization wrapper (package a supermartingale + L¹ bound, conclude a.e. convergence): `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:137`.
+  - RS weights, expectation step, and v‑sum telescope: `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:163`, `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:193`, `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:278`.
+
+- Reader capsule (how to use it in NOC).
+  - Noise control (MDS): prove `∑ (b n)^2 < ∞`; derive `R : NNReal` L¹ bound; call `weighted_sum_ae_converges`.
+  - Drift control (RS): instantiate the RS inequality for your Lyapunov proxy; use `RS_expectation_step` and `RS_vsum_partial_bound` to bound the useful‑decrease ledger; wrap normalization + L¹ into `RSNormalization.ae_converges` for a.e. convergence.
+  - TTSA glue: apply MDS separately on fast/slow channels; use RS on the meta‑Lyapunov to get the almost‑sure limit behavior under your declared budgets.
+
+Interpretation note. MDS corresponds to “contingency tamed” (fair‑game surprises remain globally bounded); RS corresponds to “necessity expressed” (a drift‑corrected supermartingale provides an arrow of decrease and a finite progress ledger). TTSA is the governance that keeps these pillars from interfering across scales.
+
 ### Lemma A — Capacity‑compatible drift (bounded rationality)
 **Claim.** Assume **A1** and a 1‑Lipschitz, increasing surrogate \(U_\phi\) for task success such that along the reflective update we have
 \(\Delta \mathbb{E}[R] \ge m\,\Delta U_\phi\) and \(\Delta\mathrm{KL} \le L\,\Delta U_\phi\). For any \(\beta_{\text{ctrl}} \ge L/m\), the free-energy objective \(\mathcal F_{\beta_{\text{ctrl}}}(\pi)=\mathbb E[R] - \tfrac{1}{\beta_{\text{ctrl}}}\mathrm{KL}(\pi\Vert\pi_0)\) weakly increases, so reflective updates drift toward higher \(U_\phi\) (and therefore higher \(U\)).
