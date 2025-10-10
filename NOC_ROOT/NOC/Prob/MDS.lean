@@ -80,6 +80,8 @@ private lemma eLpNorm_two_eq_rpow
     (eLpNorm_eq_lintegral_rpow_enorm
       (μ := μ) (f := f) (p := (2 : ℝ≥0∞)) p_ne_zero p_ne_top)
 
+-- (no pointwise helper lemma needed; we inline the identity for the concrete function `S` below)
+
 @[simp] def partialSum (b : ℕ → ℝ) (n : ℕ) : Ω → ℝ :=
   fun ω => (Finset.range n).sum (fun k => b k * h.seq (k + 1) ω)
 
@@ -601,17 +603,19 @@ theorem weighted_sum_ae_converges
       Filter.Eventually.of_forall (by intro ω; exact sq_nonneg _)
     have hpoint : ∀ ω, (‖S ω‖ₑ ^ 2) = ENNReal.ofReal ((S ω) ^ 2) := by
       intro ω
-      have hnn : 0 ≤ ‖S ω‖ := norm_nonneg _
+      have hx : 0 ≤ ‖S ω‖ := norm_nonneg _
+      have hdef : ‖S ω‖ₑ = ENNReal.ofReal |S ω| := by
+        simpa using (Real.enorm_eq_ofReal_abs (S ω))
       calc
-        ‖S ω‖ₑ ^ 2 = ‖S ω‖ₑ * ‖S ω‖ₑ := by simp [pow_two]
-        _ = ENNReal.ofReal ‖S ω‖ * ENNReal.ofReal ‖S ω‖ := by rfl
+        (‖S ω‖ₑ ^ 2) = ‖S ω‖ₑ * ‖S ω‖ₑ := by simp [pow_two]
+        _ = ENNReal.ofReal |S ω| * ENNReal.ofReal |S ω| := by simpa [hdef]
         _ = ENNReal.ofReal (‖S ω‖ * ‖S ω‖) := by
           simpa [mul_comm] using
-            ((ENNReal.ofReal_mul (hp := hnn)
-                : ENNReal.ofReal (‖S ω‖ * ‖S ω‖)
-                  = ENNReal.ofReal ‖S ω‖ * ENNReal.ofReal ‖S ω‖).symm)
-        _ = ENNReal.ofReal (‖S ω‖ ^ 2) := by simp [pow_two]
-        _ = ENNReal.ofReal ((S ω) ^ 2) := by simp [Real.norm_eq_abs, sq_abs]
+            ((ENNReal.ofReal_mul (hp := abs_nonneg _)
+                : ENNReal.ofReal (|S ω| * |S ω|)
+                  = ENNReal.ofReal |S ω| * ENNReal.ofReal |S ω|).symm)
+        _ = ENNReal.ofReal ((|S ω|) ^ 2) := by simp [pow_two]
+        _ = ENNReal.ofReal ((S ω) ^ 2) := by simpa [sq_abs]
     have hlin : ∫⁻ ω, ‖S ω‖ₑ ^ 2 ∂ μ = ENNReal.ofReal (∫ ω, (S ω) ^ 2 ∂ μ) := by
       have h₁ : ∫⁻ ω, ‖S ω‖ₑ ^ 2 ∂ μ
           = ∫⁻ ω, ENNReal.ofReal ((S ω) ^ 2) ∂ μ :=
@@ -692,25 +696,33 @@ theorem weighted_sum_ae_converges
   set Rbound : ℝ≥0∞ :=
     ((ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2))) ^ ((1 : ℝ) / 2))
       * (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ))
-  have hRfinite : Rbound < ∞ := by
+  have hRfinite : Rbound < ⊤ := by
+    have hne : ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2)) ≠ (⊤ : ℝ≥0∞) := by
+      simp
     have A : ((ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2))) ^ ((1 : ℝ) / 2)) < ∞ := by
-      refine ENNReal.rpow_lt_top_of_nonneg (by norm_num : 0 ≤ ((1 : ℝ) / 2)) ?hne
-      simpa using (by simp : ENNReal.ofReal (h.variance_bound * (∑' n, (b n) ^ 2)) ≠ (⊤ : ℝ≥0∞))
+      refine ENNReal.rpow_lt_top_of_nonneg (by norm_num : 0 ≤ ((1 : ℝ) / 2)) hne
     have B : (μ Set.univ) ^ (1 / (1 : ℝ) - 1 / (2 : ℝ)) < ∞ := by
       exact ENNReal.rpow_lt_top_of_nonneg (by norm_num) (measure_ne_top μ Set.univ)
     exact ENNReal.mul_lt_top_iff.2 (Or.inl ⟨A, B⟩)
   -- Provide an ℝ≥0 bound as required by the convergence lemma.
   -- Prepare the ℝ≥0 bound expected by the lemma
-  have hRne_top : Rbound ≠ ∞ := ne_of_lt hRfinite
-  let R : ℝ≥0 := ENNReal.toNNReal Rbound
-  have hR_coe : (R : ℝ≥0∞) = Rbound := ENNReal.coe_toNNReal hRne_top
+  have hRne_top : Rbound ≠ ⊤ := ne_of_lt hRfinite
+  let Rnn : NNReal := ENNReal.toNNReal Rbound
+  have hR_coe : (Rnn : ℝ≥0∞) = Rbound := ENNReal.coe_toNNReal hRne_top
   -- Option A: a.e. convergence via L¹-bounded submartingale
-  have hbdd : ∀ n, eLpNorm (h.partialSum b n) (1 : ℝ≥0∞) μ ≤ (R : ℝ≥0∞) := by
+  have hbdd : ∀ n, eLpNorm (h.partialSum b n) (1 : ℝ≥0∞) μ ≤ (Rnn : ℝ≥0∞) := by
     intro n
     have hbd : eLpNorm (h.partialSum b n) (1 : ℝ≥0∞) μ ≤ Rbound := hL1_bound' n
     simpa [hR_coe] using hbd
-  -- Apply a.e. convergence for submartingales: existence of a.s. limit
-  exact hsub.exists_ae_tendsto_of_bdd (μ := μ) (R := R) hbdd
+  -- Apply a.e. convergence for submartingales. First get a.e. tendsto to the limitProcess,
+  -- then package it as an existence statement.
+  have h_tend : ∀ᵐ ω ∂ μ,
+      Tendsto (fun n => h.partialSum b n ω) atTop
+        (nhds (MeasureTheory.Filtration.limitProcess (fun n => h.partialSum b n) ℱ μ ω)) :=
+    MeasureTheory.Submartingale.ae_tendsto_limitProcess
+      (μ := μ) (ℱ := ℱ) (f := fun n => h.partialSum b n) (R := Rnn) hsub hbdd
+  filter_upwards [h_tend] with ω hω
+  exact ⟨(MeasureTheory.Filtration.limitProcess (fun n => h.partialSum b n) ℱ μ ω), hω⟩
 
 end MDSData
 

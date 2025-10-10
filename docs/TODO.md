@@ -12,15 +12,16 @@
     - `projected_SA_converges_1D` currently returns `conclusion` (a `Prop` placeholder); we will replace it with the fully proved “a.s. interior hit + convergence to β⋆”.
   - **Probability layer to implement (new work)**
     - `NOC_ROOT/NOC/Prob/MDS.lean`
-      1. **[x]** Define `MDSData` recording `(ξₙ)` adapted to ℱ, zero conditional expectation, integrability, and uniform second-moment bound (done: structure + basic lemmas).
-      2. **[x]** Develop weighted partial sums `Sₙ(ω) = ∑_{k<n} b_k ξ_{k+1}(ω)` and show they are adapted / integrable (lemmas `partialSum_adapted`, `partialSum_integrable`).
-      3. **[~]** Prove the analytic control:
-         - (i) **[x]** `Sₙ` is an ℱ-martingale (implemented: `partialSum_condExp_diff_zero`, `partialSum_martingale`).
-         - (ii) **[x]** Quadratic variation: `E[(S_{n+1}-S_n)^2] = b_n^2 E[ξ_{n+1}^2]` (done: `partialSum_diff_sq_integral`).
-         - (iii) **[x]** Variance identity by induction: `∫ (Sₙ)^2 = ∑_{k<n} b_k^2 ∫ ξ_{k+1}^2` (proved: `partialSum_sq_integral_eq_varianceTerm`).
-         - (iv) **[ ]** Deduce L² boundedness when `∑ b_n^2 < ∞`.
-      4. **[ ]** Use mathlib’s convergence (`Submartingale.ae_tendsto_limitProcess`) and L² estimates to obtain a.s. and L² convergence of `Sₙ`.
-      5. **[ ]** Package as `weighted_sum_ae_converges` (a.s. convergence) and extend to L² convergence. Scaffold present; fill proof next.
+      1. [x] Define `MDSData` recording `(ξₙ)` adapted to ℱ, zero conditional expectation, integrability, and uniform second-moment bound (done: structure + basic lemmas).
+      2. [x] Develop weighted partial sums `Sₙ(ω) = ∑_{k<n} b_k ξ_{k+1}(ω)` and show they are adapted / integrable (lemmas `partialSum_adapted`, `partialSum_integrable`).
+      3. [x] Prove the analytic control:
+         - (i) [x] `Sₙ` is an ℱ-martingale (implemented: `partialSum_condExp_diff_zero`, `partialSum_martingale`).
+         - (ii) [x] Quadratic variation: `E[(S_{n+1}-S_n)^2] = b_n^2 E[ξ_{n+1}^2]` (done: `partialSum_diff_sq_integral`).
+         - (iii) [x] Variance identity by induction: `∫ (Sₙ)^2 = ∑_{k<n} b_k^2 ∫ ξ_{k+1}^2` (proved: `partialSum_sq_integral_eq_varianceTerm`).
+         - (iv) [x] Deduce uniform L² bounds when `∑ b_n^2 < ∞` (see `hL2_bound`).
+      4. [x] Use mathlib’s convergence (`MeasureTheory.Submartingale.ae_tendsto_limitProcess`) with an L¹ bound (`R : NNReal`) to get a.e. convergence of `Sₙ`.
+      5. [x] Package as `weighted_sum_ae_converges` (a.e. convergence). L² convergence can be added if needed; the L² bounds are in place.
+      6. Cleared: the submartingale convergence call requires `R : NNReal` and exponent `(1 : ℝ≥0∞)` in `eLpNorm`; we now coerce the `ℝ≥0∞` bound via `toNNReal` and apply the lemma. A small pointwise identity is handled using `Real.enorm_eq_ofReal_abs`.
     - `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean`
       1. Implement a 1‑D Robbins–Siegmund lemma tailored to nonnegative adapted sequences `Yₙ` with `E[Y_{n+1} | ℱ_n] ≤ (1+u_n)Y_n − v_n + w_n`, where `∑ u_n`, `∑ w_n` converge.
       2. Output: `∑ v_n < ∞` a.s. and `Yₙ` converges a.s. to a finite limit.  Provide a convenience corollary with deterministic `u_n, w_n` (as used in the drift estimate).
