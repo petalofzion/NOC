@@ -28,8 +28,13 @@ noncomputable section
 open Classical
 open scoped BigOperators
 
--- Silence linter hints like "try 'simp' instead of 'simpa'" in this file.
+-- Silence common linter notifications in this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
 set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
 
 
 /-- Uniform arithmetic average of a function `x : Ω → ℝ` over a nonempty finite support `S`. -/

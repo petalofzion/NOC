@@ -34,8 +34,15 @@
              - `RSNormalizedDrifted_ae_converges` (uses `Filter.Tendsto` explicitly).
         - Next:
           - [x] Prove v‑sum partial‑sum bound via unconditional expectations and telescoping (`RS_vsum_partial_bound`).
-          - [ ] Add the summability corollary under `∑ w_n/RSWeight u (n+1) < ∞` (deduce `∑ v_n/RSWeight u (n+1) < ∞`).
-          - [ ] Provide L¹‑bound constructors for `RSNormalizedDrifted` from summability/boundedness hypotheses to feed `RSNormalizedDrifted_ae_converges`.
+          - [x] Add the summability corollary under `∑ w_n/RSWeight u (n+1) < ∞` (deduce `∑ v_n/RSWeight u (n+1) < ∞`).
+                Implemented as `RS_vsum_summable_of_w_summable` at `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:360+` (assumes `u,v,w ≥ 0`, `Y_n ≥ 0` a.e., integrable, and RS inequality).
+          - [x] Provide L¹‑bound constructors for `RSNormalizedDrifted` from summability/boundedness hypotheses to feed `RSNormalizedDrifted_ae_converges`.
+                Implemented as `RSDrifted_l1_uniform_bound_of_w_summable` at `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:467+`.
+          - [x] Supermartingale wiring from RS inequality: prove `RSDrifted` is a supermartingale under adaptedness/integrability and the RS step.
+                Implemented as `RSDrifted_supermartingale_of_RS` (uses tower property `condExp_condExp_of_le` and monotonicity `condExp_mono`).
+          - [x] RS normalization constructor: package `RSDrifted` + L¹ bound into `RSNormalization` and expose `ae_converges` helper.
+                Implemented as `RSDrifted_ae_converges_of_RS`.
+          - [ ] TTSA call‑site stubs: add a usage note in `D/TTSA_Convergence.lean` showing how to instantiate the RS utilities for β‑recursions.
            - [ ] Wire RS results into Option 1 conclusion (replace Prop placeholders in `NOC_ROOT/NOC/D/TTSA_Convergence.lean`).
            - [ ] Implement the D6 interior‑hit path using RS (eventual positivity under a positive window + summable biases).
            - [ ] Triage/resolve the remaining `sorry` in `NOC_ROOT/NOC/D/BetaStabilityTTSA.lean:783` (unrelated to RS but blocks fully green builds).

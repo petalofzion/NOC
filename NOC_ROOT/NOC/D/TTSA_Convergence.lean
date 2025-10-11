@@ -133,3 +133,27 @@ def TTSA_projected_ergodic (H : TTSAErgodicHypotheses) : Prop :=
 
 end
 end NOC.TTSA
+
+/-!
+## Usage note: wiring RS convergence in TTSA (doc stub)
+
+Example (sketch): To use the RS utilities for a β-recursion, define
+
+  Y n ω := nonnegative potential at time n (measurable, integrable)
+  u n, v n, w n ≥ 0 with the RS step
+       μ[ Y (n+1) | ℱ n ] ≤ (1 + u n) * Y n − v n + w n
+  and summable ∑ w n / RSWeight u (n+1).
+
+Then call
+
+  NOC.Prob.RSDrifted_ae_converges_of_RS
+
+with the adaptedness/integrability/nonnegativity proofs and the RS inequality
+to obtain a.e. convergence of the drifted normalized process
+
+  G n ω = (RSWeight u n)⁻¹ * Y n ω + ∑_{k<n} v k / RSWeight u (k+1)
+           − ∑_{k<n} w k / RSWeight u (k+1).
+
+This plugs into TTSA by instantiating Y,u,v,w from the β-layer residual you
+track, after you verify the RS hypotheses and the w/W summability budget.
+-/

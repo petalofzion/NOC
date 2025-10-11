@@ -399,6 +399,7 @@ Why it matters. MDS guarantees that stochastic perturbations don’t inject a sp
   - Supermartingale a.e. convergence wrapper (negate to submartingale): `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:70`.
   - RS normalization wrapper (package a supermartingale + L¹ bound, conclude a.e. convergence): `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:137`.
   - RS weights, expectation step, and v‑sum telescope: `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:163`, `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:193`, `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:278`.
+  - RS v‑sum summability corollary: `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:360` (`∑ w_n/W_{n+1}` summable ⇒ `∑ v_n/W_{n+1}` summable).
 
 - Reader capsule (how to use it in NOC).
   - Noise control (MDS): prove `∑ (b n)^2 < ∞`; derive `R : NNReal` L¹ bound; call `weighted_sum_ae_converges`.

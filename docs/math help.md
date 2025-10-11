@@ -1,55 +1,31 @@
-# Math Help
+Title: math help
 
-Context: NOC_ROOT/NOC/Prob/MDS.lean — D1: MDS weighted-sum convergence.
+Context
+- Lean 4.23.0 + current mathlib in this repo.
+- File in focus: NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean.
 
-Status: Implemented full partial-sum API (martingale construction, variance
-identity, L² and L¹ bounds) and completed the a.e. convergence proof.
-We now call `MeasureTheory.Submartingale.ae_tendsto_limitProcess` with a
-`NNReal` bound `R` on the L¹ norms, obtained via `Rnn := Rbound.toNNReal` and
-`hbdd : ∀ n, eLpNorm (S n) 1 ≤ (Rnn : ℝ≥0∞)`.
+Status snapshot
+- Done/green:
+  - MDS layer (NOC/Prob/MDS.lean), including weighted_sum_ae_converges.
+  - RS v-sum partial bound and summability corollary (VSUM/VSUM_SUMMABLE).
+  - RS L¹-uniform bound for the drifted normalized process (VSUM_L1BOUND), with NNReal packaging complete.
+  - RS supermartingale wiring and convergence helper:
+    • RSDrifted_supermartingale_of_RS (uses condExp_condExp_of_le + condExp_mono)
+    • RSDrifted_ae_converges_of_RS (packages supermartingale + L¹ bound)
 
-Resolved — API signature for submartingale convergence:
-- We use `MeasureTheory.Submartingale.ae_tendsto_limitProcess` (alternatively
-  `exists_ae_tendsto_of_bdd`) from `Mathlib/Probability/Martingale/Convergence`.
-- The bound type is `R : NNReal` and the hypothesis is
-  `hbdd : ∀ n, eLpNorm (f n) (1 : ℝ≥0∞) μ ≤ (R : ℝ≥0∞)`.
-- Invocation in our file (matching names):
-  ```lean
-  have h_tend : ∀ᵐ ω, Tendsto (fun n => h.partialSum b n ω) atTop
-      (nhds (MeasureTheory.Filtration.limitProcess (fun n => h.partialSum b n) ℱ μ ω)) :=
-    MeasureTheory.Submartingale.ae_tendsto_limitProcess
-      (μ := μ) (ℱ := ℱ) (f := fun n => h.partialSum b n) (R := Rnn) hsub hbdd
-  ```
+No further math help needed; prior API questions (tower property, monotonicity, base case, AE chaining) are resolved and implemented in the code.
 
-Notes:
-- Key details to make types line up:
-  - Use `(1 : ℝ≥0∞)` as the exponent in `eLpNorm` for the L¹ bound.
-  - Package the bound as `R : NNReal` via `Rnn := Rbound.toNNReal` and
-    `(Rnn : ℝ≥0∞) = Rbound` (`ENNReal.coe_toNNReal`).
-  - For the L²→L¹ pipeline, the pointwise identity
-    `‖x‖ₑ^2 = ENNReal.ofReal (x^2)` is obtained with
-    `Real.enorm_eq_ofReal_abs` and `ENNReal.ofReal_mul`.
+Notes (already resolved; no help needed)
+- L¹ constant packaging and ENNReal algebra are complete; RSDrifted_l1_uniform_bound_of_w_summable is green.
+- Conditional-expectation algebra for the one-step RS bound is stable using a single constant C and condExp_add/condExp_const/condExp_smul.
+- Weight algebra uses RSWeight_succ and mul_div_mul_right to obtain ((1+u n) * Y n ω) / W_{n+1} = (Y n ω) / W_n and rewrites back to *(1/W).
 
-Outcome:
-- `weighted_sum_ae_converges` is proved and used to obtain a.e. convergence of
-  the weighted MDS partial sums under `∑ b_n^2 < ∞` and a uniform second‑moment
-  bound for the increments.
+Pointers (file and lines)
+- One-step CE block and assembly: NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:834–994.
+- Supermartingale record + tower/mono induction: NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:997–1060.
 
----
+Environment assumptions
+- [IsFiniteMeasure μ], real-valued processes.
+- Y adapted/integrable; u, v, w ≥ 0; RSWeight positivity available.
 
-Context: NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean — Robbins–Siegmund (RS)
-
-Update (resolved)
-- Completed the RS conditional-expectation algebra and derived the needed
-  increment bound from the RS inequality:
-  - `RS_increment_bound_of_RS_ineq` now proves
-    `μ[RSIncTerm(u,Y,w,v,n)|ℱ n] ≤ 0` a.e. under the standard RS assumptions.
-  - The proof composes mathlib’s `condExp_*` linearity lemmas
-    (`condExp_congr_ae`, `condExp_add`, `condExp_smul`, `condExp_sub`,
-    `condExp_const`) and uses `μ[Y_n|ℱ_n] = Y_n` a.e. for adapted, integrable
-    `Y_n`.
-- Built the supermartingale and convergence wrappers on top:
-  - `RSNormalizedDrifted_supermartingale_from_RS_ineq`.
-  - `RSNormalizedDrifted_ae_converges` (explicitly using `Filter.Tendsto`).
-
-No further math help is needed for this item.
+Implemented: hcond (tower+mono) and the supermartingale record for RSDrifted; the normalization convergence helper is live.
