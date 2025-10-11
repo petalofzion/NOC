@@ -422,16 +422,112 @@ lemma RS_vsum_summable_of_w_summable
       exact add_le_add_left this _
   -- Apply the real-analysis criterion: nonnegative terms with uniformly bounded partial sums are summable.
   -- We use `summable_of_sum_range_le` with constant `c = (∫ Y 0)/W 0 + ∑' w/W`.
-  refine (summable_of_sum_range_le
+  exact
+    (summable_of_sum_range_le
       (f := fun k => v k / RSWeight u (k+1))
       (c := (∫ ω, Y 0 ω ∂ μ) / RSWeight u 0 + ∑' k, (w k / RSWeight u (k+1)))
-      (hf := hv_nonneg) (h := ?_))
-  intro N
-  -- `summable_of_sum_range_le` expects a bound on `∑ i ∈ range N, f i`.
-  -- Our `h_partial_le_c` is stated with `Finset.sum (range N) f`.
-  simpa [Finset.sum_range] using h_partial_le_c N
+      (hf := hv_nonneg)
+      (h := by
+        intro N
+        -- `summable_of_sum_range_le` expects a bound on `∑ i ∈ range N, f i`.
+        -- Our `h_partial_le_c` is stated with `Finset.sum (range N) f`.
+        simpa [Finset.sum_range] using h_partial_le_c N))
 
 end VSUM_SUMMABLE
+
+/-!
+Convenient specialization: if `u ≡ 0` so the normalization weight is identically
+one, a summable nonnegative `w` implies a summable nonnegative `v` under the
+same RS hypotheses.
+-/
+
+section VSUM_SUMMABLE_UZERO
+
+variable [IsProbabilityMeasure μ]
+
+variable {Y : ℕ → Ω → ℝ} {v w : ℕ → ℝ}
+
+lemma RS_vsum_summable_of_w_summable_u_zero
+    (hv : ∀ k, 0 ≤ v k)
+    (hw : ∀ k, 0 ≤ w k)
+    (hY_nonneg : ∀ n, 0 ≤ᵐ[μ] fun ω => Y n ω)
+    (hInt : ∀ n, Integrable (Y n) μ)
+    (hRS : ∀ n,
+      μ[ Y (n+1) | ℱ n ] ≤ᵐ[μ] (fun ω => (1 + (0 : ℝ)) * Y n ω - v n + w n))
+    (hWsum : Summable (fun k => w k)) :
+    Summable (fun k => v k) := by
+  classical
+  -- Apply the general summability corollary with `u ≡ 0` and rewrite weights to 1.
+  have hu : ∀ k : ℕ, 0 ≤ (0 : ℝ) := by intro _; exact le_rfl
+  have hW : ∀ n, NOC.Prob.RSWeight (fun _ => (0 : ℝ)) n = 1 := by
+    intro n
+    induction' n with n ih
+    · simp [RSWeight]
+    · simpa [RSWeight_succ, ih]
+  -- Rewrite the RS inequality (it already has `u = 0`).
+  -- Invoke the general lemma.
+  have := RS_vsum_summable_of_w_summable (μ := μ) (ℱ := ℱ)
+    (Y := Y) (u := (fun _ => (0 : ℝ))) (v := v) (w := w)
+    hu hv hw hY_nonneg hInt
+    (by
+      intro n
+      -- `1 + 0 = 1` simplifies the RS inequality shape
+      simpa using (hRS n))
+    (by
+      -- Show summability of `w / W_{n+1}` reduces to `w` since `W_{n+1} = 1`.
+      simpa [hW] using hWsum)
+  -- Rewrite back `v / W_{n+1}` to `v` since `W_{n+1} = 1`.
+  simpa [hW] using this
+
+end VSUM_SUMMABLE_UZERO
+
+/-!
+Scalar RS summability: if a real sequence `S n` satisfies the RS one‑step
+inequality with deterministic `u,v,w` and `∑ w/W` is summable, then `∑ v/W`
+is summable. This follows from the random‑variable RS lemma applied to the
+constant process `Y n ω := S n`.
+-/
+
+section VSUM_SUMMABLE_SCALAR
+
+lemma RS_vsum_summable_of_w_summable_scalar
+    {Ω : Type*} {m0 : MeasurableSpace Ω} (μ : Measure Ω) (ℱ : Filtration ℕ m0)
+    [IsProbabilityMeasure μ]
+    (S u v w : ℕ → ℝ)
+    (hu : ∀ k, 0 ≤ u k)
+    (hv : ∀ k, 0 ≤ v k)
+    (hw : ∀ k, 0 ≤ w k)
+    (hS_nonneg : ∀ n, 0 ≤ S n)
+    (hstep : ∀ n, S (n+1) ≤ (1 + u n) * S n - v n + w n)
+    (hWsum : Summable (fun k => w k / RSWeight u (k+1))) :
+    Summable (fun k => v k / RSWeight u (k+1)) := by
+  classical
+  -- Use the random‑variable RS lemma with the constant process `Y n ω = S n`.
+  let Y : ℕ → Ω → ℝ := fun n _ => S n
+  have hInt : ∀ n, Integrable (Y n) μ := by intro n; simpa [Y] using integrable_const (S n)
+  have hY_nonneg : ∀ n, 0 ≤ᵐ[μ] fun ω => Y n ω := by
+    intro n
+    refine (ae_of_all μ (fun _ => hS_nonneg n)).mono ?_
+    intro ω hω; simpa [Y] using hω
+  have hRS : ∀ n,
+      μ[ Y (n+1) | ℱ n ] ≤ᵐ[μ] (fun ω => (1 + u n) * Y n ω - v n + w n) := by
+    intro n
+    -- condExp of a constant is the same constant; rewrite both sides to constants.
+    have hconst : μ[ Y (n+1) | ℱ n ] = fun _ => S (n+1) := by
+      simpa [Y] using
+        (condExp_const (μ := μ) (m := ℱ n) (hm := ℱ.le n) (c := S (n+1)))
+    have hrhs : (fun ω => (1 + u n) * Y n ω - v n + w n) = fun _ => (1 + u n) * S n - v n + w n := by
+      funext ω; simp [Y]
+    -- Compare constants by `hstep n` and lift to an a.e. inequality
+    have hpt_ae : (fun (_ : Ω) => S (n+1)) ≤ᵐ[μ] (fun (_ : Ω) => (1 + u n) * S n - v n + w n) :=
+      (ae_of_all μ (fun _ => hstep n))
+    simpa [hconst, hrhs] using hpt_ae
+  -- Apply the general RS summability lemma
+  simpa using RS_vsum_summable_of_w_summable (μ := μ) (ℱ := ℱ)
+    (Y := Y) (u := u) (v := v) (w := w)
+    hu hv hw hY_nonneg hInt hRS hWsum
+
+end VSUM_SUMMABLE_SCALAR
 
 /-!
 Uniform L¹ bound for the normalized drifted process. We define
@@ -447,6 +543,7 @@ the family (Gₙ) has a uniform L¹ bound.
 
 section VSUM_L1BOUND
 
+variable {Ω : Type*} {m0 : MeasurableSpace Ω} {μ : Measure Ω} {ℱ : Filtration ℕ m0}
 variable [IsProbabilityMeasure μ]
 
 variable {Y : ℕ → Ω → ℝ} {u v w : ℕ → ℝ}
@@ -1162,6 +1259,60 @@ theorem RS_drifted_ae_converges_core
   NOC.Prob.RSDrifted_ae_converges_of_RS (μ := μ) (ℱ := ℱ)
     (Y := Y) (u := u) (v := v) (w := w)
     hAdapt hInt hY_nonneg hu hv hw hRS hWsum
+
+end
+end NOC.TTSA
+
+/-!
+## TTSA aliases (RS summability helpers)
+
+Export convenient wrappers for RS summability results so the TTSA layer can
+depend on stable names without importing the full probability internals.
+-/
+
+namespace NOC.TTSA
+noncomputable section
+open Classical MeasureTheory
+
+variable {Ω : Type*} {m0 : MeasurableSpace Ω} {μ : MeasureTheory.Measure Ω}
+variable {ℱ : MeasureTheory.Filtration ℕ m0}
+
+/-- Alias of `NOC.Prob.RS_vsum_summable_of_w_summable_u_zero` under `NOC.TTSA`.
+Given nonnegative `v,w` and `Y` data satisfying the RS step with `u ≡ 0`, a
+summable `w` implies `v` is summable. -/
+theorem RS_summable_u_zero_core
+    [IsProbabilityMeasure μ]
+    {Y : ℕ → Ω → ℝ} {v w : ℕ → ℝ}
+    (hv : ∀ k, 0 ≤ v k)
+    (hw : ∀ k, 0 ≤ w k)
+    (hY_nonneg : ∀ n, 0 ≤ᵐ[μ] fun ω => Y n ω)
+    (hInt : ∀ n, Integrable (Y n) μ)
+    (hRS : ∀ n,
+      μ[ Y (n+1) | ℱ n ] ≤ᵐ[μ] (fun ω => (1 + (0 : ℝ)) * Y n ω - v n + w n))
+    (hWsum : Summable (fun k => w k)) :
+    Summable (fun k => v k) :=
+  NOC.Prob.RS_vsum_summable_of_w_summable_u_zero
+    (μ := μ) (ℱ := ℱ)
+    (Y := Y) (v := v) (w := w)
+    hv hw hY_nonneg hInt hRS hWsum
+
+/-- Alias of `NOC.Prob.RS_vsum_summable_of_w_summable_scalar` under `NOC.TTSA`.
+Scalar RS wrapper: if a real sequence `S` obeys the RS one-step inequality
+with deterministic `u,v,w` and `∑ w/W` is summable, then `∑ v/W` is summable. -/
+theorem RS_summable_scalar_core
+    [IsProbabilityMeasure μ]
+    (ℱ : MeasureTheory.Filtration ℕ m0)
+    (S u v w : ℕ → ℝ)
+    (hu : ∀ k, 0 ≤ u k)
+    (hv : ∀ k, 0 ≤ v k)
+    (hw : ∀ k, 0 ≤ w k)
+    (hS_nonneg : ∀ n, 0 ≤ S n)
+    (hstep : ∀ n, S (n+1) ≤ (1 + u n) * S n - v n + w n)
+    (hWsum : Summable (fun k => w k / NOC.Prob.RSWeight u (k+1))) :
+    Summable (fun k => v k / NOC.Prob.RSWeight u (k+1)) :=
+  NOC.Prob.RS_vsum_summable_of_w_summable_scalar
+    (μ := μ) (ℱ := ℱ) (S := S) (u := u) (v := v) (w := w)
+    hu hv hw hS_nonneg hstep hWsum
 
 end
 end NOC.TTSA

@@ -10,6 +10,25 @@
   - **Scaffolding already in repo**
     - `OneDProjectedSAHypotheses` packages the requirements: Robbins–Monro stepsizes (∑bₙ=∞, ∑bₙ²<∞), real MDS noise, bias summability (∑ bₙ E|δₙ₊₁| < ∞ or a.s.), drift regularity (continuity + local Lipschitz + positive window), unique locally stable interior root β⋆, and an alignment clause for the stochastic recursion.
     - `projected_SA_converges_1D` currently returns `conclusion` (a `Prop` placeholder); we will replace it with the fully proved “a.s. interior hit + convergence to β⋆”.
+    - New named wrappers added (placeholders returning bundled conclusions; proofs to be filled):
+      - D6: `NOC.TTSA.ttsa_interior_hit_via_RS` (RS + clamp route)
+      - D4: `NOC.TTSA.projected_SA_converges_1D_full` (Option 1 convergence)
+    - Algebraic barrier lemmas added and green (support RS step + Lyapunov):
+      - `barrier_ineq_unprojected`, `barrier_ineq_projected`
+      - `pospart_sub_mono_left`, `pospart_K_clamp_le`
+      - `pospart_sub_sq_le`, `pospart_add_le_posparts`, `pospart_add_le_pos_abs`
+      - `add_sq_le_two_sq`, `pospart_add_sq_le_two`
+    - RS pointwise step for the clamped recursion added: `rs_step_pointwise`.
+    - D6 RS wiring skeletons added (model‑agnostic):
+      - `D6RSData`, `D6RSField`, and names `D6RS_Y`, `D6RS_v`, `D6RS_w`
+      - Prop skeletons `D6_RS_condExp_ineq`, `D6_RS_w_summable`, `D6_RS_interior_hit_goal`, `D6_RS_interior_hit_from_RS`
+    - D4 RS Lyapunov skeletons added:
+      - `D4RSData`, `D4RS_Y`
+      - Prop skeletons `D4_RS_condExp_ineq`, `D4_RS_w_summable`, `D4_RS_converges_goal`, `D4_RS_converges_from_RS`
+    - New RS summability helpers wired for D6:
+      - Prob layer: `RS_vsum_summable_of_w_summable_u_zero`, `RS_vsum_summable_of_w_summable_scalar`.
+      - TTSA aliases: `NOC.TTSA.RS_summable_u_zero_core`, `NOC.TTSA.RS_summable_scalar_core`.
+      - TTSA scalar u≡0 theorem: `D6_scalar_RS_u0_summable` (wraps the alias on a constant process `Y n ω := S n`).
   - **Probability layer to implement (new work)**
     - `NOC_ROOT/NOC/Prob/MDS.lean`
       1. [x] Define `MDSData` recording `(ξₙ)` adapted to ℱ, zero conditional expectation, integrability, and uniform second-moment bound (done: structure + basic lemmas).
@@ -162,3 +181,10 @@ The following tasks are currently stalled because the requisite mathematical or 
 
 - **DI instantiation (`NOC_ROOT/NOC/E/Interfaces/DI*.lean`)**
   - Requires a concrete causal model with per-step directed information computations, SDPI witnesses, and filtration-alignment proofs. Those model-specific ingredients are not present, so the typeclass instances and final inequality cannot be instantiated yet.
+
+---
+
+## Recent additions (probability layer)
+
+- Added a convenience specialization for RS summability with `u ≡ 0`:
+  `NOC.Prob.RS_vsum_summable_of_w_summable_u_zero` (useful for D6 where weights are 1).
