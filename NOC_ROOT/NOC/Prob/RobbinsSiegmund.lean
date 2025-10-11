@@ -1091,7 +1091,77 @@ theorem RSDrifted_ae_converges_of_RS
   -- Package
   refine
     (RSNormalization.ae_converges
-      (N := { g := RSDrifted u Y v w, super := hSuper, R := R, l1bdd := hL1 }))
+    (N := { g := RSDrifted u Y v w, super := hSuper, R := R, l1bdd := hL1 }))
 
 end
 end NOC.Prob
+
+
+/-!
+## TTSA wiring aliases (export RS helper under `NOC.TTSA`)
+
+This section provides a light alias for the RS a.e. convergence helper under
+the `NOC.TTSA` namespace so callers in the TTSA layer can depend on a stable
+entry point without importing or qualifying the full probability module.
+
+Why this exists
+- Decouples the TTSA layer from internal names like `RSWeight`/`RSDrifted`.
+- If internals move, TTSA code can keep calling this alias.
+
+What it proves
+- Given adapted/integrable nonnegative `Y : ℕ → Ω → ℝ` and sequences
+  `u,v,w : ℕ → ℝ` with the RS one‑step inequality and summable
+  `∑ w k / RSWeight u (k+1)`, the drifted normalized process
+  `RSDrifted u Y v w` converges almost everywhere.
+
+How to use it
+- From TTSA hypotheses, instantiate `Y,u,v,w`, provide:
+  1) `hAdapt`, `hInt`, `hY_nonneg`.
+  2) `hu`, `hv`, `hw` (nonnegativity of u,v,w).
+  3) `hRS` (the RS step inequality).
+  4) `hWsum : Summable (fun k => w k / RSWeight u (k+1))`.
+- Then call `NOC.TTSA.RS_drifted_ae_converges_core` to obtain the a.e. limit.
+-/
+
+namespace NOC.TTSA
+noncomputable section
+open Classical MeasureTheory Filter
+
+variable {Ω : Type*} {m0 : MeasurableSpace Ω} {μ : Measure Ω}
+variable {ℱ : Filtration ℕ m0}
+
+/--
+Core alias of `NOC.Prob.RSDrifted_ae_converges_of_RS`, exported under `NOC.TTSA`.
+
+Purpose:
+- Make the RS convergence helper available to the TTSA layer with a stable
+  name and minimal qualification.
+
+Hypotheses:
+- `hAdapt`/`hInt`: `Y n` is adapted to `ℱ n` and integrable.
+- `hY_nonneg`: `Y n ≥ 0` a.e.
+- `hu`/`hv`/`hw`: nonnegativity of `u,v,w`.
+- `hRS`: RS step `μ[Y (n+1) | ℱ n] ≤ (1+u n)Y n − v n + w n` a.e.
+- `hWsum`: summability of `w` against the deterministic weight `RSWeight u`.
+
+Conclusion:
+- The drifted normalized process `RSDrifted u Y v w` converges a.e.
+- This is precisely the statement returned by the probability‑layer helper.
+-/
+theorem RS_drifted_ae_converges_core
+    [IsProbabilityMeasure μ]
+    {Y : ℕ → Ω → ℝ} {u v w : ℕ → ℝ}
+    (hAdapt : Adapted ℱ Y)
+    (hInt : ∀ n, Integrable (Y n) μ)
+    (hY_nonneg : ∀ n, 0 ≤ᵐ[μ] fun ω => Y n ω)
+    (hu : ∀ k, 0 ≤ u k) (hv : ∀ k, 0 ≤ v k) (hw : ∀ k, 0 ≤ w k)
+    (hRS : ∀ n,
+      μ[ Y (n+1) | ℱ n ] ≤ᵐ[μ] (fun ω => (1 + u n) * Y n ω - v n + w n))
+    (hWsum : Summable (fun k => w k / NOC.Prob.RSWeight u (k+1))) :
+    ∀ᵐ ω ∂ μ, ∃ c, Tendsto (fun n => NOC.Prob.RSDrifted u Y v w n ω) atTop (nhds c) :=
+  NOC.Prob.RSDrifted_ae_converges_of_RS (μ := μ) (ℱ := ℱ)
+    (Y := Y) (u := u) (v := v) (w := w)
+    hAdapt hInt hY_nonneg hu hv hw hRS hWsum
+
+end
+end NOC.TTSA

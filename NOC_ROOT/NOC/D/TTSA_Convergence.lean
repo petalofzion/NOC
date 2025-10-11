@@ -29,6 +29,14 @@ namespace NOC.TTSA
 noncomputable section
 open Classical
 
+-- Silence common linter notifications in this file
+set_option linter.unusedVariables false
+set_option linter.unusedSimpArgs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedTactic false
+set_option linter.unusedSectionVars false
+
 /-! ## Shared utilities -/
 
 /-- Non-expansiveness of the canonical clamp projection on the interval
@@ -133,6 +141,8 @@ def TTSA_projected_ergodic (H : TTSAErgodicHypotheses) : Prop :=
 
 end
 end NOC.TTSA
+
+-- (RS wiring aliases are provided directly in `NOC.Prob.RobbinsSiegmund`.)
 
 /-!
 ## Usage note: wiring RS convergence in TTSA (doc stub)
