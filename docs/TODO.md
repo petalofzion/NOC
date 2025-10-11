@@ -42,6 +42,8 @@
                 Implemented as `RSDrifted_supermartingale_of_RS` (uses tower property `condExp_condExp_of_le` and monotonicity `condExp_mono`).
           - [x] RS normalization constructor: package `RSDrifted` + L¹ bound into `RSNormalization` and expose `ae_converges` helper.
                 Implemented as `RSDrifted_ae_converges_of_RS`.
+          - [x] TTSA wiring alias: export the RS convergence helper under the TTSA namespace for easier consumption.
+                Implemented as `NOC.TTSA.RS_drifted_ae_converges_core` in `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean`.
           - [ ] TTSA call‑site stubs: add a usage note in `D/TTSA_Convergence.lean` showing how to instantiate the RS utilities for β‑recursions.
            - [ ] Wire RS results into Option 1 conclusion (replace Prop placeholders in `NOC_ROOT/NOC/D/TTSA_Convergence.lean`).
            - [ ] Implement the D6 interior‑hit path using RS (eventual positivity under a positive window + summable biases).
