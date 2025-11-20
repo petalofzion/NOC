@@ -5,14 +5,21 @@ Compatibility: Atropos v1.0+ (BaseEnv architecture)
 """
 
 import logging
+import os
 import numpy as np
+import inspect
 from typing import List, Dict, Any, Tuple, Optional
 from dataclasses import dataclass
 
 # Atropos Imports
 from atroposlib.envs.base import BaseEnv, BaseEnvConfig
 from atroposlib.core.trajectory import ScoredDataGroup
-from atroposlib.server.config import OpenaiConfig
+
+# Canonical Server Config
+try:
+    from atroposlib.server.config import APIServerConfig
+except ImportError:
+    from atroposlib.server.config import OpenaiConfig as APIServerConfig
 
 @dataclass
 class NOCEnvConfig(BaseEnvConfig):
@@ -21,15 +28,16 @@ class NOCEnvConfig(BaseEnvConfig):
     group_size: int = 16  
     
     # NOC Specific Hyperparameters
-    alpha: float = 1.0      # Weight for Direct Improvement (Delta U)
-    beta_meta: float = 0.5  # Weight for Acceleration/Variance proxy
-    gamma: float = 2.0      # Weight for Synergy (Delta Sigma)
-    zeta: float = 0.001     # Weight for Cost (J)
+    alpha: float = 1.0      
+    beta_meta: float = 0.5  
+    gamma: float = 2.0      
+    zeta: float = 0.001     
     
-    # Dataset config
+    # Data & Model
     dataset_name: str = "gsm8k" 
     dataset_split: str = "train"
     tokenizer_name: str = "gpt2" 
+    model_name: str = "gpt2"
 
 class NOCEnv(BaseEnv):
     """
@@ -37,28 +45,122 @@ class NOCEnv(BaseEnv):
     """
 
     @classmethod
-    def config_init(cls):
-        """Injects configuration for the environment and the LLM server."""
-        return NOCEnvConfig, [OpenaiConfig]
+    def config_init(cls) -> Tuple[BaseEnvConfig, List[Any]]:
+        """
+        Injects configuration for the environment and the LLM server.
+        Returns instantiated config objects.
+        """
+        env_config = NOCEnvConfig(
+            max_token_length=2048,
+            group_size=16,
+            dataset_name="gsm8k",
+            tokenizer_name="gpt2",
+            model_name="gpt2"
+        )
+
+        server_config = APIServerConfig(
+            model_name=env_config.model_name,
+            base_url=None,     
+            api_key=os.environ.get("OPENAI_API_KEY", None), # Safety: None instead of "EMPTY"
+            num_requests_for_eval=env_config.group_size 
+        )
+        return env_config, [server_config]
 
     def setup(self):
         """
-        Initializes the dataset. 
+        Initializes the dataset and tokenizer.
         """
+        # 1. Load Dataset Robustly
         try:
             import datasets
-            ds = datasets.load_dataset(self.config.dataset_name, "main")
-            self.train_ds = ds['train']
+        except ImportError as e:
+            raise RuntimeError("Please `pip install datasets` to run this environment.") from e
+
+        try:
+            if self.config.dataset_name == "gsm8k":
+                ds = datasets.load_dataset(self.config.dataset_name, "main")
+            else:
+                ds = datasets.load_dataset(self.config.dataset_name)
+                
+            split = getattr(self.config, "dataset_split", "train")
+            
+            if split not in ds:
+                if split == "train" and "training" in ds: split = "training"
+                elif split == "test" and "validation" in ds: split = "validation"
+                else:
+                    raise RuntimeError(f"Dataset {self.config.dataset_name} does not contain split '{split}'. Available: {list(ds.keys())}")
+            
+            self.train_ds = ds[split]
             self.dataset = self.train_ds 
-            logging.info(f"NOCEnv: Loaded {self.config.dataset_name} with {len(self.dataset)} samples.")
-        except ImportError:
-            raise RuntimeError("The 'datasets' library is missing. Please install it to run NOCEnv.")
+            logging.info(f"NOCEnv: Loaded {self.config.dataset_name} split={split} with {len(self.dataset)} samples.")
+            
+        except Exception as e:
+            raise RuntimeError(f"Failed to load dataset: {e}")
+
+        # 2. Ensure Tokenizer Exists
+        if getattr(self, "tokenizer", None) is None:
+            try:
+                from transformers import AutoTokenizer
+                self.tokenizer = AutoTokenizer.from_pretrained(self.config.tokenizer_name)
+                if not self.tokenizer.pad_token:
+                    self.tokenizer.pad_token = self.tokenizer.eos_token
+                logging.info(f"NOCEnv: Built tokenizer from {self.config.tokenizer_name}")
+            except Exception as e:
+                logging.warning(f"Could not auto-load tokenizer: {e}. Expecting BaseEnv to handle it.")
+
+    def _normalize_rollouts(self, raw_rollouts) -> List[str]:
+        """
+        Normalizes various server response shapes into a list of strings.
+        """
+        texts = []
+        for r in raw_rollouts:
+            text = ""
+            try:
+                # Case A: Object with choices
+                if hasattr(r, "choices"):
+                    c = r.choices[0]
+                    if hasattr(c, "message") and getattr(c.message, "content", None):
+                        text = c.message.content
+                    elif getattr(c, "text", None):
+                        text = c.text
+                # Case B: Dictionary
+                elif isinstance(r, dict):
+                    if "choices" in r and r["choices"]:
+                        c0 = r["choices"][0]
+                        if isinstance(c0, dict):
+                            text = c0.get("message", {}).get("content", "") or c0.get("text", "")
+                        else:
+                             if hasattr(c0, "message"): text = c0.message.content
+                             elif hasattr(c0, "text"): text = c0.text
+                    else:
+                        text = r.get("text") or r.get("content", "")
+            except Exception:
+                text = ""
+            texts.append(text or "")
+        return texts
+
+    def _make_scored_group(self) -> ScoredDataGroup:
+        """
+        Factory to create ScoredDataGroup robustly across versions.
+        """
+        try:
+            sig = inspect.signature(ScoredDataGroup)
+            if 'tokens' in sig.parameters:
+                return ScoredDataGroup(tokens=[], masks=[], rewards=[], prompts=[], texts=[])
+        except Exception:
+            pass
+        
+        sd = ScoredDataGroup()
+        sd.tokens = []; sd.masks = []; sd.rewards = []; sd.prompts = []; sd.texts = []
+        return sd
 
     async def collect_trajectories(self, item: Dict) -> ScoredDataGroup:
         """
         Phase 1 & 2: Generation AND Scoring.
-        Returns the final ScoredDataGroup for the Trainer.
         """
+        if not hasattr(self, "server") or self.server is None:
+            raise RuntimeError("NOCEnv: No server object available. Ensure Atropos injects the server.")
+
         question = item['question']
         target = item['answer']
         
@@ -68,7 +170,6 @@ class NOCEnv(BaseEnv):
             "Response:"
         )
 
-        # Managed Server Context
         if hasattr(self.server, 'managed_server'):
             async with self.server.managed_server(self.tokenizer) as managed:
                 rollouts = await managed.chat_completion(
@@ -85,10 +186,13 @@ class NOCEnv(BaseEnv):
                 temperature=1.0
             )
 
+        texts = self._normalize_rollouts(rollouts)
+        
         group_data = {
             "item": item,
             "prompt": prompt,
             "rollouts": rollouts, 
+            "texts": texts,       
             "ground_truth": target
         }
         
@@ -97,33 +201,19 @@ class NOCEnv(BaseEnv):
     async def score(self, group_data: Any) -> ScoredDataGroup:
         """
         Phase 2: Evaluation.
-        Calculates Meta-Utility M and packs data manually for safety.
         """
         target = group_data['ground_truth']
-        rollouts = group_data['rollouts']
+        texts = group_data['texts']
         prompt = group_data['prompt']
         
-        # Initialize output container explicitely 
-        scored_data = ScoredDataGroup(
-            tokens=[], masks=[], rewards=[], prompts=[], texts=[]
-        )
-        
+        scored_data = self._make_scored_group()
+
         # --- 1. Calculate Batch Statistics ---
         correctness_vector = []
-        texts = []
-        
-        # Extract texts and basic stats first
-        for completion in rollouts:
-            if hasattr(completion.choices[0].message, 'content'):
-                text = completion.choices[0].message.content
-            else:
-                text = ""
-            texts.append(text)
-            
+        for text in texts:
             is_correct = 1.0 if target.strip() in text else 0.0
             correctness_vector.append(is_correct)
             
-        # Batch Variance (Acceleration Proxy)
         if not correctness_vector:
             batch_accel_proxy = 0.0
         else:
@@ -131,30 +221,22 @@ class NOCEnv(BaseEnv):
 
         # --- 2. Scoring & Manual Tokenization ---
         for i, text in enumerate(texts):
-            # --- Reward Calculation ---
-            # A. Utility
             u_val = correctness_vector[i] if i < len(correctness_vector) else 0.0
-            
-            # B. Cost
             cost_j = len(text) * self.config.zeta
             
-            # C. Synergy
             synergy_val = await self._calculate_synergy(prompt, text, target)
             
-            # D. Final Reward
             reward = (self.config.alpha * u_val) + \
                      (self.config.beta_meta * batch_accel_proxy) + \
                      (self.config.gamma * synergy_val) - \
                      cost_j
             
-            # --- Manual Tokenization & Packing ---
             conversation = [
                 {"role": "user", "content": prompt},
                 {"role": "assistant", "content": text}
             ]
             
             try:
-                # FIX: Check for chat template availability
                 if getattr(self.tokenizer, 'chat_template', None):
                     formatted_text = self.tokenizer.apply_chat_template(
                         conversation, 
@@ -162,22 +244,29 @@ class NOCEnv(BaseEnv):
                         add_generation_prompt=False
                     )
                 else:
-                    # Fallback for GPT-2 or models without chat templates
                     formatted_text = f"{prompt}\n{text}"
 
-                # Tokenize
+                # Robust Tokenization
                 encoding = self.tokenizer(
                     formatted_text,
                     truncation=True,
                     max_length=self.config.max_token_length,
                     padding=False, 
-                    return_tensors=None 
+                    return_tensors=None,
+                    return_attention_mask=True
                 )
                 
-                tokens = encoding['input_ids']
-                mask = encoding['attention_mask']
+                # Flatten & Safely Extract
+                tokens = encoding.get('input_ids', encoding)
+                if isinstance(tokens, list) and len(tokens) > 0 and isinstance(tokens[0], list):
+                     tokens = tokens[0]
                 
-                # Append to ScoredDataGroup
+                mask = encoding.get('attention_mask', None)
+                if mask is None:
+                    mask = [1] * len(tokens)
+                elif isinstance(mask, list) and len(mask) > 0 and isinstance(mask[0], list):
+                    mask = mask[0]
+                
                 if hasattr(scored_data, 'tokens'): scored_data.tokens.append(tokens)
                 if hasattr(scored_data, 'masks'): scored_data.masks.append(mask)
                 if hasattr(scored_data, 'rewards'): scored_data.rewards.append(reward)
@@ -194,50 +283,57 @@ class NOCEnv(BaseEnv):
         Calculates Information Gain (Delta Sigma).
         """
         try:
-            # 1. Baseline: P(Answer | Prompt)
-            base_req = f"{prompt}\nAnswer: {target}"
+            def format_request(conversation):
+                if getattr(self.tokenizer, 'chat_template', None):
+                    return self.tokenizer.apply_chat_template(
+                        conversation, 
+                        tokenize=False, 
+                        add_generation_prompt=False
+                    )
+                else:
+                    return "\n".join([msg['content'] for msg in conversation])
+
+            base_conv = [
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": f"Answer: {target}"}
+            ]
+            base_req = format_request(base_conv)
             base_logprob = await self._fetch_sequence_logprob(base_req, target)
             
-            # 2. Helped: P(Answer | Prompt + Thought)
-            help_req = f"{prompt}\n{generated_thought}\nAnswer: {target}"
+            help_conv = [
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": f"{generated_thought}\nAnswer: {target}"}
+            ]
+            help_req = format_request(help_conv)
             help_logprob = await self._fetch_sequence_logprob(help_req, target)
             
             return max(help_logprob - base_logprob, -5.0) 
-            
         except Exception as e:
             logging.warning(f"Synergy calc failed: {e}")
             return 0.0
 
     async def _fetch_sequence_logprob(self, full_text: str, target_suffix: str) -> float:
         """
-        Extracts the log-probability of the target_suffix given the prefix.
-        Uses Completions API to support echo=True.
+        Extracts log-probability using Completions API.
         """
         try:
-            # FIX: Use raw completion endpoint for echo=True support
-            # vLLM Chat Endpoint DOES NOT support echo.
             if hasattr(self.server, 'managed_server'):
                 async with self.server.managed_server(self.tokenizer) as managed:
-                    # We access the raw OpenAI client inside the managed wrapper
-                    # Note: This assumes 'managed' exposes 'client' or we call directly
-                    if hasattr(managed, 'client'):
+                    # FIX: Guard against missing client/completions
+                    if hasattr(managed, 'client') and hasattr(managed.client, 'completions'):
                         response = await managed.client.completions.create(
-                            model=self.config.tokenizer_name, # Use config model name
+                            model=self.config.model_name, 
                             prompt=full_text,
-                            max_tokens=0, # vLLM supports 0 for pure echo
+                            max_tokens=0, 
                             logprobs=1, 
                             echo=True, 
                             temperature=0.0
                         )
                     else:
-                         # Fallback if managed wrapper hides client
-                         # This path might fail on Chat-Only servers
                          return 0.0
             else:
-                # Fallback for mock/legacy
                 return 0.0
             
-            # Parse Standard OpenAI Completion Object
             if not response or not response.choices: return 0.0
             
             choice = response.choices[0]
@@ -247,25 +343,27 @@ class NOCEnv(BaseEnv):
             tokens = logprobs_data.tokens
             token_logprobs = logprobs_data.token_logprobs
             
-            # Reverse Matcher
-            accumulated_logprob = 0.0
-            matched_str = ""
-            target_clean = target_suffix.strip()
+            target_clean = target_suffix.strip().lower()
             lookback_limit = min(len(tokens), 50) 
-            found_match = False
             
-            for i in range(1, lookback_limit + 1):
-                idx = -i
-                tok = tokens[idx]
-                val = token_logprobs[idx]
-                if val is not None: accumulated_logprob += val
-                matched_str = tok + matched_str
-                if target_clean in matched_str:
-                    found_match = True
-                    break
+            # Enhanced Decoding Strategy
+            try:
+                # Try to decode suffix to string if tokenizer allows
+                suffix_tokens = tokens[-lookback_limit:]
+                if hasattr(self.tokenizer, "decode") and all(isinstance(t, int) for t in suffix_tokens):
+                    decoded_suffix = self.tokenizer.decode(suffix_tokens)
+                else:
+                    # Fallback: join token strings
+                    decoded_suffix = "".join(map(str, suffix_tokens)).lower()
+            except:
+                decoded_suffix = "".join(map(str, tokens[-lookback_limit:])).lower()
             
-            return accumulated_logprob if found_match else 0.0
+            if target_clean in decoded_suffix:
+                # Approximate: sum last N logprobs
+                accumulated_logprob = sum(v for v in token_logprobs[-lookback_limit:] if v is not None)
+                return accumulated_logprob
+            
+            return 0.0
             
         except Exception as e:
-            # logging.warning(f"Logprob fetch failed: {e}")
             return 0.0
