@@ -1,0 +1,108 @@
+# Lean File Analysis: NOC Project
+
+## Project Overview
+
+This project is a formalization of mathematical concepts in Lean, primarily focused on stochastic approximation, information theory, and control theory. The codebase is well-structured and uses advanced features of Lean, including typeclasses and a modular design. The overall goal appears to be the formal proof of a set of lemmas, designated as Lemma A, B, C, D, and E, which are related to the stability and performance of learning systems.
+
+The project is organized into several directories, each corresponding to a different lemma or a different aspect of the formalization. The `NOC_ROOT` directory contains the main Lean project, which is built using the `lake` build tool.
+
+## File Analysis
+
+The following is a list of all the Lean files in the `NOC_ROOT/NOC` directory, along with a brief description of their purpose.
+
+### Root Directory
+
+*   `All.lean`: An aggregator file that imports all other modules in the library.
+*   `A.lean`: Defines "Lemma A (capacity-compatible drift)" in two forms: product and ratio.
+*   `AHelpers.lean`: Provides a set of small, reusable algebra and inequality lemmas that are used in the proof of Lemma A.
+*   `AwithHelpers.lean`: A version of `A.lean` that uses the lemmas defined in `AHelpers.lean` to simplify the proofs.
+*   `zzzketchpad uwu.lean`: A scratchpad file for temporary experiments.
+
+### B Directory
+
+*   `B/Core.lean`: Defines "Lemma B", which appears to be a statement about the second-order difference of a function `U`.
+*   `B/Expectation.lean`: Lifts the pointwise bounds from `B/Core.lean` to statements about averages over finite sets.
+
+### C Directory
+
+*   `C/C.lean`: Defines the "Σ-law (acceleration)", which is a pointwise inequality `ΔΣ ≥ c₁·Δ²U − λΞ·Ξ_loss`.
+*   `C/CPrime.lean`: Defines the "Σ-law (improvement)", which is another pointwise inequality of the form `dSigma ≥ P.c1 * dU − P.lambdaXi * xiLoss`.
+*   `C/CPrimeToy.lean`: Provides a "toy" 2x2 instance to demonstrate the application of the C' lemma.
+*   `C/CPrimeToyExamples.lean`: Contains examples for the C' toy.
+
+### D Directory
+
+*   `D/Interfaces.lean`: Provides a high-level interface for using the "D-bridge", which seems to be a mechanism for deriving the C' inequality from a pair of "link" conditions.
+*   `D/BetaStability.lean`: Sets up the formalization plan for "Lemma D (β-stability)".
+*   `D/BetaStabilityTTSA.lean`: Refines the scaffolding for Lemma D by introducing a Two-Time-Scale Stochastic Approximation (TTSA) framework.
+*   `D/TTSA_Convergence.lean`: Contains the main convergence theorems for the TTSA framework.
+
+### E Directory
+
+*   `E/Core.lean`: Provides the scaffolding for "Lemma E (synergistic empowerment)".
+*   `E/ConversionVsAblation.lean`: Provides a formalization of the "Return on Investment" (ROI) inequality, which compares the utility of "conversion" versus "ablation".
+*   `E/Boundary/LoewnerHelpers.lean`: Provides a collection of helper lemmas related to the Loewner order on matrices.
+*   `E/Boundary/GaussianMAC.lean`: Provides a counterexample to the idea that ablating a partner in a communication system always reduces the mutual information for the remaining users.
+*   `E/Boundary/GaussianVector.lean`: Extends the counterexample from `GaussianMAC.lean` to the vector case.
+*   `E/Interfaces/DI.lean`: Defines the core interfaces for Directed Information (DI) and the Strong Data-Processing Inequality (SDPI).
+*   `E/Interfaces/DI_Toy.lean`: Provides a simplified, "toy" interface for Directed Information and SDPI.
+*   `E/Interfaces/DI_Averaging.lean`: Provides helper lemmas for lifting pointwise inequalities to averaged inequalities.
+*   `E/Interfaces/DI_Fiberwise.lean`: Builds upon the averaging helpers in `DI_Averaging.lean` to provide a way to compose DI-DPI results from "fiberwise" (conditional) bounds.
+*   `E/Interfaces/DI_NOC_Instance.lean`: Provides a scaffolding for instantiating the DI-DPI framework for a specific "NOC" model.
+*   `E/Interfaces/DI_NOC_Wrapper.lean`: Provides a high-level wrapper for the DI-DPI framework, tailored for a "NOC" model.
+*   `E/Interfaces/Examples/DI_Fiberwise_NCC.lean`: Provides a concrete example of how to use the fiberwise DI-DPI framework.
+*   `E/Interfaces/Examples/DI_Weighted_Bound.lean`: Provides an example of how to use the `lemmaE_bound_weighted` theorem.
+*   `E/Interfaces/Examples/DI_NOC_BSC.lean`: Provides a concrete example of how to use the DI-DPI typeclass interface.
+
+### Prob Directory
+
+*   `Prob/Alignment.lean`: Defines a structure `AlignsWithGbar` which is used to encode the alignment of a stochastic recursion with an averaged drift `ḡ`.
+*   `Prob/MDS.lean`: Defines a framework for working with Martingale Difference Sequences (MDS).
+*   `Prob/RobbinsSiegmund.lean`: Contains a formalization of the Robbins-Siegmund theorem, a key result in the theory of stochastic approximation.
+
+## Build Report
+
+The project was built using the `lake build` command. The build completed successfully with warnings, but no errors. The warnings indicate that some proofs are incomplete (`sorry`).
+
+## In-depth Analysis of Incomplete Files
+
+This section provides a more detailed look at the files with incomplete proofs and their connection to the project's `TODO.md`.
+
+### `NOC/D/BetaStabilityTTSA.lean`
+
+*   **What is currently implemented:** This file sets up the formalization for "Lemma D (β-stability)" using a Two-Time-Scale Stochastic Approximation (TTSA) framework. It defines the necessary data structures (`TTSASchedules`, `TTSANoise`, `MetaReg`, `AccelWindow`, `BetaTTSAContext`) and includes several proven helper lemmas for deterministic and stochastic recursions, such as `beta_hits_target` and `clamped_hitting_time_under_window`.
+
+*   **What is missing:** The main theorem, `lemmaD_beta_stability_TTSA_ode`, is stated but its proof is `sorry`.
+
+*   **Connection to `TODO.md`:** The `TODO.md` file directly addresses this in the "Lemma D / β-meta stability (TTSA)" section, noting that the proof for `lemmaD_beta_stability_TTSA_ode` is pending. The "Blocked Items" section further explains that this is due to the lack of a full two-time-scale SA/ODE meta-theorem in the `mathlib` library.
+
+*   **Completed TODOs:** The `TODO.md` sub-item "Property-layer stepping lemmas are proved: `TTSA.beta_drift_lower_bound_props`, `TTSA.beta_hits_target_props`, and `DriftHitThresholdPropsContext.hits_threshold_props` (clamp wrappers delegate). No `sorry`s in the arithmetic layer" is confirmed to be complete within this file.
+
+### `NOC/D/TTSA_Convergence.lean`
+
+*   **What is currently implemented:** This file contains the main convergence theorems for the TTSA framework. It includes a detailed proof of `d6_scalar_RS_summable` (a key step for the D6 interior-hit proof) and `ae_summable_of_summable_integral_nonneg` (a helper lemma). It also contains the statement for `pathwise_interior_hit`, a deterministic SA lemma, and placeholders for the full TTSA theorems (`TTSA_projected_unique_equilibrium` and `TTSA_projected_ergodic`).
+
+*   **What is missing:** The proof of `pathwise_interior_hit` is incomplete, with comments indicating that the "Summation logic" and "Staying logic" are omitted. The proofs for `TTSA_projected_unique_equilibrium` and `TTSA_projected_ergodic` are also placeholders.
+
+*   **Connection to `TODO.md`:** The `TODO.md`'s "Option 1: 1-D Projected SA Meta-Theorem" section directly relates to the incomplete `pathwise_interior_hit` proof, which is a crucial part of the `projected_SA_converges_1D` theorem. The "Option 2A" and "Option 2B" sections correspond to the placeholder theorems in this file.
+
+*   **Completed TODOs:** Many items under "Probability layer to implement (new work)" are completed in the `Prob/` directory, including the `MDSData` definition, the development of weighted partial sums, and the proof of analytic control in `MDS.lean`, as well as the "RS summability helpers" in `RobbinsSiegmund.lean`. The `d6_scalar_RS_summable` sub-item under "D6 expectation-level RS step (integrability route)" is also complete.
+
+## Final Review: Mathematical Accuracy and Consistency
+
+This review provides a high-level assessment of the mathematical accuracy and consistency of the Lean formalization with respect to the `NOC_v5.md` document. This is not a formal audit or proof verification, but a conceptual check for any gross misrepresentations.
+
+Overall, the Lean codebase appears to be a faithful and accurate representation of the mathematical claims and structures outlined in `NOC_v5.md`. The modular organization of the project into different lemmas (A, B, C, D, E) and the clear separation of concerns (e.g., core lemmas, interfaces, examples, probability theory) directly mirror the structure of the research blueprint.
+
+### Key Observations:
+
+*   **Lemma A (Capacity-compatible drift):** The formalization in `A.lean` and `AHelpers.lean` correctly captures the algebraic core of the free-energy argument. The use of `ℝ` and `mathlib`'s real analysis library is appropriate for this kind of argument.
+*   **Lemma B (PL + momentum):** The formalization in `B/Core.lean` and `B/Expectation.lean` correctly captures the concept of second-order differences (`Δ²U`) and the lifting of pointwise inequalities to expectations. The use of quadratic supports and the algebraic bridge to `Δ²U ≥ 0` is consistent with the `NOC_v5.md` description.
+*   **Lemmas C and C' (Σ-laws):** The distinction between the "improvement" (C') and "acceleration" (C) forms of the Σ-law is well-represented in the file structure. The use of a "toy" model in `C/CPrimeToy.lean` to demonstrate the C' lemma is a good practice for ensuring the soundness of the core ideas.
+*   **Lemma D (β-stability):** The formalization of Lemma D in `D/BetaStabilityTTSA.lean` and `D/TTSA_Convergence.lean` is a very detailed and accurate representation of the TTSA framework described in `NOC_v5.md`. The use of `Prop` placeholders for the high-level assumptions is a good way to manage the complexity of the proof and to separate the core logic from the model-specific details. The incomplete proofs directly correspond to the "Blocked Items" in the `TODO.md`, which shows a high level of self-awareness in the project.
+*   **Lemma E (Conditional DI–DPI):** The formalization of Lemma E in the `E/` directory is a sophisticated and accurate representation of the information-theoretic arguments. The use of typeclasses to define the DI and SDPI interfaces is a powerful and flexible design choice. The inclusion of counterexamples (e.g., `GaussianMAC.lean`) and detailed examples (`DI_Fiberwise_NCC.lean`, `DI_NOC_BSC.lean`) demonstrates a deep understanding of the problem domain.
+*   **Probability Theory:** The `Prob/` directory contains a solid formalization of the necessary probability theory concepts, including Martingale Difference Sequences and the Robbins-Siegmund theorem. The use of `mathlib`'s probability library is appropriate and the code is well-structured.
+
+### Conclusion:
+
+Based on my review, the Lean formalization is a high-quality and faithful representation of the mathematical concepts described in `NOC_v5.md`. There are no obvious misrepresentations or gross errors. The codebase is well-structured, well-documented, and makes good use of Lean's features. The incomplete proofs are clearly identified and their status is consistent with the project's `TODO.md`. The project as a whole demonstrates a deep understanding of both the mathematical domain and the art of formal verification in Lean.

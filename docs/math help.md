@@ -1,75 +1,63 @@
-Title: math help
+# Math Help
 
-Context
-- Lean 4.23.0 + current mathlib in this repo.
-- Files in focus now: NOC_ROOT/NOC/D/TTSA_Convergence.lean (D6/D4) and NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean.
+## Blocker — D6 interior-hit small-tail step
 
-Status snapshot (what’s green)
-- MDS layer (NOC/Prob/MDS.lean), including weighted_sum_ae_converges (a.e.).
-- RS layer: v-sum partial bound and summability corollary; L¹-uniform bound for the drifted normalized process; supermartingale wiring and a.e. convergence alias (`NOC.TTSA.RS_drifted_ae_converges_core`).
+**File / goal:** `NOC_ROOT/NOC/D/TTSA_Convergence.lean`, section after `d6_scalar_RS_summable`.
 
-What I’m implementing next (Option 1)
-- D6 (interior hit): show the clamped 1‑D recursion enters [K, βmax] in finite time a.s. under a positive drift window near 0, Robbins–Monro steps, MDS noise, and summable bias.
-- D4 (convergence): with unique locally stable root β⋆ and mild regularity (continuity + local Lipschitz), prove β_n → β⋆ a.s., combining D6 + MDS sum convergence + Lyapunov drift.
+### Current status
+- The expectation-level RS lemma `d6_scalar_RS_summable` is complete:
+  the series `∑ₙ (2 ε₀) bₙ · E[(K - βₙ)\_+]` converges.
+- Next goal in the interior-hit chain is the almost-sure statement
+  `∀ᵐ ω, ∑ₙ bₙ (K - βₙ(ω))\_+ < ∞`.
+- Existing lemmas give:
+  * `(K - βₙ(ω))\_+ ∈ [0, K]` for all `n, ω`;
+  * `φₙ(ω) := (K - βₙ(ω))\_+` is integrable (and square-integrable).
 
-Where I’m stuck mathematically (precise gaps to close)
-1) RS inequality for Y_n := (K − β_n)_+^2 under projection
-   - Need a robust per-step inequality of the form
-     E[Y_{n+1} | 𝓕_n] ≤ (1 + u_n) Y_n − v_n + w_n,
-     with u_n = O(b_n^2), v_n ≳ c·b_n·(K − β_n)_+, and
-     w_n = O(b_n^2) + O(b_n·E[|δ_{n+1}| | 𝓕_n]).
-   - This requires a clean algebraic bound for the clamp step:
-     clamp_nonexpansive is available, but I need a standard inequality to control
-     (max 0 (K − clamp(x + s)))^2 in terms of (max 0 (K − x))^2, linear term in s,
-     and a quadratic O(s^2) remainder, usable under conditional expectation.
+### Sticking point
+Need a Lean-friendly theorem/lemma that upgrades the non-negative,
+integrable series from an L¹ (expectation) bound to an almost-surely
+summable pointwise series. Concretely, with
 
-2) Choice of v_n and w_n compatible with RS_vsum_summable_of_w_summable
-   - Target: pick u ≡ 0 to make RSWeight ≡ 1 (simplifies the telescope), set
-     v_n := c·b_n·(K − β_n)_+, w_n := C1·b_n^2 + C2·b_n·E[|δ_{n+1}| | 𝓕_n].
-   - Need confirmation that this fits the standard Robbins–Siegmund template in mathlib or a short custom proof (1‑D, real-valued) is acceptable here.
+```
+variables (μ : Measure Ω) [IsProbabilityMeasure μ]
+variables {f : ℕ → Ω → ℝ}
+  (hf_pos : ∀ n ω, 0 ≤ f n ω)
+  (hf_int : ∀ n, Integrable (f n) μ)
+  (hf_sum : Summable (fun n => ∫ ω, f n ω ∂ μ))
+```
 
-3) From ∑ v_n < ∞ to “eventual β_n ≥ K”
-   - With v_n ≍ b_n·(K − β_n)_+, ∑ v_n < ∞ and ∑ b_n = ∞ do not alone imply
-     eventual β_n ≥ K. The classical argument uses the positive drift window
-     to show that when β_n ≤ K often, the potential decreases by a non-summable
-     amount—contradicting ∑ v_n < ∞. I need a concise lemma formalizing this
-     step in our setting (1‑D, clamp, positive drift). Pointers to a standard
-     inequality or a reference would help fix constants cleanly.
+I need guidance/a reference to conclude
+`∀ᵐ ω ∂ μ, Summable (fun n => f n ω)`.
+The intuitive argument is via Tonelli or monotone convergence on
+non-negative series, but I have not located a ready-made lemma in mathlib,
+and I want to avoid re-deriving too much measure-theory infrastructure.
 
-4) Lyapunov one‑step bound for D4
-   - For V(β) := ∫_{β⋆}^β ḡ(u) du, need
-     E[V(β_{n+1}) | 𝓕_n] ≤ V(β_n) − c·b_n·ḡ(β_n)^2 + C(b_n^2 + b_n·E|δ_{n+1}|).
-   - A crisp inequality usable with cond. exp. and projection (leveraging
-     clamp_nonexpansive + local Lipschitz) will let me invoke RS to conclude
-     ∑ b_n ḡ(β_n)^2 < ∞ and convergence of V(β_n).
+### Requested help
+Please point me to (or sketch) a Lean proof pattern that bridges
+the expectation-level summability to almost-sure summability for a
+non-negative series. Once I have that tool, I can finish the D6
+interior-hit lemmas.
+# Math Help
 
-Assumptions/preferences to confirm (so I can proceed deterministically)
-- Bias: prefer the a.s. summable variant ∑ b_n |δ_{n+1}| < ∞ (robust and standard).
-- Steps: Robbins–Monro (∑ b_n = ∞, ∑ b_n^2 < ∞), b_n deterministic/predictable.
-- Noise: MDS with bounded conditional variance (L²‑integrable increments).
-- Drift window: ∃ ε0, β° > 0 s.t. ḡ(β) ≥ ε0 on [0, β°].
-- Regularity: ḡ continuous and locally Lipschitz on [0, βmax]; unique locally
-  stable root β⋆ ∈ (0, βmax].
+## Blocker — D6 interior-hit small-tail step
 
-What I’m requesting
-- A standard per‑step inequality (statement or reference) for the projected
-  step that yields the RS form for Y_n := (K − β_n)_+^2 with the error terms
-  as above; or approval to implement a short custom 1‑D derivation under the
-  listed regularity, relying on |x + s − clamp(x + s)| ≤ |s| and clamp 1‑Lipschitz.
-- A short lemma/template to go from ∑ b_n·(K − β_n)_+ < ∞ and the positive
-  window to “eventually β_n ≥ K” under the recursion (clamped SA). A precise
-  formulation will prevent brittle algebra in Lean.
+**File / goal:** `NOC_ROOT/NOC/D/TTSA_Convergence.lean`, lemma `d6_weighted_gap_ae_summable`.
 
-Why this is needed
-- These two ingredients let me turn the existing RS/MDS machinery into the
-  full D6/D4 proofs. Without them, the AE‑chaining/cond‑exp pieces are in place,
-  but the core drift inequalities remain the blocking step.
+### Current status
+- Expectation-level RS lemma finished: `Summable (fun n => (2 ε₀) bₙ ∫ (K−βₙ)_+)`.
+- Need to upgrade `∑ bₙ (K−βₙ(ω))_+` from L¹ control to a.s. summability for the interior-hit argument. I attempted a direct Tonelli/monotone convergence proof but ran into complications massaging
+  ```
+    ∫⁻ ω, Σ' n ENNReal.ofReal (bₙ φₙ(ω)) = Σ' n ENNReal.ofReal (bₙ ∫ φₙ)
+  ```
+  into the desired a.e. finiteness statement; the `lintegral` algebra is proving thorny.
+- Specifically, matching the shapes `∫⁻ ENNReal.ofReal (bₙ φₙ)` and `ENNReal.ofReal (bₙ ∫ φₙ)` after pulling constants through (`integral_const_mul`, `ofReal_integral_eq_lintegral_ofReal`) keeps failing because Lean normalises the products in different orders, and I’m burning time juggling `mul_comm`/`mul_assoc` rewrites.
 
-Pointers (for reviewers)
-- RS step assembly and supermartingale wiring live at:
-  NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean:834–1066, 1073–1162.
-- clamp_nonexpansive is defined at:
-  NOC_ROOT/NOC/D/TTSA_Convergence.lean:36–46.
+### What I need
+1. A short, reusable lemma (or pattern) that takes
+   * `hf_nonneg : ∀ n ω, 0 ≤ fₙ(ω)`,
+   * `hf_int : ∀ n, Integrable fₙ μ`,
+   * `hf_sum : Summable (fun n => ∫ fₙ)`,
+   and returns `∀ᵐ ω, Summable fun n => fₙ(ω)`. We only need it in the scalar case (`ℝ`, nonnegative).
+2. Alternatively, a concrete walkthrough of the Tonelli/monotone convergence argument tailored to `fₙ := bₙ (K-βₙ)_+`, with Lean-level details on how to show the pointwise sum is finite a.e.
 
-Once I have sign‑off or the requested lemmas, I will replace the D6/D4 wrappers
-with full proofs and mark Option 1 as complete in docs/TODO.md.
+Once I have that piece, finishing `d6_weighted_gap_ae_summable` and the interior-hit step should be straightforward.

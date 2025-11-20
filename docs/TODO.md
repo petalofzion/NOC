@@ -1,5 +1,26 @@
 # TODO — Next Formalization Steps
 
+- [ ] Option 1 — 1‑D Projected SA (synced status and next steps)
+  - Status
+    - TTSA scaffolding present: `OneDProjectedSAHypotheses`, wrappers `projected_SA_converges_1D_full`, `ttsa_interior_hit_via_RS`.
+    - Algebra/geometry helpers implemented and green: clamp nonexpansive, barrier lemmas, pos‑part lemmas, `rs_step_pointwise`.
+    - New small helpers added: `sq_sum_le_three` (fast (a+b+c)^2 bound), `window_prod_lb` (window product lower bound).
+    - RS/MDS wiring available: RS summability helpers (scalar/u≡0), MDS a.e. convergence with NNReal L¹ bound.
+  - ✅ D6 expectation‑level RS step (integrability route)
+    - `d6_scalar_RS_summable` now complete: pointwise inequality wired, integrability handled via domination/Cauchy–Schwarz, RS helper invoked, and summability concluded with a direct partial-sum bound (no remaining `sorry`s in this section).
+    - `d6_scalar_rs_from_data_summable` alias not needed; the main theorem is proved directly.
+  - D6 interior‑hit (next)
+    - New: `ae_summable_of_summable_integral_nonneg` (finite-measure monotone convergence upgrade) + `d6_weighted_gap_ae_summable` proved using it; weighted gap summability now available for the small-tail step.
+    - Use MDS small tails (`weighted_sum_ae_converges`) to show `b_n ξ_{n+1} → 0` a.e.; bias tails via L² bound or deterministic `d_n` with `∑ b_n d_n < ∞`.
+    - From `Summable v = (2 ε0) ∑ b_n ∫ (K−β_n)_+`, deduce only finitely many `β_n < K` ⇒ eventually `β_n ≥ K` a.s.
+    - Provide a TTSA‑facing lemma for interior‑hit; Prop skeletons already exist.
+  - D4 Lyapunov (scaffold)
+    - Keep `D4RSData` and Prop shells; implement a descent step for `V(β)` to conclude `∑ b_n h(β_n)^2 < ∞` and `β_n → β⋆` a.s. after D6.
+  - Wiring map
+    - TTSA: `NOC_ROOT/NOC/D/TTSA_Convergence.lean` (D6 proof, helpers)
+    - Prob/RS: `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean` (RS summability helpers)
+    - Prob/MDS: `NOC_ROOT/NOC/Prob/MDS.lean` (weighted sums a.e. convergence)
+
 - [ ] **Lemma D / β-meta stability (TTSA)** (`NOC_ROOT/NOC/D/BetaStabilityTTSA.lean`)
   - New: full ODE-style statement added as `lemmaD_beta_stability_TTSA_ode`, bundling standard hypotheses in `TTSATrackingHypotheses` (schedules, noise, averaged drift `ḡ`, positive window, interior root). Proof pending (Borkar ODE method).
   - Context/schedules/noise/regularizer records remain in place; the earlier front-door finitary theorem `lemmaD_beta_stability_TTSA_window` is proved from the arithmetic layer.
@@ -28,7 +49,23 @@
     - New RS summability helpers wired for D6:
       - Prob layer: `RS_vsum_summable_of_w_summable_u_zero`, `RS_vsum_summable_of_w_summable_scalar`.
       - TTSA aliases: `NOC.TTSA.RS_summable_u_zero_core`, `NOC.TTSA.RS_summable_scalar_core`.
-      - TTSA scalar u≡0 theorem: `D6_scalar_RS_u0_summable` (wraps the alias on a constant process `Y n ω := S n`).
+      - TTSA scalar u≡0 theorem: `D6_scalar_RS_u0_summable` (proved; uses constant process `Y n ω := S n`).
+      - TTSA scalar context: `D6ScalarRSContext` and wrapper `d6_vsum_summable_from_scalar`.
+      - Helper defs/lemmas to shape S and v from β: `D6_S`, `D6_v`, `D6_S_nonneg`, `D6_v_nonneg`.
+  - **Next concrete steps (probability-layer wiring)**
+    - D6 scalar context from β (L²-bias variant): in `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean`
+      1) Add/confirm a small assumption bundle capturing: adaptedness of `β`, zero-mean `ξ` (condExp=0), uniform second-moment bounds for `ξ` and `δ`, a uniform bound `gBound` on `g` over `[0,βmax]`, and `Summable (b n)^2`.
+      2) Define scalar sequences from `D6RSData`:
+         `S n := ∫ (K − βₙ)_+^2 dμ`, `v n := (2·ε0)·bₙ·∫ (K − βₙ)_+ dμ`, `w n := C·(bₙ)^2` with `C := 3·(gBound² + varBoundξ + bias2Bound)`.
+      3) Prove the expectation-level RS step
+         `S (n+1) ≤ S n − v n + w n`
+         by integrating `rs_step_pointwise`, canceling the `ξ` cross-term via the zero-mean hypothesis, using the window lower bound `g ≥ ε0` on `[0,K]`, and bounding the square term using `(a+b+c)^2 ≤ 3(a^2+b^2+c^2)` and the L² budgets.
+      4) Show `Summable w` from `Summable (bₙ)^2` and conclude `Summable v` via `RS_vsum_summable_of_w_summable_scalar`.
+    - D6 interior-hit (a.s.): add a wrapper lemma in `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean`
+      1) Use `Summable v = (2·ε0)·∑ bₙ·∫(K−βₙ)_+` to get the v-sum finite.
+      2) Invoke `NOC.Prob.MDSData.weighted_sum_ae_converges` to get `bₙ ξ_{n+1} → 0` a.e.; handle bias tails (either uniform L² or deterministic `dₙ` with `∑ bₙ dₙ < ∞`) to get `bₙ δ_{n+1} → 0` a.e.
+      3) Small-tail argument: when `βₙ ≤ K`, the drift contributes at least `ε0·bₙ`, while tails vanish; deduce only finitely many indices with `βₙ < K`. Conclude: a.s. ∃N, ∀n≥N, `βₙ ≥ K`.
+    - Keep the TTSA `Prop` skeletons (`D6_RS_condExp_ineq`, `D6_RS_interior_hit_from_RS`) as thin aliases pointing to the probability-layer theorems.
   - **Probability layer to implement (new work)**
     - `NOC_ROOT/NOC/Prob/MDS.lean`
       1. [x] Define `MDSData` recording `(ξₙ)` adapted to ℱ, zero conditional expectation, integrability, and uniform second-moment bound (done: structure + basic lemmas).
@@ -42,12 +79,17 @@
       5. [x] Package as `weighted_sum_ae_converges` (a.e. convergence). L² convergence can be added if needed; the L² bounds are in place.
       6. Cleared: the submartingale convergence call requires `R : NNReal` and exponent `(1 : ℝ≥0∞)` in `eLpNorm`; we now coerce the `ℝ≥0∞` bound via `toNNReal` and apply the lemma. A small pointwise identity is handled using `Real.enorm_eq_ofReal_abs`.
     - `NOC_ROOT/NOC/Prob/RobbinsSiegmund.lean`
-      1. [x] Implement a 1‑D Robbins–Siegmund lemma tailored to nonnegative adapted sequences `Yₙ` with `E[Y_{n+1} | ℱ_n] ≤ (1+u_n)Y_n − v_n + w_n`, where `∑ u_n`, `∑ w_n` converge.
+      1. [x] Implement a 1‑D Robbins–Siegmund helper tailored to nonnegative adapted sequences `Yₙ` with `E[Y_{n+1} | ℱ_n] ≤ (1+u_n)Y_n − v_n + w_n`, where `∑ u_n`, `∑ w_n` converge.
          - Done:
            - `supermartingale_exists_ae_tendsto_of_bdd`: a.e. convergence of supermartingales under an L¹ bound (via negating to a submartingale and mathlib convergence).
-           - Deterministic normalization utilities: `RSWeight` (+ positivity), `RSNormalized`, `RSNormalizedComp`, and `RSNormalizedDrifted` with step identities `RSNormalized_succ_eq`, `RSNormalizedComp_succ_eq`, `RSNormalizedDrifted_succ_eq`, and `RSNormalizedDrifted_sub_succ_eq`.
+           - Deterministic normalization utilities: `RSWeight` (+ positivity), `RSNormalized`, `RSNormalizedComp`, and `RSNormalizedDrifted` with step identities.
            - Increment and supermartingale bridge: `RSIncTerm` and `RSNormalizedDrifted_supermartingale_of_increment_bound`.
-           - Conditional‑expectation algebra closed: `RS_increment_bound_of_RS_ineq` derives `μ[RSIncTerm|ℱ_n] ≤ 0` from the RS inequality using `condExp_*` linearity and the adaptedness identity `μ[Y_n|ℱ_n] = Y_n`.
+           - Conditional‑expectation algebra closed.
+      2. [x] RS summability helpers: `RS_vsum_summable_of_w_summable_u_zero`, `RS_vsum_summable_of_w_summable_scalar` and TTSA aliases.
+    - Next:
+      - [ ] D6 expectation-level RS step from `D6RSData` (use clamp step + zero-mean noise) to construct scalar `S,v,w` and apply `d6_vsum_summable_from_scalar`.
+      - [ ] D6 interior-hit proof (small-tail argument) after summability result.
+      - [ ] D4 Lyapunov RS wiring and convergence.
            - Final wrappers:
              - `RSNormalizedDrifted_supermartingale_from_RS_ineq`.
              - `RSNormalizedDrifted_ae_converges` (uses `Filter.Tendsto` explicitly).
