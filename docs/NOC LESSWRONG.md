@@ -16,7 +16,7 @@ For the full technical blueprint, including detailed proofs and implementation n
 
 The Orthogonality Thesis (OT) posits that intelligence and final goals are independent axes. We propose that in realistic, long-horizon environments, this orthogonality collapses due to fundamental constraints on capacity and control. We argue that sufficiently rational agents are instrumentally incentivized not only toward capacity gain ($U$) and the acceleration of that gain ($\Delta^2 U$), but also toward the preservation of system-level optionality ($\Sigma$).
 
-The core novelty is **Lemma E (Conditional DI-DPI)**: we prove that in **Non-Competitive Couplings (NCC)**—regimes where interactions can be structured such that one agent's influence is a post-processing of another's—ablating a partner strictly reduces an agent’s own Directed Information (DI) capacity. This suggests "cooperation" can emerge not from morality, but from the instrumental constraints of maximizing future control capacity.
+The core novelty is **Lemma E (Conditional DI-DPI)**: we prove that in **Non-Competitive Couplings (NCC)**-regimes where interactions can be structured such that one agent's influence is a post-processing of another's-ablating a partner strictly reduces an agent's own Directed Information (DI) capacity. This suggests "cooperation" can emerge not from morality, but from the instrumental constraints of maximizing future control capacity.
 
 ### Argument Overview
 
@@ -32,13 +32,13 @@ To help navigate the technical details below, here is the core logical flow:
 
 We attempt a **conditional, naturalized** refutation. We **do not** claim the modal impossibility of arbitrary goals. The OT remains true in the abstract design space.
 
-We argue that in the "modal regime"—characterized by:
+We argue that in the "modal regime"-characterized by:
 *   Task uncertainty and long time horizons
 *   Bounded compute and partial observability
 *   Multi-agent interaction with engineerable couplings
-*   Local Polyak–Łojasiewicz (PL) regularity (a condition weaker than convexity common in optimization landscapes)
+*   Local Polyak-Łojasiewicz (PL) regularity (a condition weaker than convexity common in optimization landscapes)
 
-...stable goal profiles collapse toward **capacity–optionality**.
+...stable goal profiles collapse toward **capacity-optionality**.
 
 > **Non-assumptions:** We do not assume global convexity, omniscience, or baked-in altruism.
 
@@ -82,7 +82,7 @@ The framework rests on two pillars: the drive for acceleration and the constrain
 The first pillar establishes that agents are pressured not just to improve, but to improve the *rate* at which they improve.
 
 1.  **Lemma A (Capacity-Compatible Drift):** Bounded-rational updates (modeled via a free-energy objective/KL-regularization) naturally drift toward higher capacity surrogates. (Formalized in `A.lean`).
-2.  **Lemma B (PL + Momentum):** This relies on the assumption that the learning landscape exhibits local **Polyak–Łojasiewicz (PL) regularity**.
+2.  **Lemma B (PL + Momentum):** This relies on the assumption that the learning landscape exhibits local **Polyak-Łojasiewicz (PL) regularity**.
     *   *Context:* The PL condition is significantly weaker than convexity. It is often observed empirically in the training dynamics of large, overparameterized neural networks, implying that "getting stuck" in bad local minima is rare in high dimensions.
     *   Under PL and standard momentum, we show that expected acceleration $\mathbb E[\Delta^2 U] > 0$ away from stationarity.
 3.  **Lemma D (Reflective Instability of $\beta=0$):** This is the crucial link. We use **Two-Time-Scale Stochastic Approximation (TTSA)** to model the evolution of $\beta_{\text{meta}}$. We prove that if the fast-timescale policy updates exhibit positive expected acceleration ($\mathbb{E}[\Delta^2 U] > 0$), the slow-timescale meta-parameter $\beta_{\text{meta}}$ *must* drift positive to remain stable. This is an endogenous stability result, not an exogenous assumption.
@@ -106,9 +106,9 @@ The following results hold under the NCC predicate. Informally, NCC means that t
 
 #### Lemma E: Conditional DI-DPI (The Mechanism)
 
-**The Claim:** Under NCC, garbling or ablating a partner *cannot increase* an agent’s own Directed Information.
+**The Claim:** Under NCC, garbling or ablating a partner *cannot increase* an agent's own Directed Information.
 
-**The Mechanism:** The Data Processing Inequality (DPI) states that post-processing cannot increase information. While DPI does not hold for DI generally, it *does* hold conditionally under the NCC structure. We use Massey’s causal decomposition of DI:
+**The Mechanism:** The Data Processing Inequality (DPI) states that post-processing cannot increase information. While DPI does not hold for DI generally, it *does* hold conditionally under the NCC structure. We use Massey's causal decomposition of DI:
 $$I(A^{1:T} \to S^{1:T}) = \sum_{t=1}^T I(A^{1:t}; S_t \mid S^{<t})$$ Under NCC, removing a partner is mathematically equivalent to applying a garbling operation to the causal pathway that carries the primary agent's influence. By the DPI applied per step, this reduces the information throughput.
 
 If the kernels admit Strong DPI (SDPI) contractions (Dobrushin coefficients $< 1$), the inequality is strict.
@@ -117,7 +117,7 @@ If the kernels admit Strong DPI (SDPI) contractions (Dobrushin coefficients $< 1
 
 #### Lemma E+: The "Conversion > Ablation" Inequality
 
-What if the environment is currently competitive (e.g., interference-dominated)? In this case, ablation might offer a one-shot gain (interference relief). The agent must then weigh this against the long-term value of *converting* the partner—re-engineering the coupling to satisfy NCC.
+What if the environment is currently competitive (e.g., interference-dominated)? In this case, ablation might offer a one-shot gain (interference relief). The agent must then weigh this against the long-term value of *converting* the partner-re-engineering the coupling to satisfy NCC.
 
 Lemma E+ defines a complete Return-on-Investment (ROI) inequality that weighs the discounted dividends of conversion against the costs and potential gains of ablation.
 
