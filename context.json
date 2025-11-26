@@ -1,0 +1,40 @@
+{
+  "project": {
+    "name": "NOC",
+    "description": "Naturalized Orthogonality Collapse (Lean 4)",
+    "language": "Lean 4",
+    "toolchain": "leanprover/lean4:v4.23.0",
+    "entry_point": "NOC.lean"
+  },
+  "structure": {
+    "root_files": [
+      "lakefile.lean",
+      "lake-manifest.json",
+      "lean-toolchain",
+      "README.md",
+      "PAPER_MAPPING.md",
+      "MATH_INDEX.md",
+      "GLOSSARY.md"
+    ],
+    "source_dir": "NOC/",
+    "modules": {
+      "A": "Lemma A (Drift) - NOC/A/",
+      "B": "Lemma B (Geometry) - NOC/B/",
+      "C": "Lemma C (Sigma Laws) - NOC/C/",
+      "D": "Lemma D (Stability) - NOC/D/",
+      "E": "Lemma E (Empirical/DI) - NOC/E/",
+      "HB": "Heavy Ball Dynamics - NOC/HB/",
+      "Prob": "Probability Theory - NOC/Prob/"
+    }
+  },
+  "conventions": {
+    "imports": "Use `import NOC.All` for convenience, or granular `import NOC.X.Y`.",
+    "proofs": "Algebraic proofs use `linarith`, `nlinarith`, `ring`. Probability uses `MeasureTheory`.",
+    "incomplete": "Incomplete proofs are marked with `sorry`."
+  },
+  "commands": {
+    "build": "lake build",
+    "test": "./scripts/smoke_test.sh",
+    "clean": "rm -rf .lake"
+  }
+}

@@ -1,5 +1,7 @@
 # NOC: Naturalized Orthogonality Collapse (Lean 4)
 
+> **🤖 AI Agents:** Please read **[`AGENTS.md`](AGENTS.md)** immediately for context, conventions, and safety protocols.
+
 NOC is a Lean 4 library formalizing the algebraic backbone of the "Naturalized Orthogonality Collapse" (NOC) research. It provides the proofs for Lemmas A, B, and C' (the Σ-laws), while scaffolding the interfaces for empirical components (Lemma E).
 
 For a detailed mapping of how this code corresponds to the paper's claims, notation, and experiments, see **[PAPER_MAPPING.md](PAPER_MAPPING.md)**.

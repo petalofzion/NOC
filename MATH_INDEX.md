@@ -55,13 +55,13 @@ graph TD
 
 | Module Path | Description |
 |---|---|
-| `NOC/A/BasicNoHelp.lean` | **Lemma A** (capacity-compatible drift): product/ratio forms. |
-| `NOC/A/Helpers.lean` | Helper lemmas for Lemma A algebra. |
-| `NOC/B/Core.lean` | **Lemma B** core: supports→link, bridge, local form, δ-wrapper. |
-| `NOC/B/Expectation.lean` | Expectation layer for Lemma B (finite ensemble). |
-| `NOC/HB/Quadratic.lean` | **Heavy Ball**: HBParams, hbStep, f_at, delta2, and pure quadratic algebra. |
-| `NOC/HB/CloseLoop.lean` | **Heavy Ball**: One-variable reduction + small-relative-step ⇒ Δ²f≤0. |
-| `NOC/Dev/Checks.lean` | Quick `#check`s you can run in VSCode to verify types. |
+| [`NOC/A/BasicNoHelp.lean`](NOC/A/BasicNoHelp.lean) | **Lemma A** (capacity-compatible drift): product/ratio forms. |
+| [`NOC/A/Helpers.lean`](NOC/A/Helpers.lean) | Helper lemmas for Lemma A algebra. |
+| [`NOC/B/Core.lean`](NOC/B/Core.lean) | **Lemma B** core: supports→link, bridge, local form, δ-wrapper. |
+| [`NOC/B/Expectation.lean`](NOC/B/Expectation.lean) | Expectation layer for Lemma B (finite ensemble). |
+| [`NOC/HB/Quadratic.lean`](NOC/HB/Quadratic.lean) | **Heavy Ball**: HBParams, hbStep, f_at, delta2, and pure quadratic algebra. |
+| [`NOC/HB/CloseLoop.lean`](NOC/HB/CloseLoop.lean) | **Heavy Ball**: One-variable reduction + small-relative-step ⇒ Δ²f≤0. |
+| [`NOC/Dev/Checks.lean`](NOC/Dev/Checks.lean) | Quick `#check`s you can run in VSCode to verify types. |
 
 ## File Analysis
 
@@ -69,53 +69,53 @@ The following is a detailed list of all the Lean files in the source directory, 
 
 ### Root Directory
 
-*   `All.lean`: An aggregator file that imports all other modules in the library.
-*   `A.lean`: Defines "Lemma A (capacity-compatible drift)" in two forms: product and ratio.
-*   `AHelpers.lean`: Provides a set of small, reusable algebra and inequality lemmas that are used in the proof of Lemma A.
-*   `AwithHelpers.lean`: A version of `A.lean` that uses the lemmas defined in `AHelpers.lean` to simplify the proofs.
-*   `zzzketchpad uwu.lean`: A scratchpad file for temporary experiments.
+*   [`All.lean`](NOC/All.lean): An aggregator file that imports all other modules in the library.
+*   [`A.lean`](NOC/A/BasicNoHelp.lean): Defines "Lemma A (capacity-compatible drift)" in two forms: product and ratio.
+*   [`AHelpers.lean`](NOC/A/Helpers.lean): Provides a set of small, reusable algebra and inequality lemmas that are used in the proof of Lemma A.
+*   [`AwithHelpers.lean`](NOC/A/BasicHelp.lean): A version of `A.lean` that uses the lemmas defined in `AHelpers.lean` to simplify the proofs.
+*   [`zzzketchpad uwu.lean`](Scratch/zzzketchpad_uwu.lean): A scratchpad file for temporary experiments.
 
 ### B Directory
 
-*   `B/Core.lean`: Defines "Lemma B", which appears to be a statement about the second-order difference of a function `U`.
-*   `B/Expectation.lean`: Lifts the pointwise bounds from `B/Core.lean` to statements about averages over finite sets.
+*   [`B/Core.lean`](NOC/B/Core.lean): Defines "Lemma B", which appears to be a statement about the second-order difference of a function `U`.
+*   [`B/Expectation.lean`](NOC/B/Expectation.lean): Lifts the pointwise bounds from `B/Core.lean` to statements about averages over finite sets.
 
 ### C Directory
 
-*   `C/C.lean`: Defines the "Σ-law (acceleration)", which is a pointwise inequality `ΔΣ ≥ c₁·Δ²U − λΞ·Ξ_loss`.
-*   `C/CPrime.lean`: Defines the "Σ-law (improvement)", which is another pointwise inequality of the form `dSigma ≥ P.c1 * dU − P.lambdaXi * xiLoss`.
-*   `C/CPrimeToy.lean`: Provides a "toy" 2x2 instance to demonstrate the application of the C' lemma.
-*   `C/CPrimeToyExamples.lean`: Contains examples for the C' toy.
+*   [`C/C.lean`](NOC/C/C.lean): Defines the "Σ-law (acceleration)", which is a pointwise inequality `ΔΣ ≥ c₁·Δ²U − λΞ·Ξ_loss`.
+*   [`C/CPrime.lean`](NOC/C/CPrime.lean): Defines the "Σ-law (improvement)", which is another pointwise inequality of the form `dSigma ≥ P.c1 * dU − P.lambdaXi * xiLoss`.
+*   [`C/CPrimeToy.lean`](NOC/C/CPrimeToy.lean): Provides a "toy" 2x2 instance to demonstrate the application of the C' lemma.
+*   [`C/CPrimeToyExamples.lean`](NOC/C/CPrimeToyExamples.lean): Contains examples for the C' toy.
 
 ### D Directory
 
-*   `D/Interfaces.lean`: Provides a high-level interface for using the "D-bridge", which seems to be a mechanism for deriving the C' inequality from a pair of "link" conditions.
-*   `D/BetaStability.lean`: Sets up the formalization plan for "Lemma D (β-stability)".
-*   `D/BetaStabilityTTSA.lean`: Refines the scaffolding for Lemma D by introducing a Two-Time-Scale Stochastic Approximation (TTSA) framework.
-*   `D/TTSA_Convergence.lean`: Contains the main convergence theorems for the TTSA framework.
+*   [`D/Interfaces.lean`](NOC/D/Interfaces.lean): Provides a high-level interface for using the "D-bridge", which seems to be a mechanism for deriving the C' inequality from a pair of "link" conditions.
+*   [`D/BetaStability.lean`](NOC/D/BetaStability.lean): Sets up the formalization plan for "Lemma D (β-stability)".
+*   [`D/BetaStabilityTTSA.lean`](NOC/D/BetaStabilityTTSA.lean): Refines the scaffolding for Lemma D by introducing a Two-Time-Scale Stochastic Approximation (TTSA) framework.
+*   [`D/TTSA_Convergence.lean`](NOC/D/TTSA_Convergence.lean): Contains the main convergence theorems for the TTSA framework.
 
 ### E Directory
 
-*   `E/Core.lean`: Provides the scaffolding for "Lemma E (synergistic empowerment)".
-*   `E/ConversionVsAblation.lean`: Provides a formalization of the "Return on Investment" (ROI) inequality, which compares the utility of "conversion" versus "ablation".
-*   `E/Boundary/LoewnerHelpers.lean`: Provides a collection of helper lemmas related to the Loewner order on matrices.
-*   `E/Boundary/GaussianMAC.lean`: Provides a counterexample to the idea that ablating a partner in a communication system always reduces the mutual information for the remaining users.
-*   `E/Boundary/GaussianVector.lean`: Extends the counterexample from `GaussianMAC.lean` to the vector case.
-*   `E/Interfaces/DI.lean`: Defines the core interfaces for Directed Information (DI) and the Strong Data-Processing Inequality (SDPI).
-*   `E/Interfaces/DI_Toy.lean`: Provides a simplified, "toy" interface for Directed Information and SDPI.
-*   `E/Interfaces/DI_Averaging.lean`: Provides helper lemmas for lifting pointwise inequalities to averaged inequalities.
-*   `E/Interfaces/DI_Fiberwise.lean`: Builds upon the averaging helpers in `DI_Averaging.lean` to provide a way to compose DI-DPI results from "fiberwise" (conditional) bounds.
-*   `E/Interfaces/DI_NOC_Instance.lean`: Provides a scaffolding for instantiating the DI-DPI framework for a specific "NOC" model.
-*   `E/Interfaces/DI_NOC_Wrapper.lean`: Provides a high-level wrapper for the DI-DPI framework, tailored for a "NOC" model.
-*   `E/Interfaces/Examples/DI_Fiberwise_NCC.lean`: Provides a concrete example of how to use the fiberwise DI-DPI framework.
-*   `E/Interfaces/Examples/DI_Weighted_Bound.lean`: Provides an example of how to use the `lemmaE_bound_weighted` theorem.
-*   `E/Interfaces/Examples/DI_NOC_BSC.lean`: Provides a concrete example of how to use the DI-DPI typeclass interface.
+*   [`E/Core.lean`](NOC/E/Core.lean): Provides the scaffolding for "Lemma E (synergistic empowerment)".
+*   [`E/ConversionVsAblation.lean`](NOC/E/ConversionVsAblation.lean): Provides a formalization of the "Return on Investment" (ROI) inequality, which compares the utility of "conversion" versus "ablation".
+*   [`E/Boundary/LoewnerHelpers.lean`](NOC/E/Boundary/LoewnerHelpers.lean): Provides a collection of helper lemmas related to the Loewner order on matrices.
+*   [`E/Boundary/GaussianMAC.lean`](NOC/E/Boundary/GaussianMAC.lean): Provides a counterexample to the idea that ablating a partner in a communication system always reduces the mutual information for the remaining users.
+*   [`E/Boundary/GaussianVector.lean`](NOC/E/Boundary/GaussianVector.lean): Extends the counterexample from `GaussianMAC.lean` to the vector case.
+*   [`E/Interfaces/DI.lean`](NOC/E/Interfaces/DI.lean): Defines the core interfaces for Directed Information (DI) and the Strong Data-Processing Inequality (SDPI).
+*   [`E/Interfaces/DI_Toy.lean`](NOC/E/Interfaces/DI_Toy.lean): Provides a simplified, "toy" interface for Directed Information and SDPI.
+*   [`E/Interfaces/DI_Averaging.lean`](NOC/E/Interfaces/DI_Averaging.lean): Provides helper lemmas for lifting pointwise inequalities to averaged inequalities.
+*   [`E/Interfaces/DI_Fiberwise.lean`](NOC/E/Interfaces/DI_Fiberwise.lean): Builds upon the averaging helpers in `DI_Averaging.lean` to provide a way to compose DI-DPI results from "fiberwise" (conditional) bounds.
+*   [`E/Interfaces/DI_NOC_Instance.lean`](NOC/E/Interfaces/DI_NOC_Instance.lean): Provides a scaffolding for instantiating the DI-DPI framework for a specific "NOC" model.
+*   [`E/Interfaces/DI_NOC_Wrapper.lean`](NOC/E/Interfaces/DI_NOC_Wrapper.lean): Provides a high-level wrapper for the DI-DPI framework, tailored for a "NOC" model.
+*   [`E/Interfaces/Examples/DI_Fiberwise_NCC.lean`](NOC/E/Interfaces/Examples/DI_Fiberwise_NCC.lean): Provides a concrete example of how to use the fiberwise DI-DPI framework.
+*   [`E/Interfaces/Examples/DI_Weighted_Bound.lean`](NOC/E/Interfaces/Examples/DI_Weighted_Bound.lean): Provides an example of how to use the `lemmaE_bound_weighted` theorem.
+*   [`E/Interfaces/Examples/DI_NOC_BSC.lean`](NOC/E/Interfaces/Examples/DI_NOC_BSC.lean): Provides a concrete example of how to use the DI-DPI typeclass interface.
 
 ### Prob Directory
 
-*   `Prob/Alignment.lean`: Defines a structure `AlignsWithGbar` which is used to encode the alignment of a stochastic recursion with an averaged drift `ḡ`.
-*   `Prob/MDS.lean`: Defines a framework for working with Martingale Difference Sequences (MDS).
-*   `Prob/RobbinsSiegmund.lean`: Contains a formalization of the Robbins-Siegmund theorem, a key result in the theory of stochastic approximation.
+*   [`Prob/Alignment.lean`](NOC/Prob/Alignment.lean): Defines a structure `AlignsWithGbar` which is used to encode the alignment of a stochastic recursion with an averaged drift `ḡ`.
+*   [`Prob/MDS.lean`](NOC/Prob/MDS.lean): Defines a framework for working with Martingale Difference Sequences (MDS).
+*   [`Prob/RobbinsSiegmund.lean`](NOC/Prob/RobbinsSiegmund.lean): Contains a formalization of the Robbins-Siegmund theorem, a key result in the theory of stochastic approximation.
 
 ## Build Report
 

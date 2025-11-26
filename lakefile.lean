@@ -10,7 +10,7 @@ package «NOC» where
   ]
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4"
+  "https://github.com/leanprover-community/mathlib4" @ "v4.23.0"
 
 @[default_target]
 lean_lib «NOC» where

@@ -23,5 +23,13 @@
 - Proof scaffolds for D/E may contain intentional `sorry`s (TTSA, DI–DPI, ROI, boundary) where empirical interfaces are used.
 - `HB/CloseLoop.lean` includes a conservative explicit bound (`hb_rhoStar`) with a complete proof that the polynomial bracket is nonpositive for `ρ ≤ ρ⋆(τ,γ)` when `0<τ<2`.
 
+### Standard Stub Patterns
+
+When marking incomplete proofs, use these comment conventions to guide agents and contributors:
+
+- `sorry -- TODO: [Task Description]`: **Actionable**. This is a missing proof that should be filled in.
+- `sorry -- EMPIRICAL`: **Non-Actionable**. This premise is satisfied by experimental results (Python), not formal proof.
+- `sorry -- BLOCKED`: **Blocked**. Waiting for an upstream dependency or refactor.
+
 **Note on Refactoring:**
 Lean module names are path‑based. If you move files, you must update imports.
