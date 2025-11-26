@@ -4,11 +4,68 @@
 
 This project is a formalization of mathematical concepts in Lean, primarily focused on stochastic approximation, information theory, and control theory. The codebase is well-structured and uses advanced features of Lean, including typeclasses and a modular design. The overall goal appears to be the formal proof of a set of lemmas, designated as Lemma A, B, C, D, and E, which are related to the stability and performance of learning systems.
 
-The project is organized into several directories, each corresponding to a different lemma or a different aspect of the formalization. The `NOC_ROOT` directory contains the main Lean project, which is built using the `lake` build tool.
+## Dependency Graph
+
+```mermaid
+graph TD
+    subgraph Core [Core Lemmas]
+        A[Lemma A (Drift)] --> A_Basic[NOC.A.BasicNoHelp]
+        A_Basic --> A_Help[NOC.A.Helpers]
+        
+        B[Lemma B (Geometry)] --> B_Core[NOC.B.Core]
+        B_Core --> B_Exp[NOC.B.Expectation]
+        
+        C[Lemma C/C' (Sigma Laws)] --> C_Prime[NOC.C.CPrime]
+        C[Lemma C/C' (Sigma Laws)] --> C_Accel[NOC.C.C]
+        
+        Bridge[Sigma Bridge] --> S_Bridge[NOC.Bridge.SigmaBridge]
+        S_Bridge --> A_Help
+    end
+
+    subgraph HB [Heavy Ball]
+        HB_Quad[NOC.HB.Quadratic]
+        HB_Loop[NOC.HB.CloseLoop]
+        HB_Loop --> HB_Quad
+    end
+
+    subgraph Prob [Probability & TTSA]
+        MDS[NOC.Prob.MDS]
+        RS[NOC.Prob.RobbinsSiegmund]
+        TTSA[NOC.D.TTSA_Convergence] --> RS
+        TTSA --> MDS
+        TTSA --> Beta[NOC.D.BetaStabilityTTSA]
+    end
+
+    subgraph E [Lemma E & Interfaces]
+        E_Core[NOC.E.Core]
+        DI[NOC.E.Interfaces.DI]
+        ROI[NOC.E.ConversionVsAblation]
+    end
+
+    All[NOC.All] --> A_Basic
+    All --> B_Core
+    All --> C_Prime
+    All --> S_Bridge
+    All --> TTSA
+    All --> HB_Loop
+    All --> E_Core
+```
+
+## Module Map (Developer Guide)
+
+| Module Path | Description |
+|---|---|
+| `NOC/A/BasicNoHelp.lean` | **Lemma A** (capacity-compatible drift): product/ratio forms. |
+| `NOC/A/Helpers.lean` | Helper lemmas for Lemma A algebra. |
+| `NOC/B/Core.lean` | **Lemma B** core: supports→link, bridge, local form, δ-wrapper. |
+| `NOC/B/Expectation.lean` | Expectation layer for Lemma B (finite ensemble). |
+| `NOC/HB/Quadratic.lean` | **Heavy Ball**: HBParams, hbStep, f_at, delta2, and pure quadratic algebra. |
+| `NOC/HB/CloseLoop.lean` | **Heavy Ball**: One-variable reduction + small-relative-step ⇒ Δ²f≤0. |
+| `NOC/Dev/Checks.lean` | Quick `#check`s you can run in VSCode to verify types. |
 
 ## File Analysis
 
-The following is a list of all the Lean files in the `NOC_ROOT/NOC` directory, along with a brief description of their purpose.
+The following is a detailed list of all the Lean files in the source directory, along with a brief description of their purpose.
 
 ### Root Directory
 
@@ -93,16 +150,3 @@ This section provides a more detailed look at the files with incomplete proofs a
 This review provides a high-level assessment of the mathematical accuracy and consistency of the Lean formalization with respect to the `NOC_v5.md` document. This is not a formal audit or proof verification, but a conceptual check for any gross misrepresentations.
 
 Overall, the Lean codebase appears to be a faithful and accurate representation of the mathematical claims and structures outlined in `NOC_v5.md`. The modular organization of the project into different lemmas (A, B, C, D, E) and the clear separation of concerns (e.g., core lemmas, interfaces, examples, probability theory) directly mirror the structure of the research blueprint.
-
-### Key Observations:
-
-*   **Lemma A (Capacity-compatible drift):** The formalization in `A.lean` and `AHelpers.lean` correctly captures the algebraic core of the free-energy argument. The use of `ℝ` and `mathlib`'s real analysis library is appropriate for this kind of argument.
-*   **Lemma B (PL + momentum):** The formalization in `B/Core.lean` and `B/Expectation.lean` correctly captures the concept of second-order differences (`Δ²U`) and the lifting of pointwise inequalities to expectations. The use of quadratic supports and the algebraic bridge to `Δ²U ≥ 0` is consistent with the `NOC_v5.md` description.
-*   **Lemmas C and C' (Σ-laws):** The distinction between the "improvement" (C') and "acceleration" (C) forms of the Σ-law is well-represented in the file structure. The use of a "toy" model in `C/CPrimeToy.lean` to demonstrate the C' lemma is a good practice for ensuring the soundness of the core ideas.
-*   **Lemma D (β-stability):** The formalization of Lemma D in `D/BetaStabilityTTSA.lean` and `D/TTSA_Convergence.lean` is a very detailed and accurate representation of the TTSA framework described in `NOC_v5.md`. The use of `Prop` placeholders for the high-level assumptions is a good way to manage the complexity of the proof and to separate the core logic from the model-specific details. The incomplete proofs directly correspond to the "Blocked Items" in the `TODO.md`, which shows a high level of self-awareness in the project.
-*   **Lemma E (Conditional DI–DPI):** The formalization of Lemma E in the `E/` directory is a sophisticated and accurate representation of the information-theoretic arguments. The use of typeclasses to define the DI and SDPI interfaces is a powerful and flexible design choice. The inclusion of counterexamples (e.g., `GaussianMAC.lean`) and detailed examples (`DI_Fiberwise_NCC.lean`, `DI_NOC_BSC.lean`) demonstrates a deep understanding of the problem domain.
-*   **Probability Theory:** The `Prob/` directory contains a solid formalization of the necessary probability theory concepts, including Martingale Difference Sequences and the Robbins-Siegmund theorem. The use of `mathlib`'s probability library is appropriate and the code is well-structured.
-
-### Conclusion:
-
-Based on my review, the Lean formalization is a high-quality and faithful representation of the mathematical concepts described in `NOC_v5.md`. There are no obvious misrepresentations or gross errors. The codebase is well-structured, well-documented, and makes good use of Lean's features. The incomplete proofs are clearly identified and their status is consistent with the project's `TODO.md`. The project as a whole demonstrates a deep understanding of both the mathematical domain and the art of formal verification in Lean.

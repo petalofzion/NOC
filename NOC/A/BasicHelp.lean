@@ -1,5 +1,5 @@
 import Mathlib
-import NOC.AHelpers
+import NOC.A.Helpers
 set_option pp.all true  -- 👀 enables verbose “x-ray” printing in infoview
 
 /-!

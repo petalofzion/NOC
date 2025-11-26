@@ -243,6 +243,7 @@ lemma barrier_ineq_projected (βmax K x s : ℝ)
 
 /-- Pointwise RS-style step for the clamped recursion. -/
 lemma rs_step_pointwise
+    {α : Type*}
     (βmax K : ℝ) (b : ℕ → ℝ)
     (β : ℕ → α → ℝ) (g : ℝ → ℝ) (ξ δ : ℕ → α → ℝ)
     (hK0 : 0 ≤ K) (hKmax : K ≤ βmax)

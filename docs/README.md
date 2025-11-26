@@ -1,2 +1,0 @@
-# NOC
-Naturalized Orthogonality Collapse

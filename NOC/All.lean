@@ -1,5 +1,5 @@
 /- Aggregator: import everything with one line. -/
-import NOC.A
+import NOC.A.BasicNoHelp
 import NOC.B.Core
 import NOC.B.Expectation
 import NOC.C.CPrime

@@ -1,5 +1,5 @@
 import Mathlib
-import NOC.AHelpers
+import NOC.A.Helpers
 import NOC.B.Expectation
 import NOC.C.CPrime
 import NOC.Bridge.SigmaBridge
