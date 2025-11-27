@@ -14,7 +14,7 @@ Setup
 - S = {0,1}, G = {0}. Define per-sample reals with `dSigma(0)=1`, `dU(0)=1`,
   and zero elsewhere; take `B ≡ 0`, `MSigma = 0`, and set `c1=1`, `lambdaXi=0`.
   The pointwise C′ inequality on G is immediate, and the floor on S\G is trivial.
-/-
+-/
 
 namespace NOC
 noncomputable section
@@ -41,11 +41,11 @@ def D2 : CPrimeToy.TwoByTwoData (E := E2) :=
     dSigma := fun i => if (i : Fin 2) = 0 then 1 else 0,
     MSigma := 0,
     good := by
-      intro ω hω; 
+      intro ω hω;
       have : ω = 0 := by simpa [G2] using (Finset.mem_singleton.mp hω)
       simp [this],
     bad := by
-      intro ω hω; 
+      intro ω hω;
       have hnot : ω ∉ G2 := (Finset.mem_sdiff.mp hω).2
       have hne : ω ≠ 0 := by simpa [G2, Finset.mem_singleton] using hnot
       simp [hne] }
@@ -56,7 +56,7 @@ def P2 : SigmaLawParams :=
 
 /- Pointwise C′ on G2. -/
 lemma hGood2 : ∀ ω ∈ E2.G, D2.dSigma ω ≥ P2.c1 * D2.dU ω - P2.lambdaXi * D2.B ω := by
-  intro ω hω; 
+  intro ω hω;
   have : ω = 0 := by simpa [G2] using (Finset.mem_singleton.mp hω)
   simp [D2, P2, this]
 
@@ -75,4 +75,3 @@ theorem toy_Cprime_concrete_2x2 :
 
 end
 end NOC
-

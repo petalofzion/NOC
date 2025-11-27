@@ -230,16 +230,6 @@ def hb_rhoStar (τ γ : ℝ) : ℝ :=
   -- conservative choice: see `hb_bracket_nonpos` below
   τ * (2 - τ) / ( (1 + γ^2) + 2 * (1 + |γ|) )
 
-/-- Non-negativity of ρ⋆. -/
-lemma hb_rhoStar_nonneg {τ γ : ℝ} (hτlo : 0 < τ) (hτhi : τ < 2) :
-  0 ≤ hb_rhoStar τ γ := by
-  apply div_nonneg
-  · -- Numerator: τ(2-τ)
-    exact mul_nonneg (le_of_lt hτlo) (le_of_lt (sub_pos.mpr hτhi))
-  · -- Denominator: (1+γ^2) + 2(1+|γ|)
-    have hSq : 0 ≤ γ^2 := sq_nonneg _
-    have hAbs : 0 ≤ |γ| := abs_nonneg _
-    nlinarith
 
 /-- Helper inequality: the polynomial bracket is ≤ 0 for ρ ≤ ρ⋆. -/
 lemma hb_bracket_nonpos
