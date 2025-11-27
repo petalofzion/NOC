@@ -9,10 +9,11 @@
 
 ## 0) Big picture (one minute)
 
-- The paper defines **objects** (capacity \(U\), acceleration \(\Delta^2 U\), optionality \(\Sigma\), deletion penalty \(\Xi_{\mathrm{loss}}\)) and **lemmas** (A, B, C′/C, D; E is empirical).
-- The Lean library proves the **algebraic / conservative tier**: A, B (expected form), the Σ-bridge (`NOC/Bridge/SigmaBridge.lean`), and C′/C (Σ‑laws) — with *no* `sorry`; Lemma D (β-stability) remains planned.
-- **What Lean intentionally does *not* define:** \(\Sigma\) as MI, empowerment, or any estimator internals; those live in the **experiments** (E‑0, E‑2, E‑3b). The Lean side takes them as symbols/inputs and proves the inequalities they must satisfy *if* measured as in the paper.
-- **Lemma E** (synergistic empowerment ⇒ selfish→Σ) is **empirical** in this release: E‑0 exact toy result, E‑2 calibration, E‑3b cost sweeps. In Lean we expose a clean predicate to carry that assumption.
+- The paper defines **objects** (capacity $U$, acceleration $\Delta^2 U$, optionality $\Sigma$, deletion penalty $\Xi_{\mathrm{loss}}$) and **lemmas** (A, B, C′/C, D; E is empirical).
+- The Lean library proves the **algebraic / conservative tier**: A, B (expected form), the Σ-bridge (`NOC/Bridge/SigmaBridge.lean`), and C′/C (Σ‑laws) — with *no* `sorry`.
+- **Lemma D (β-stability)** is backed by a rigorous **Two-Time-Scale Stochastic Approximation (TTSA)** framework (`NOC/D/*`). The arithmetic and property layers are proved; the final ODE convergence theorem contains explicit `sorry` placeholders pending upstream mathlib dependencies.
+- **What Lean intentionally does *not* define:** $\Sigma$ as MI, empowerment, or any estimator internals; those live in the **experiments** (E‑0, E‑2, E‑3b). The Lean side takes them as symbols/inputs and proves the inequalities they must satisfy *if* measured as in the paper.
+- **Lemma E** (synergy ⇒ empowerment drop) is **empirical** in this release. In Lean we expose a clean predicate to carry that assumption, plus a **Directed Information (DI)** shell to formalize the "NCC" (Non-Competitive Coupling) regime where the lemma holds algebraically.
 
 Think of the split as: *Lean proves the shape; Experiments attach numbers to the shape.*
 
@@ -21,8 +22,9 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 ## 1) Quick start
 
 - Build: `lake update && lake build`
-- Root export: `import NOC`
+- Root export: `import NOC.All`
 - Minimal MI/synergy interface (finite tabular scaffolding): `import NOC.E.Core` (see §4).
+- **Smoke Tests:** Check `NOC/Dev/Checks.lean` to verify that key definitions (A, B, C, HB) elaborate correctly in your environment.
 
 ---
 
@@ -30,40 +32,38 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 
 | Paper concept / claim | What the repo provides | Where |
 |---|---|---|
-| **State, policies, trajectories** | Finite-horizon POMDP/Policies scaffolding for experiments and Lemma E. | `NOC/E/Core.lean` |
-| **Meta‑utility (informal)** | Not formalized; used only in commentary and to motivate lemmas A/B/D/C′. | — |
-| **Capacity \(U\), ΔU, Δ²U** | Abstract symbols or helper defs; used on the RHS of Σ‑laws. | `NOC/B/*` (expectation wrappers), `NOC/C/*` |
-| **Option­ality \(\Sigma\)** | **Abstract** `dSigma` symbol (Lean does not hard‑code MI). | `NOC/C/*`, `NOC/D/*` |
-| **Deletion penalty \(\Xi_{\mathrm{loss}}\)** | Name/slot and algebraic handling; see interfaces + C′/D usage. | `NOC/C/CPrime.lean`, `NOC/Bridge/SigmaBridge.lean`, `NOC/D/Interfaces.lean` |
-| **Lemma A (β‑choice ⇒ Δℱβ≥0)** | Arithmetic lemmas `lemmaA_freeEnergy_nonneg_*` (product/ratio) capturing the β‑choice trick. | `NOC/A.lean`, `NOC/AHelpers.lean` |
-| **Lemma B (local → expected Δ²U>0)** | Pointwise bridge + **expected**/finite‑support lifts (`avg`, expectation lemmas). | `NOC/B/Core.lean`, `NOC/B/Expectation.lean` |
-| **Lemma D (β-stability, planned)** | Reflective stability of precision (TTSA meta-gradient). | `NOC/D/BetaStability.lean` |
+| **State, policies, trajectories** | Finite-horizon POMDP/Policies scaffolding (`FinPOMDP`, `PolicyProfile`). | `NOC/E/Core.lean` |
+| **Capacity $U$, $\Delta U$, $\Delta^2 U$** | Abstract symbols or helper defs; used on the RHS of Σ‑laws. | `NOC/B/*` (expectation wrappers), `NOC/C/*` |
+| **Option­ality $\Sigma$** | **Abstract** `dSigma` symbol (Lean does not hard‑code MI). | `NOC/C/*`, `NOC/D/*` |
+| **Directed Information (DI)** | Formal shell for DI, Massey's Chain Rule, and SDPI interfaces. | `NOC/E/ConditionalDIDPI.lean`, `NOC/E/Interfaces/DI.lean` |
+| **Deletion penalty $\Xi_{\mathrm{loss}}$** | Name/slot and algebraic handling; see interfaces + C′/D usage. | `NOC/C/CPrime.lean`, `NOC/Bridge/SigmaBridge.lean`, `NOC/D/Interfaces.lean` |
+| **Lemma A (β‑choice ⇒ $\Delta \mathcal{F}_\beta \ge 0$)** | Arithmetic lemmas `lemmaA_freeEnergy_nonneg_*` (product/ratio) capturing the β‑choice trick. | `NOC/A/BasicHelp.lean`, `NOC/A/BasicNoHelp.lean` (helpers in `NOC/A/Helpers.lean`) |
+| **Lemma B (local → expected $\Delta^2 U > 0$)** | Pointwise bridge + **expected**/finite‑support lifts (`avg`, expectation lemmas). | `NOC/B/Core.lean`, `NOC/B/Expectation.lean` |
+| **Lemma D (β-stability)** | Meta-gradient dynamics via **Two-Time-Scale Stochastic Approximation (TTSA)**. | `NOC/D/BetaStability.lean` (shell), `NOC/D/BetaStabilityTTSA.lean` (stepping), `NOC/D/TTSA_Convergence.lean` (convergence). |
 | **Lemma C′ (Σ‑law, improvement)** | `SigmaLawParams` with `c1, λXi ≥ 0`; pointwise + expected + “good‑set” finitary splits. | `NOC/C/CPrime.lean` |
-| **Lemma C (Σ‑law, acceleration)** | Like C′ but with Δ²U and velocity/smoothness constants. | `NOC/C/C.lean` *(if present in your tree)* |
-| **Lemma E (synergy ⇒ empowerment drop)** | **Empirical**. In Lean we expose predicates and POMDP scaffolding for those assumptions. | `NOC/E/Core.lean` |
-| **Worked example** | How to pass premises on a “good set” \(G\) and call the expectation Σ‑law. | `NOC/Examples/D/HowToUseDPath.lean` |
-
-> If a specific foundation file is named slightly differently in your tree (e.g., `Model.lean`), update this table accordingly when you commit.
+| **Lemma C (Σ‑law, acceleration)** | The **acceleration** form: $\Delta\Sigma \ge c_1\Delta^2 U - \dots$ (distinct from C′). | `NOC/C/C.lean` |
+| **Lemma E (synergy ⇒ empowerment drop)** | **Empirical**. In Lean we expose predicates (`ESynergyWitness`) and POMDP scaffolding. | `NOC/E/Core.lean`, `NOC/E/Interfaces/DI_Fiberwise.lean` (NCC regime) |
+| **ROI / Trade-offs** | Logic for "Conversion vs Ablation" comparison (cost-benefit analysis). | `NOC/E/ConversionVsAblation.lean` |
+| **Heavy Ball (Dynamics)** | 1D Quadratic HB "lab" for testing acceleration/stability claims. | `NOC/HB/Quadratic.lean`, `NOC/HB/CloseLoop.lean` |
+| **Probability/Convergence** | Martingale machinery (Robbins-Siegmund, MDS) backing TTSA. | `NOC/Prob/*` |
 
 ---
 
 ## 3) What each lemma file *does* vs *does not* do
 
-### A — `NOC/A.lean`, `NOC/AHelpers.lean`
-- **Does:** formalize the free‑energy arithmetic behind Lemma A. If `ΔER ≥ m·ΔU` and `ΔKL ≤ L·ΔU` and `β ≥ L/m`, then `ΔER − ΔKL/β ≥ 0`. This is the β‑choice (“capacity‑compatible drift”) move used in the paper.
-- **Does not:** define \(ER\), \(KL\), or \(U\) themselves; those come from your modeling layer. A is purely inequality algebra.
+### A — `NOC/A/`
+- **Does:** `BasicHelp.lean` and `BasicNoHelp.lean` formalize the free‑energy arithmetic behind Lemma A. If `ΔER ≥ m·ΔU` and `ΔKL ≤ L·ΔU` and `β ≥ L/m`, then `ΔER − ΔKL/β ≥ 0`. `Helpers.lean` provides reusable algebra steps.
+- **Does not:** define $ER$, $KL$, or $U$ themselves; those come from your modeling layer. A is purely inequality algebra.
 
 ### B — `NOC/B/Core.lean`, `NOC/B/Expectation.lean`
-- **Does:** lift local/pointwise improvement assumptions to **expected** statements over a finite support (via `avg` wrappers). This mirrors “positive expected Δ²U off‑optimum.”
+- **Does:** lift local/pointwise improvement assumptions to **expected** statements over a finite support (via `avg` wrappers). This mirrors “positive expected $\Delta^2 U$ off‑optimum.”
 - **Does not:** implement any optimizer dynamics; it assumes PL‑like premises or local curvature and produces expectation forms.
 
-### D — `NOC/D/BetaStability.lean` (planned)
-- **Does (eventually):** deliver the β-stability lemma via two-time-scale/ODE analysis (using Lemma B’s acceleration). Currently a scaffold with the intended statement and hypotheses.
-- **Does not:** contain the Σ-bridge algebra; that now lives in `NOC/Bridge/SigmaBridge.lean`.
-
-### Bridge — `NOC/Bridge/SigmaBridge.lean`
-- **Does:** package an “upper link” plus a Dobrushin/SDPI-style inequality via `SigmaBridgeParams`, eliminating intermediates to expose the Σ-law constants (pointwise & expectation).
-- **Does not:** prove the SDPI bounds; they are assumed or empirically fitted (typically from E-2).
+### D — `NOC/D/BetaStability.lean` & TTSA
+- **Does:** `BetaStability.lean` defines the high-level stability claim. The heavy lifting is in `BetaStabilityTTSA.lean` and `TTSA_Convergence.lean`.
+- **Status:** The **arithmetic** and **stepping** layers are proved. The final ODE convergence theorem is currently **incomplete** (marked with `sorry`) pending a formalization of the TTSA meta-theorem.
+- **Dependencies:** Relies heavily on `NOC/Prob/RobbinsSiegmund.lean` (supermartingale convergence), `NOC/Prob/MDS.lean` (martingales), and `NOC/Prob/Alignment.lean` (drift alignment interface).
+- **Interfaces:** `NOC/D/Interfaces.lean` provides `UpperLink` and `SDPILink` predicates that connect D-premises to the C' Σ-law.
 
 ### C′ (improvement Σ‑law) — `NOC/C/CPrime.lean`
 - **Does:** present the core boxed inequality  
@@ -71,36 +71,48 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
   \Delta\Sigma \;\ge\; c_1\,\Delta U \;-\; \lambda_\Xi\,\Xi_{\mathrm{loss}}
   \]
   with (i) pointwise, (ii) expected, and (iii) **good‑set** finitary split variants (exactly matching the paper’s “mass‑θ on G” usage).
-- **Does not:** define \(\Sigma\), \(\Xi_{\mathrm{loss}}\), or how to compute them; it treats them as named inputs.
+- **Does not:** define $\Sigma$, $\Xi_{\mathrm{loss}}$, or how to compute them; it treats them as named inputs.
+- **Proof of Concept:** `NOC/C/CPrimeToyExamples.lean` provides a concrete, no-sorry instantiation of the Σ-law on a 2x2 domain to prove the typeclasses are inhabited.
 
-### C (acceleration Σ‑law) — `NOC/C/C.lean` *(if present)*
-- **Does:** same pattern as C′ but with Δ²U and an extra smoothness/velocity constant.
-- **Does not:** same caveat — no numeric MI on the Lean side.
+### C (acceleration Σ‑law) — `NOC/C/C.lean`
+- **Does:** The **acceleration** counterpart to C′. States $\Delta\Sigma \ge c_1\Delta^2 U - \lambda_\Xi\Xi_{\mathrm{loss}}$.
+- **Does not:** Prove the *dynamical* link from HB to this inequality (that's the job of model-specific files like `NOC/HB`), but provides the algebraic container for it.
 
-### Examples — `NOC/Examples/D/HowToUseDPath.lean`
-- **Does:** show how a client supplies *their* \(A, B, \Delta U, \Delta\Sigma\), chooses a “good set” \(G\), and calls the expectation Σ‑law. Good template for reviewers and tests.
-- **Does not:** compute MI — this is a structural usage example.
+### Bridge — `NOC/Bridge/SigmaBridge.lean`
+- **Does:** package an “upper link” plus a Dobrushin/SDPI-style inequality via `SigmaBridgeParams`, eliminating intermediates to expose the Σ-law constants (pointwise & expectation).
+- **Does not:** prove the SDPI bounds; they are assumed or empirically fitted (typically from E-2).
 
-### Boundary (Gaussian) — `NOC/E/Boundary/LoewnerHelpers.lean`, `NOC/E/Boundary/GaussianVector.lean`
-- **Does:** provide matrix‑analysis infrastructure and vector MI‑proxy comparisons used as boundary illustrations for Lemma E:
-  - `LoewnerHelpers`: PSD congruence (`psd_congr`), inverse antitone on SPD (`inv_antitone_spd`), and log‑det monotonicity (`logdet_mono_from_opmonotone`, proved via whitening + spectral/product route).
-  - `GaussianVector`: monotonicity of the log‑det proxy under Loewner (`loewner_logdet_mono`) and the ablation‑beats‑interference inequality (`mi_after_ablation_logdet`), using Sylvester’s determinant identity and the helpers.
-- **Does not:** pick numerical parameters or compute MI; scalar `GaussianMAC` hosts the parameterized counterexample once you choose concrete values.
+### Lemma E & Information Geometry — `NOC/E/`
+- **NCC Regime (The "Happy Path"):** `Interfaces/DI_Fiberwise.lean` and `DI_NOC_Wrapper.lean` formalize the **Non-Competitive Coupling (NCC)** case. Here, the "ablation" is a data-processing operation (garbling), so strict SDPI applies, and Lemma E holds algebraically.
+- **Interference Regime (The Boundary):** `Boundary/GaussianMAC.lean` (scaffolding with `sorry`) and `GaussianVector.lean` provide the infrastructure for counterexamples where NCC fails. In these regimes, ablation can actually *increase* capacity.
+- **Core Logic:** `ConditionalDIDPI.lean` and `Interfaces/DI_Toy.lean` provide the high-level shell for Directed Information bounds.
 
 ---
 
-## 4) Interfaces for empirical Lemma‑E‑style premises
+## 4) Supporting Infrastructure & Examples
 
-**File:** `NOC/Interfaces/Synergy.lean` (small, dependency‑light)
+### Dynamics Lab — `NOC/HB/`
+- **Does:** rigorous analysis of **Heavy-Ball (HB) momentum** on 1D quadratics.
+- **Files:** `Quadratic.lean` (update steps, operators), `CloseLoop.lean` (closed-loop algebra). `Link.lean` provides a **bundle API** (`HBLinkBundle`) for packaging global or restricted links to be fed into the C' expectation lemmas.
+- **Why:** serves as a concrete "petri dish" to verify how acceleration creates the $\Delta^2 U$ term required for Lemma C and D.
 
-- `abbrev XiLoss (Ω) := Ω → ℝ` — name for the per‑scenario deletion penalty \(\Xi_{\mathrm{loss}}\).
-- `def PositiveSynergyPointwise … := 0 < xi ω` — pointwise positivity (what E‑0 often witnesses).
-- `def PositiveSynergyOn …` — average positivity on a finite “good set” \(G\):  
-  \(G \neq \varnothing \wedge 0 < \frac{1}{|G|}\sum_{\omega\in G}\Xi_{\mathrm{loss}}(\omega)\).
-- Small helper lemmas that turn nonnegativity + one positive point into average positivity.
-- `@[inline] def xiDiff withScore withoutScore` — convenience alias to define \(\Xi_{\mathrm{loss}}(\omega)=\Sigma_{\text{with}}(\omega)-\Sigma_{\text{without}}(\omega)\) without committing to MI internals in Lean.
+### Probability Engine — `NOC/Prob/`
+- **Does:** general-purpose probability and martingale theory.
+- **Files:** `RobbinsSiegmund.lean` (supermartingale convergence), `MDS.lean` (martingale difference sequences), `Alignment.lean` (drift alignment interface).
+- **Why:** powers the stochastic convergence proofs in Lemma D (TTSA).
 
-**Why:** The paper treats Lemma E as **empirical** (E‑0 exact toy, E‑2 calibration, E‑3b cost sweeps). On the Lean side we **assume** a synergy predicate where needed; the experiments establish it.
+### ROI Logic — `NOC/E/ConversionVsAblation.lean`
+- **Does:** Formalizes the comparison: "Is the utility gain from conversion ($\gamma \Delta \Sigma$) greater than the cost of ablation ($\zeta \Delta J$)?"
+- **Why:** This is the central "naturalization" check—if this holds, the system prefers to convert capacity rather than destroy it.
+- **Status:** Scaffolding (no `sorry`, but logic is purely algebraic).
+
+### Interfaces — `NOC/E/Core.lean`
+- **Does:** Defines `FinPOMDP`, `PolicyProfile`, `ESynergyWitness`, and `SDPIHypothesis`.
+- **Why:** These are the "clean predicates" assumed by the formal layer. The experiments must instantiate these structures.
+
+### Example Usage — `NOC/Examples/D/HowToUseDPath.lean`
+- **Does:** Demonstrates how to **call** the D-path lemmas (Upper Link + SDPI ⇒ C') by passing in user-provided proofs for a model.
+- **Why:** Serves as a template for reviewers or developers integrating new models.
 
 ---
 
@@ -108,11 +120,11 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 
 - **No MI/Σ implementation in Lean.**  
   *Why:* avoids measure‑theory and estimator bias in the formal layer.  
-  *Plug:* Experiments (E‑0 exact count; E‑2 with InfoNCE/MINE/kNN; E‑3b sweeps) compute \(\Sigma\), \(\Delta\Sigma\), and \(\Xi_{\mathrm{loss}}\). Those numbers are then fed to the Σ‑law inequalities.
+  *Plug:* Experiments (E‑0 exact count; E‑2 with InfoNCE/MINE/kNN; E‑3b sweeps) compute $\Sigma$, $\Delta\Sigma$, and $\Xi_{\mathrm{loss}}$. Those numbers are then fed to the Σ‑law inequalities.
 
 - **No formal Lemma E proof (yet).**  
   *Why:* scoped as empirical in v3.1.2.  
-  *Plug:* Use `PositiveSynergyOn` as a hypothesis in any theorem that depended on E; use E‑0/E‑2 results to justify it.
+  *Plug:* Use `ESynergyWitness` / `PositiveSynergyOn` as a hypothesis in any theorem that depended on E; use E‑0/E‑2 results to justify it.
 
 - **No SDPI/Dobrushin derivation in Lean.**  
   *Why:* can be imported as premises OR calibrated empirically (E‑2).  
@@ -120,36 +132,9 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 
 ---
 
-## 6) How to read the Σ‑law proofs (C′) correctly
+## 6) Contributing
 
-- Check **signs** and **quantifiers**:  
-  `ΔΣ ≥ c1·ΔU − λXi·Ξ_loss`, with `c1, λXi ≥ 0`.  
-  If you use the **expected** form, both sides are expectations (optionally conditioned on a good set).
-- The Σ‑law is **agnostic** to how you got \(\Delta\Sigma\) and \(\Xi_{\mathrm{loss}}\) — that’s by design. It’s the reusable bound the empirical side must satisfy.
-
----
-
-## 7) Minimal workflow for a new contributor
-
-1. **Build Lean**: `lake update && lake build`.  
-2. **Skim**: `NOC/C/CPrime.lean` (Σ‑law), `NOC/Bridge/SigmaBridge.lean` (bridge), `NOC/B/Expectation.lean` (expected lifts).  
-3. **Use**: open `NOC/Examples/D/HowToUseDPath.lean` to see how to pass premises and call the expectation Σ‑law.  
-4. **Experiment side (later)**: run E‑0 / E‑2 to produce \(\Delta\Sigma\) and \(\Xi_{\mathrm{loss}}\) values; compare to Σ‑law; log the preserve ratio \(\rho=\gamma\Delta\Sigma/(\zeta\Delta J)\), the threat multiplier \(\tau_{\mathrm{th}}\), time-production \(\tau\) (and convergence toward \(\tau^\star\)), and the Anselmian diagnostic \(A_i\) alongside EA checks per the v5 blueprint.
-
----
-
-## 8) FAQ for reviewers
-
-- **“Where is \(\Sigma\) defined as MI?”** In the experiments, not in Lean. The formal layer proves the inequalities that MI‑based \(\Delta\Sigma\) must satisfy; the empirical layer computes MI (exact on tiny worlds; estimators on larger ones).
-- **“Where is Lemma E?”** Empirical. See `NOC/Interfaces/Synergy.lean` for the predicate we assume and the experiments (E‑0/E‑2) that establish it.
-- **“What if my domain violates the premises?”** Then the Σ‑law still holds as a formal implication, but your empirical numbers may not meet the bound; the paper explicitly treats those as **outside** the claimed regime.
-- **“Can I swap in different estimators?”** Yes — the formal layer is estimator‑agnostic. The experiments recommend multiple estimators + anti‑Goodhart checks.
-
----
-
-## 9) Contributing
-
-- If you’re adding a new dynamic model, implement your premises (PL region, curvature, or links) and call the **expected Σ‑law** on a good set \(G\).  
+- If you’re adding a new dynamic model, implement your premises (PL region, curvature, or links) and call the **expected Σ‑law** on a good set $G$.  
 - If you’re on the experiment side, focus on E‑0 (exact toy), E‑2 (fidelity curve, MI estimators), and E‑3b (cost sweeps and the preserve ratio).
 
 ---
