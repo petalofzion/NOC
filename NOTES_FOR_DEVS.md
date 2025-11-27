@@ -40,7 +40,21 @@ This grounds the abstract predicate in measurable physics.
 
 ---
 
-## 3. New Gems (Hidden Opportunities)
+## 3. The "Grokking" Transition (The Grand Unifying Theory)
+
+**Status:** Target #10 & #12 in `NOVEL.md`.
+**Insight:** NOC is the dynamical engine that drives the system from **Lazy (NTK)** to **Rich (Grokking)**.
+
+*   **The Kinetic Argument:** NOC maximizes Acceleration ($\Delta^2 U$). This pushes the system to the "Edge of Stability," destabilizing the sharp minima of the Lazy Regime.
+*   **The Phase Transition:** The system "catapults" out of the Lazy basin and settles into the **Flat Minimum** of the Rich Regime.
+*   **The Geometric Endpoint:** The Rich Regime corresponds to **Neural Collapse (Simplex Geometry)**.
+*   **The Link to Lemma E:** A Simplex has **Zero Redundancy**. Therefore, the transition to the Rich Regime *activates* Lemma E (Fragility).
+    *   *Lazy Regime:* High Redundancy $\implies$ Lemma E False.
+    *   *Rich Regime:* High Synergy (Simplex) $\implies$ Lemma E True.
+
+---
+
+## 4. New Gems (Hidden Opportunities)
 
 *   **MDS Strong Law:** Extend `weighted_sum_ae_converges` to a full Strong Law of Large Numbers for Martingales.
 *   **Automated LMI:** Build a tactic to solve `delta2_f_hb_closed_form` inequalities automatically using Sum-of-Squares.
