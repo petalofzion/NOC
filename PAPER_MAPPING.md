@@ -36,6 +36,7 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 | **Capacity $U$, $\Delta U$, $\Delta^2 U$** | Abstract symbols or helper defs; used on the RHS of Σ‑laws. | `NOC/B/*` (expectation wrappers), `NOC/C/*` |
 | **Option­ality $\Sigma$** | **Abstract** `dSigma` symbol (Lean does not hard‑code MI). | `NOC/C/*`, `NOC/D/*` |
 | **Directed Information (DI)** | Formal shell for DI, Massey's Chain Rule, and SDPI interfaces. | `NOC/E/ConditionalDIDPI.lean`, `NOC/E/Interfaces/DI.lean` |
+| **Discrete Information** | Shannon Entropy/MI for Fintype (scaffolding). | `NOC/E/Information/Discrete.lean` |
 | **Deletion penalty $\Xi_{\mathrm{loss}}$** | Name/slot and algebraic handling; see interfaces + C′/D usage. | `NOC/C/CPrime.lean`, `NOC/Bridge/SigmaBridge.lean`, `NOC/D/Interfaces.lean` |
 | **Lemma A (β‑choice ⇒ $\Delta \mathcal{F}_\beta \ge 0$)** | Arithmetic lemmas `lemmaA_freeEnergy_nonneg_*` (product/ratio) capturing the β‑choice trick. | `NOC/A/BasicHelp.lean`, `NOC/A/BasicNoHelp.lean` (helpers in `NOC/A/Helpers.lean`) |
 | **Lemma B (local → expected $\Delta^2 U > 0$)** | Pointwise bridge + **expected**/finite‑support lifts (`avg`, expectation lemmas). | `NOC/B/Core.lean`, `NOC/B/Expectation.lean` |
@@ -85,7 +86,7 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 ### Lemma E & Information Geometry — `NOC/E/`
 - **NCC Regime (The "Happy Path"):** `Interfaces/DI_Fiberwise.lean` and `DI_NOC_Wrapper.lean` formalize the **Non-Competitive Coupling (NCC)** case. Here, the "ablation" is a data-processing operation (garbling), so strict SDPI applies, and Lemma E holds algebraically.
 - **Interference Regime (The Boundary):** `Boundary/GaussianMAC.lean` (scaffolding with `sorry`) and `GaussianVector.lean` provide the infrastructure for counterexamples where NCC fails. In these regimes, ablation can actually *increase* capacity.
-- **Core Logic:** `ConditionalDIDPI.lean` and `Interfaces/DI_Toy.lean` provide the high-level shell for Directed Information bounds.
+- **Core Logic:** `ConditionalDIDPI.lean` and `Interfaces/DI_Toy.lean` provide the high-level shell for Directed Information bounds. `Information/Discrete.lean` (new) provides the scaffolding for Fintype-based Shannon Entropy.
 
 ---
 
@@ -93,7 +94,7 @@ Think of the split as: *Lean proves the shape; Experiments attach numbers to the
 
 ### Dynamics Lab — `NOC/HB/`
 - **Does:** rigorous analysis of **Heavy-Ball (HB) momentum** on 1D quadratics.
-- **Files:** `Quadratic.lean` (update steps, operators), `CloseLoop.lean` (closed-loop algebra). `Link.lean` provides a **bundle API** (`HBLinkBundle`) for packaging global or restricted links to be fed into the C' expectation lemmas.
+- **Files:** `Quadratic.lean` (update steps, operators), `CloseLoop.lean` (closed-loop algebra). `Link.lean` provides a **bundle API** (`HBLinkBundle`) for packaging global or restricted links to be fed into the C' expectation lemmas. `Integration.lean` and `AdaptiveIntegration.lean` provide end-to-end verified proofs of acceleration.
 - **Why:** serves as a concrete "petri dish" to verify how acceleration creates the $\Delta^2 U$ term required for Lemma C and D.
 
 ### Probability Engine — `NOC/Prob/`

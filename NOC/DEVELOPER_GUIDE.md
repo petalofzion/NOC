@@ -15,6 +15,7 @@
 | `NOC/B/Expectation.lean` | Expectation layer for Lemma B (finite ensemble). |
 | `NOC/HB/Quadratic.lean` | **Heavy Ball**: HBParams, hbStep, f_at, delta2, and pure quadratic algebra. |
 | `NOC/HB/CloseLoop.lean` | **Heavy Ball**: One-variable reduction + small-relative-step ⇒ Δ²f≤0. |
+| `NOC/E/Information/Discrete.lean` | **Discrete Info Theory**: Shannon Entropy/MI for Fintype (Foundation for Lemma E). |
 | `NOC/Dev/Checks.lean` | Quick `#check`s you can run in VSCode to verify types. |
 
 ## Implementation Notes

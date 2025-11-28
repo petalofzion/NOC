@@ -20,9 +20,6 @@
 
 ---
 
-# Tier 1: The Abstract Core (Pure Mathematics)
-*Goal: Prove theorems about abstract variables $U, Σ, \beta, \Xi$ independent of interpretation (Neurons vs. Agents).*
-
 ## 1. The "Borkar-Meyn" ODE Approximation (Three-Tier Strategy)
 **Domain:** Stochastic Approximation / Dynamical Systems
 **Significance:** High. Resolves the tension between "Noise Bias" and "Interpolation Regime."
@@ -32,7 +29,7 @@ We explicitly adopt **TTSA/ODE** over strict Lyapunov analysis.
 *   **Lyapunov (Su et al. 2014):** Provides physical intuition ("Energy always decreases") but fails in the **"Edge of Stability"** regime (Cohen et al. 2021) where loss is non-monotonic.
 *   **TTSA (Borkar 1997; Konda & Tsitsiklis 2000):** Proves that the *average* trajectory is stable even if individual steps are chaotic. This is robust to the noise inherent in Deep Learning.
 
-### Path A: The "Safe" Pivot ($\epsilon$-Stability)
+### Path A: The "Safe" Pivot (ε-Stability)
 Prove that the discrete sequence tracks the ODE *approximately*, bounded by the noise variance.
 *   **Formalism:** Prove convergence to the **Internally Chain Transitive (ICT) Set** of the Differential Inclusion $\dot{\beta} \in \pi(h(\beta)) + \mathcal{B}(\epsilon)$.
 *   **Machinery:** Formalize the **Borkar-Meyn Theorem** (Interpolation, Equicontinuity via Ascoli-Arzelà) for bounded martingale noise.
@@ -41,8 +38,16 @@ Prove that the discrete sequence tracks the ODE *approximately*, bounded by the 
 ### Path B: The "Profound" Corollary (Conditional Exactness)
 Prove that if the system is in the **Interpolation Regime** (Loss $\to$ 0), it converges *exactly*.
 *   **Formalism:** Introduce `class InterpolationRegime` asserting $\mathbb{E}[\|\xi\|^2] \le C \|\nabla L(\theta)\|^2$.
-*   **Proof:** Show that under this assumption, the bias $\mathcal{B}(\epsilon) \to 0$ as $\theta \to \theta^\star$, collapsing the ICT set to {$\beta^\star$}.
+*   **Proof:** Show that under this assumption, the bias $\mathcal{B}(\epsilon) \to 0$ as $\theta \to \theta^\star$, collapsing the ICT set to $\{\beta^\star\}$.
 *   **Novelty:** Formalizes the "Vanishing Noise" phenomenon in modern Deep Learning verification.
+
+### Path C: The "Deepest" Formalization (Neural Tangent Kernel)
+Prove that the **Interpolation Regime** actually exists for Neural Networks.
+*   **Formalism:** Formalize the **Neural Tangent Kernel (NTK)** limit ($width \to \infty$).
+*   **Proof:** Prove **Global Convergence of Gradient Descent** for overparameterized networks (Linearized Dynamics).
+*   **Link:** Show Global Convergence $\implies$ Loss $\to$ 0 $\implies$ Noise $\to$ 0. This closes the loop, proving Path B's assumption from first principles.
+
+---
 
 ## 2. Discrete Strong Data Processing Inequality (SDPI)
 **Domain:** Information Geometry / Spectral Graph Theory
@@ -52,38 +57,44 @@ Prove that if the system is in the **Interpolation Regime** (Loss $\to$ 0), it c
 Instantiate `DirectedInfo` and `SDPI` for concrete channels (BSC, Z-Channel).
 
 ### The Missing Machinery
-1.  **Discrete Information Theory:** Define `Entropy` and `MutualInformation` for `Fintype` (independent of heavy measure-theory if possible). Prove **Massey Chain Rule** explicitly: $I(A^n 	o B^n) = \sum I(A^i; B_i | B^{i-1})$.
+1.  **Discrete Information Theory:** Define `Entropy` and `MutualInformation` for `Fintype` (independent of heavy measure-theory if possible). Prove **Massey Chain Rule** explicitly: $I(A^n \to B^n) = \sum I(A^i; B_i | B^{i-1})$.
 2.  **Contraction Coefficient:** Prove **Dobrushin Coefficient** bound or **Evans-Schulman** bound for specific $W$.
     *   *Specific Target:* Prove $\eta_{\text{BSC}(\epsilon)} = (1-2\epsilon)^2$. This involves analyzing the convexity of the KL divergence on the probability simplex.
+
+---
 
 ## 3. Heavy Ball "Upper Link" Geometry
 **Domain:** Optimization Theory / Symplectic Geometry
 **Significance:** Medium-High. First "verified momentum-info bridge."
 
 ### The Problem
-Prove $\Delta^2 U \le c_U \Delta(\text{Energy}) - \kappa_U \Delta(\text{Loss})$ for HB on Quadratics.
+Prove $\Delta^2 U \le c_U Δ(\text{Energy}) - κ_U Δ(\text{Loss})$ for HB on Quadratics.
 
 ### The Missing Machinery
 1.  **Lyapunov Construction:** Quadratic $V(z)$ on augmented state $z_k = (x_k, x_{k-1})$.
 2.  **LMI Solver:** Automate the check that $V(z_{k+1}) - V(z_k) \le -\rho \|\nabla f\|^2$ holds for all parameters (Automated LMI Tactic). Requires solving the 2x2 block LMI symbolically in Lean.
+
+---
 
 ## 4. Two-Time-Scale Stochastic Approximation (TTSA)
 **Domain:** Stochastic Approximation (Multi-Agent)
 **Significance:** High. Extends Target #1 to coupled Fast/Slow systems.
 
 ### The Problem
-Coupled update $\theta_{n+1} = \dots$, $\phi_{n+1} = \dots$ with $\gamma_n / \beta_n \to 0$.
+Coupled update $\theta_{n+1} = $, $\phi_{n+1} = $ with $\gamma_n / β_n \to 0$.
 
 ### The Missing Machinery
 *   **Quasi-Static Approximation:** Prove fast process tracks equilibrium $\lambda(\theta)$ instantly.
 *   **Coupling Error:** Formalizing the bounds to prove that the difference between the coupled system and the averaged system vanishes a.s.
+
+---
 
 ## 5. The "Synergy" Inequality (Lemma E & E')
 **Domain:** Information Decomposition (PID) / Geometric Control Theory
 **Significance:** Medium. First formal causal PID and Geometric Control link to Empowerment.
 
 ### The Problem
-Prove $I(X; Y, Z) - I(X; Y) = \text{Unique}(Z) + \text{Synergy}$. Connect this to Manifold Collapse.
+Prove $I(X; Y, Z) - I(X; Y) = 	ext{Unique}(Z) + 	ext{Synergy}$. Connect this to Manifold Collapse.
 
 ### The Missing Machinery
 1.  **PID Definitions:** Formalize Partial Information Decomposition (lattice of information measures). 
@@ -94,9 +105,11 @@ Prove $I(X; Y, Z) - I(X; Y) = \text{Unique}(Z) + \text{Synergy}$. Connect this t
     *   *The Theorem (Geometric Control):* **"Rank-Deficient Control Authority."** Prove that if the interaction is "Non-Holonomic" (requires Lie Brackets $[f_1, f_2]$ to move), then ablating $f_2$ reduces the Rank of the Reachability Gramian.
     *   *Physics:* "Synthetic Lethality" (Genetics) and "Percolation Threshold" (Physics). If the system is at a critical point (Synergistic Core), ablation collapses the manifold dimensionality.
 3.  **Lemma E' (The General Metric):** "Interaction Sign Determines Empowerment Change."
-    *   *Formalism:* Define **O-Information ($\Omega$)** or Spectral Gap.
-    *   *Theorem:* If $\Omega < 0$ (Synergy), Empowerment Collapses (Original Lemma E). If $\Omega > 0$ (Interference), Empowerment Increases.
+    *   *Formalism:* Define **O-Information ($Ω$)** or Spectral Gap.
+    *   *Theorem:* If $Ω < 0$ (Synergy), Empowerment Collapses (Original Lemma E). If $Ω > 0$ (Interference), Empowerment Increases.
     *   *Significance:* This generalized lemma explains the *switch* in behavior. NOC drives the agent from E' (Redundant) to E (Synergistic).
+
+---
 
 ## 6. Martingale Difference Sequence (MDS) Strong Laws
 **Domain:** Probability Theory
@@ -106,18 +119,22 @@ Prove $I(X; Y, Z) - I(X; Y) = \text{Unique}(Z) + \text{Synergy}$. Connect this t
 `NOC/Prob/MDS.lean` already proves `weighted_sum_ae_converges`.
 
 ### The Opportunity
-*   **Generalized SLLN:** Prove $\frac{1}{n} \sum M_i \to 0$ a.s. for general MDS with bounded variance.
+*   **Generalized SLLN:** Prove $\frac{1}{n} ∑ M_i \to 0$ a.s. for general MDS with bounded variance.
 *   **Borel-Cantelli for Martingales:** Generalize existing convergence theorems to "Conditional Borel-Cantelli" lemmas (Lévy's extension).
+
+---
 
 ## 7. Inverse Antitonicity & Operator Monotonicity
 **Domain:** Functional Analysis / Matrix Analysis
 **Significance:** Medium-High.
 
 ### The Gem
-`NOC/E/Boundary/LoewnerHelpers.lean` proves $\log \det$ monotonicity.
+`NOC/E/Boundary/LoewnerHelpers.lean` proves $\log   $ monotonicity.
 
 ### The Opportunity
 *   **Löwner-Heinz Theorem:** Formalize Operator Monotone functions and their connection to analytic functions (Pick functions). This connects Matrix Analysis to Complex Analysis.
+
+---
 
 ## 8. Generalized Robbins-Siegmund Theorem
 **Domain:** Functional Analysis / Stochastic Processes
@@ -129,6 +146,8 @@ Prove $I(X; Y, Z) - I(X; Y) = \text{Unique}(Z) + \text{Synergy}$. Connect this t
 ### The Opportunity
 *   **Hilbert Space Extension:** Generalize 1D RS theorem to Hilbert/Banach spaces.
 *   **Applications:** Use this to prove convergence of SGD on Reproducing Kernel Hilbert Spaces (RKHS) (hot topic in theoretical ML).
+
+---
 
 ## 9. Automated LMI Verification Tactic
 **Domain:** Control Theory / Meta-Programming
@@ -142,22 +161,6 @@ Prove $I(X; Y, Z) - I(X; Y) = \text{Unique}(Z) + \text{Synergy}$. Connect this t
 
 ---
 
-# Tier 2: Application A (External / Multi-Agent NOC)
-*Goal: Instantiate the Core to prove claims about Agents, Policies, and Orthogonality.*
-
-*   **Target:** Theorem 1 & 2 from `NOC_v5.md`.
-*   **Instantiation:**
-    *   $U$ = General Task Capacity.
-    *   $\Sigma$ = Joint Action-Future State MI.
-    *   $\beta$ = Explicit Meta-Parameter.
-    *   $\Xi_{\text{loss}}$ = Co-Policy Deletion.
-*   **Key Theorem:** "In symmetric potential games with strict Σ-regularized maxima, profile is an ESS." (Theorem 2).
-
----
-
-# Tier 3: Application B (Internal / NFT / Grokking)
-*Goal: Instantiate the Core to prove claims about Neurons, Features, and Representation Learning.*
-
 ## 10. The "Variational Preference" Theorem (Replacing Grokking Causality)
 **Domain:** Deep Learning Theory / Statistical Physics
 **Significance:** High. Replaces the risky "Dynamical Transition" proof with a rigorous "Optimization Preference" proof.
@@ -166,21 +169,39 @@ Prove $I(X; Y, Z) - I(X; Y) = \text{Unique}(Z) + \text{Synergy}$. Connect this t
 We do not prove that NOC *causes* the transition dynamically (which is an open problem in chaos theory). We prove that NOC *prefers* the endpoint.
 
 ### The Formalism
-1.  **Lazy Regime (NTK):** High Redundancy ($\Omega > 0$), Linear Dynamics, Additive Features. Lemma E is False here.
-2.  **Rich Regime (Feature Learning):** High Synergy ($\Omega < 0$), Non-linear, Simplex Geometry. Lemma E is True here.
-3.  **The Meta-Utility Function:** $M(\pi) = \alpha \Delta U + \beta \Delta^2 U + \gamma \Sigma$.
+1.  **Lazy Regime (NTK):** High Redundancy ($Ω > 0$), Linear Dynamics, Additive Features. Lemma E is False here.
+2.  **Rich Regime (Feature Learning):** High Synergy ($Ω < 0$), Non-linear, Simplex Geometry. Lemma E is True here.
+3.  **The Meta-Utility Function:** $M(\pi) = \alpha Δ U + β Δ^2 U + γ Σ$.
 
 ### The Theorem
 **"If $\gamma$ is sufficiently large, the Global Maximum of $M(\pi)$ lies in the Rich Regime."**
-*   *Proof Sketch:* Show that in the Lazy regime, $\Sigma$ is bounded by additivity. In the Rich regime, $\Sigma$ scales with the combinatorics of the Simplex. Thus, for high $\gamma$, the Rich regime dominates.
+*   *Proof Sketch:* Show that in the Lazy regime, $Σ$ is bounded by additivity. In the Rich regime, $Σ$ scales with the combinatorics of the Simplex. Thus, for high $\gamma$, the Rich regime dominates.
 *   *Outcome:* This validates the "Developmental Trajectory." The agent starts Lazy (easy to find), but the NOC drive pulls it towards Rich (higher reward).
 
-## 11. Path C: The "Deepest" Formalization (Neural Tangent Kernel)
-**Note:** This is the *Internal* instantiation of the abstract Target #1 (Path C).
-Prove that the **Interpolation Regime** actually exists for Neural Networks.
-*   **Formalism:** Formalize the **Neural Tangent Kernel (NTK)** limit ($width \to \infty$).
-*   **Proof:** Prove **Global Convergence of Gradient Descent** for overparameterized networks (Linearized Dynamics).
-*   **Link:** Show Global Convergence $\implies$ Loss $\to$ 0 $\implies$ Noise $\to$ 0. This closes the loop, proving Path B's assumption from first principles.
+### The "Kinetic" Mechanism (Formalization Roadmap)
+*   **Hypothesis:** NOC acts as an **"Edge of Stability" (EoS)** controller. Maximizing $Δ^2 U$ (acceleration) pushes the system to the limit of stable curvature.
+*   **The Catapult Phase:** Prove that large steps/momentum (NOC dynamics) destabilize the sharp minima of the Lazy/NTK regime, forcing the system to "catapult" into a flatter basin.
+*   **The Rich Regime:** Prove that this new basin corresponds to the "Rich" regime (feature learning), where weights deviate from initialization and redundancy is shed.
+*   **Outcome:** NOC *activates* Lemma E by forcing the transition from **Lazy (Interference)** to **Rich (Synergy)**.
+
+---
+
+## 11. Geometric Control Theory of Synergy (Lemma E Proof)
+**Domain:** Differential Geometry / Non-Linear Control
+**Significance:** High. Provides the rigorous mechanism for "Synergy = Fragility."
+
+### The Problem
+Why does high synergy imply that removing a partner causes a catastrophic drop in control?
+
+### The Missing Machinery
+1.  **Formalize Lie Brackets:** Define the Lie Bracket $[f, g]$ for vector fields on a manifold.
+2.  **The "Rank Deficient" Theorem:**
+    *   Define a system as "Synergistic" (Non-Holonomic) if the rank of the control distribution $\Delta = 	ext{span}\{f_1, , f_k\}$ is less than the rank of the Lie Algebra $	ext{Lie}(\Delta)$.
+    *   Prove that ablating a vector field $f_i$ reduces the rank of the reachable set (Manifold Collapse).
+    *   *Link:* If the system needs Lie Brackets to move (Parallel Parking), losing one actuator kills the emergent dimension.
+3.  **Connection to O-Information:** Link the geometric "Rank Deficiency" to the statistical "Negative O-Information."
+
+---
 
 ## 12. Neural Collapse (ETF Simplex) Geometry
 **Domain:** High-Dimensional Geometry / Optimization
@@ -194,9 +215,3 @@ What is the specific geometry that NOC converges to?
 2.  **The "Simplex" Theorem:** Prove that minimizing the "Cross-Entropy + Weight Decay" (NOC proxy) objective forces feature vectors to converge to an ETF Simplex.
 3.  **The "Fragility" Corollary:** Prove that an ETF Simplex has **Zero Redundancy**. Removing any vertex destroys the frame properties. 
     *   *Conclusion:* Optimizing for the Simplex (NOC) *mathematically necessitates* Lemma E (Fragility).
-
-### The "Kinetic" Mechanism (Formalization Roadmap)
-*   **Hypothesis:** NOC acts as an **"Edge of Stability" (EoS)** controller. Maximizing $\Delta^2 U$ (acceleration) pushes the system to the limit of stable curvature.
-*   **The Catapult Phase:** Prove that large steps/momentum (NOC dynamics) destabilize the sharp minima of the Lazy/NTK regime, forcing the system to "catapult" into a flatter basin.
-*   **The Rich Regime:** Prove that this new basin corresponds to the "Rich" regime (feature learning), where weights deviate from initialization and redundancy is shed.
-*   **Outcome:** NOC *activates* Lemma E by forcing the transition from **Lazy (Interference)** to **Rich (Synergy)**.

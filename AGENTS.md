@@ -31,3 +31,8 @@ Use these scripts to ensure safety and correctness:
 ## 4. Safety Constraints
 *   **Dependency Lock:** Do NOT modify `lake-manifest.json` or `lean-toolchain`. The project is pinned to specific versions to avoid dependency hell.
 *   **Deep Proof Over Scaffolding:** While we maintain empirical interfaces, the default action for any `sorry` or axiom is to **eliminate it via deep formalization**. Do not leave "empirical" stubs unless they represent raw data inputs (like specific dataset values) that cannot be derived mathematically.
+
+## 5. Version Control Protocol
+*   **No Auto-Reverts:** Do **NOT** use `git checkout`, `git reset`, or `git revert` to undo changes unless explicitly instructed by the user.
+*   **Forward Fixes Only:** If a build breaks, fix the code forward (by editing the file). Do not roll back to a previous commit state, as this may destroy uncommitted work in the user's local environment.
+*   **Commit Discipline:** Do not commit or push changes without explicit user approval.
