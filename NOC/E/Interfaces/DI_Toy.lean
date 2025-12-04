@@ -30,7 +30,7 @@ instance (X Y : Type u) [d : PerStepData X Y] : DirectedInfo X Y where
 /-- Contraction data for the Strong Data-Processing Inequality. -/
 class SDPIData (X Y : Type u) where
   η : Time → ℝ
-  η_range : ∀ t, 0 ≤ η t ∧ η t < 1
+  η_range : ∀ t, 0 ≤ η t ∧ η t ≤ 1
 
 instance (X Y : Type u) [s : SDPIData X Y] : SDPI X Y where
   η       := s.η

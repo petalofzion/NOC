@@ -34,7 +34,7 @@ structure NOCStepModel (X Y : Type u) where
   pre     : Time → (Time → X) → (Time → Y) → ℝ
   post    : Time → (Time → X) → (Time → Y) → ℝ
   eta     : Time → ℝ
-  eta_range : ∀ t, 0 ≤ eta t ∧ eta t < 1
+  eta_range : ∀ t, 0 ≤ eta t ∧ eta t ≤ 1
   per_le_post : ∀ t x y, perStep t x y ≤ post t x y
   sdpi_step   : ∀ t x y, post t x y ≤ eta t * pre t x y
 

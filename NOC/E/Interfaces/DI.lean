@@ -43,10 +43,10 @@ class DirectedInfo (X Y : Type u) where
   chainRule : ∀ (n : Nat) (x : Time → X) (y : Time → Y),
     DI n x y = (Finset.range (n+1)).sum (fun t => perStep t x y)
 
-/-- Strong Data-Processing Inequality (per-step) with a contraction `η t ∈ [0,1)`. -/
+/-- Strong Data-Processing Inequality (per-step) with a contraction `η t ∈ [0,1]`. -/
 class SDPI (X Y : Type u) where
   η        : Time → ℝ
-  η_range  : ∀ t, 0 ≤ η t ∧ η t < 1
+  η_range  : ∀ t, 0 ≤ η t ∧ η t ≤ 1
 
 /-- Witness functions to connect a concrete per-step pre/post information quantity to SDPI. -/
 class SDPIStepWitness (X Y : Type u) [DirectedInfo X Y] [SDPI X Y] where
@@ -137,7 +137,7 @@ theorem di_strict_under_garbling
         SDPI.η (X:=X) (Y:=Y) t * SDPIStepWitness.pre t x y
           ≤ SDPIStepWitness.pre t x y := by
     intro t ht
-    have hη_le_one : SDPI.η (X:=X) (Y:=Y) t ≤ 1 := (SDPI.η_range (X:=X) (Y:=Y) t).2.le
+    have hη_le_one : SDPI.η (X:=X) (Y:=Y) t ≤ 1 := (SDPI.η_range (X:=X) (Y:=Y) t).2
     have hpre_nn : 0 ≤ SDPIStepWitness.pre t x y := hpre_nonneg t ht
     simpa [one_mul] using
       (mul_le_mul_of_nonneg_right hη_le_one hpre_nn)
@@ -205,7 +205,7 @@ theorem di_strict_under_garbling_explicit
   have h_all_le : ∀ t ∈ Finset.range (n+1),
       SDPI.η (X:=X) (Y:=Y) t * pre t x y ≤ pre t x y := by
     intro t ht
-    have hη_le_one : SDPI.η (X:=X) (Y:=Y) t ≤ 1 := (SDPI.η_range (X:=X) (Y:=Y) t).2.le
+    have hη_le_one : SDPI.η (X:=X) (Y:=Y) t ≤ 1 := (SDPI.η_range (X:=X) (Y:=Y) t).2
     have hpre_nn : 0 ≤ pre t x y := hpre_nonneg t ht
     simpa [one_mul] using mul_le_mul_of_nonneg_right hη_le_one hpre_nn
   have h_one_strict : SDPI.η (X:=X) (Y:=Y) t0 * pre t0 x y < pre t0 x y := by
